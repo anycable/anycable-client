@@ -18,7 +18,7 @@ export class Channel {
     this.pendingSubscription = this.connector
       .subscribe({
         channel: this.constructor.identifier,
-        params
+        params: this.params
       })
       .then(sid => {
         this.sid = sid
@@ -33,7 +33,7 @@ export class Channel {
   async disconnect() {
     await this.ensureConnected()
 
-    return this.connector.unsubscribe(this.sid).then(() => {
+    return this.connector.unsubscribe(this.identifier).then(() => {
       delete this.connector
       delete this.sid
 
@@ -44,13 +44,11 @@ export class Channel {
   async perform(action, payload) {
     await this.ensureConnected()
 
-    if (payload !== void 0)
-      return this.client.perform(this.sub_id, { action, payload })
-    else return this.client.perform(this.sub_id, { action })
+    return this.connector.perform(this.identifier, action, payload)
   }
 
   async ensureConnected() {
-    if (this.sid) return Promise.resolve()
+    if (this.identifier) return Promise.resolve()
 
     if (this.pendingSubscription) return this.pendingSubscription
 

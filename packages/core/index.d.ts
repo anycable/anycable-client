@@ -1,2 +1,2 @@
 export { ClientOptions, Client } from './client'
-export { Connector, Channel, ParamsMap, PerformPayload } from './channel'
+export { Connector, Channel } from './channel'

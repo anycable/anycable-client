@@ -14,6 +14,9 @@
   "engines": {
     "node": "^12.0.0 || ^14.0.0 || >=16.0.0"
   },
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --coverage && check-dts"
+  },
   "homepage": "https://anycable.io/",
   "repository": "https://github.com/anycable/anycable-client",
   "author": "Vladimir Dementyev",
@@ -26,9 +29,26 @@
     "singleQuote": true,
     "trailingComma": "none"
   },
+  "jest": {
+    "preset": "ts-jest/presets/default-esm",
+    "testEnvironment": "jsdom",
+    "globals": {
+      "ts-jest": {
+        "useESM": true
+      }
+    },
+    "coverageThreshold": {
+      "global": {
+        "statements": 100
+      }
+    }
+  },
   "devDependencies": {
+    "@types/jest": "^26.0.23",
     "check-dts": "^0.4.4",
+    "jest": "^27.0.6",
     "prettier": "^2.3.1",
+    "ts-jest": "^27.0.3",
     "typescript": "^4.3.3"
   }
 }

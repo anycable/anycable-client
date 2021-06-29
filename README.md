@@ -1,4 +1,4 @@
-[![Build](https://github.com/anycable/anycable-client/workflows/Build/badge.svg)](https://github.com/anycable/anycable-client/actions)
+[![Test](https://github.com/anycable/anycable-client/workflows/Test/badge.svg)](https://github.com/anycable/anycable-client/actions)
 
 # AnyCable JavaScript Client
 

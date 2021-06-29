@@ -1,5 +1,5 @@
 export interface Connector {
-  subscribe(channel: string, params?: object): Promise<string>
+  subscribe(data: { channel: string; params?: object }): Promise<string>
   unsubscribe(sid: string): Promise<boolean>
   perform(sid: string, action: string, payload?: object): Promise<object>
 }
@@ -12,6 +12,7 @@ declare class Channel<ParamsType extends ParamsMap = {}> {
   static readonly identifier: string
 
   readonly identifier: string
+  readonly params: ParamsType
 
   constructor(params?: ParamsType)
 

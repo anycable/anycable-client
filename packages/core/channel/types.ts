@@ -1,8 +1,8 @@
 import { Channel } from './index.js'
 
 class MockClient {
-  subscribe(channel: string, params?: any): Promise<string> {
-    return Promise.resolve(channel)
+  subscribe(data: { channel: string; params?: any }): Promise<string> {
+    return Promise.resolve(data.channel)
   }
   unsubscribe(sid: string): Promise<boolean> {
     return Promise.resolve(true)
