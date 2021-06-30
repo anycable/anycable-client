@@ -75,10 +75,10 @@ import client from 'anycable'
 import { ChatChannel } from 'channels/chat'
 
 // Build an instance of a ChatChannel class.
-const channel = new ChatChannel({ roomId: '42' })
+const channel = new ChatChannel(client, { roomId: '42' })
 
 // Subscribe to the server channel via the client.
-await channel.connect(client)
+await channel.connect()
 
 // Perform an action
 // NOTE: Action Cable doesn't implement a full-featured RPC with ACK messages,
