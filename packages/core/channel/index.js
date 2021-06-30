@@ -12,7 +12,7 @@ export class Channel {
   }
 
   async connect(receiver) {
-    if (this.connected) throw 'Already connected'
+    if (this.connected) throw Error('Already connected')
 
     this.receiver = receiver
 
@@ -56,7 +56,7 @@ export class Channel {
   }
 
   once(event, callback) {
-    const unbind = this.emitter.on(event, (...args) => {
+    let unbind = this.emitter.on(event, (...args) => {
       unbind()
       callback(...args)
     })
@@ -72,6 +72,6 @@ export class Channel {
 
     if (this.pendingSubscription) return this.pendingSubscription
 
-    return Promise.reject('Must be connected')
+    return Promise.reject(Error('Must be connected'))
   }
 }

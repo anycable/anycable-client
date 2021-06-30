@@ -1,4 +1,4 @@
-export { CableOptions, Cable } from './cable'
+export { CableOptions, Cable } from './cable/index.js'
 export {
   Receiver,
   ReceiveCallback,
@@ -7,4 +7,4 @@ export {
   Message,
   MessageMeta,
   Line
-} from './channel'
+} from './channel/index.js'

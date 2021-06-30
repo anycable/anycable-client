@@ -1,12 +1,13 @@
-import { Channel } from '../index.js'
+import { jest } from '@jest/globals'
+
 import {
+  Channel,
   ChannelEvents as Events,
   Receiver,
   ReceiveCallback,
   Message,
   Line
-} from '../index'
-import { jest } from '@jest/globals'
+} from '../index.js'
 
 class TestLine implements Line {
   conn: TestReceiver
@@ -41,17 +42,17 @@ class TestReceiver implements Receiver {
     this.subscriptionsCount = 0
   }
 
-  subscribe(channel: string, params?: object): Promise<Line> {
-    const id = (++this.subscriptionsCount).toString()
+  subscribe(_channel: string, _params?: object): Promise<Line> {
+    let id = (++this.subscriptionsCount).toString()
     this.line = new TestLine(this, id)
     return Promise.resolve(this.line)
   }
 
-  unsubscribe(sid: string): Promise<void> {
+  unsubscribe(_sid: string): Promise<void> {
     return Promise.resolve()
   }
 
-  perform(sid: string, action: string, payload?: any): Promise<any> {
+  perform(_sid: string, action: string, payload?: any): Promise<any> {
     if (!payload) {
       payload = {}
     }
@@ -76,7 +77,7 @@ beforeEach(() => {
   client = new TestReceiver()
 })
 
-describe('Receiver communicaton', () => {
+describe('receiver communicaton', () => {
   let channel: TestChannel
 
   beforeEach(() => {
@@ -90,8 +91,8 @@ describe('Receiver communicaton', () => {
   })
 
   it('connects', async () => {
-    jest.spyOn(client, 'subscribe').mockImplementation((channel, params) => {
-      expect(channel).toEqual('test')
+    jest.spyOn(client, 'subscribe').mockImplementation((channelId, params) => {
+      expect(channelId).toEqual('test')
       expect(params).toMatchObject({ id: '2021' })
 
       return Promise.resolve(new TestLine(client, '1'))
@@ -103,19 +104,14 @@ describe('Receiver communicaton', () => {
   })
 
   it('connect rejection', async () => {
-    jest.spyOn(client, 'subscribe').mockImplementation((channel, params) => {
-      expect(channel).toEqual('test')
+    jest.spyOn(client, 'subscribe').mockImplementation((channelId, params) => {
+      expect(channelId).toEqual('test')
       expect(params).toMatchObject({ id: '2021' })
 
-      return Promise.reject('Forbidden')
+      return Promise.reject(Error('Forbidden'))
     })
 
-    try {
-      await channel.connect(client)
-      fail('No exception was thrown')
-    } catch (e) {
-      expect(e).toEqual('Forbidden')
-    }
+    await expect(channel.connect(client)).rejects.toThrow('Forbidden')
 
     expect(channel.connected).toEqual(false)
   })
@@ -123,12 +119,7 @@ describe('Receiver communicaton', () => {
   it('double connect', async () => {
     await channel.connect(client)
 
-    try {
-      await channel.connect(client)
-      fail('No exception was thrown')
-    } catch (e) {
-      expect(e).toEqual('Already connected')
-    }
+    await expect(channel.connect(client)).rejects.toThrow('Already connected')
   })
 
   it('performs action with payload', async () => {
@@ -164,12 +155,9 @@ describe('Receiver communicaton', () => {
   })
 
   it('performs without connect', async () => {
-    try {
-      await channel.perform('do', { foo: 'bar' })
-      fail('No exception was thrown')
-    } catch (e) {
-      expect(e).toMatch(/must be connected/i)
-    }
+    await expect(channel.perform('do', { foo: 'bar' })).rejects.toThrow(
+      /must be connected/i
+    )
   })
 
   it('performs right after connect', async () => {
@@ -191,12 +179,7 @@ describe('Receiver communicaton', () => {
   })
 
   it('disconnect without connect', async () => {
-    try {
-      await channel.disconnect()
-      fail('No exception was thrown')
-    } catch (e) {
-      expect(e).toMatch(/must be connected/i)
-    }
+    await expect(channel.disconnect()).rejects.toThrow(/must be connected/i)
   })
 
   it('disconnect right after connect', async () => {

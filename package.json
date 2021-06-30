@@ -15,7 +15,8 @@
     "node": "^12.0.0 || ^14.0.0 || >=16.0.0"
   },
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/.bin/jest --coverage && check-dts"
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --coverage && check-dts",
+    "lint": "eslint . && prettier --check 'packages/**/*.{js,ts}'"
   },
   "homepage": "https://anycable.io/",
   "repository": "https://github.com/anycable/anycable-client",
@@ -43,12 +44,54 @@
       }
     }
   },
+  "eslintConfig": {
+    "extends": "@logux/eslint-config/esm",
+    "rules": {
+      "jest/no-conditional-expect": "off"
+    },
+    "overrides": [
+      {
+        "files": ["**/*.js"],
+        "parser": "@babel/eslint-parser",
+        "parserOptions": {
+          "requireConfigFile": false,
+          "sourceType": "module"
+        }
+      },
+      {
+        "files": ["**/*.test.ts"],
+        "rules": {
+          "@typescript-eslint/explicit-function-return-type": "off",
+          "@typescript-eslint/no-unused-vars": "off"
+        }
+      }
+    ]
+  },
+  "eslintIgnore": [
+    "**/errors.ts",
+    "**/cable/*.js",
+    "**/cable/*.ts"
+  ],
   "devDependencies": {
+    "@babel/core": "^7.14.6",
+    "@babel/eslint-parser": "^7.14.7",
+    "@logux/eslint-config": "^45.4.6",
     "@types/jest": "^26.0.23",
+    "@typescript-eslint/eslint-plugin": "^4.28.1",
+    "@typescript-eslint/parser": "^4.28.1",
     "check-dts": "^0.4.4",
+    "eslint": "^7.29.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.23.4",
+    "eslint-plugin-jest": "^24.3.6",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prefer-let": "^1.1.0",
+    "eslint-plugin-promise": "^5.1.0",
+    "eslint-plugin-security": "^1.4.0",
+    "eslint-plugin-unicorn": "^34.0.1",
     "jest": "^27.0.6",
     "prettier": "^2.3.1",
     "ts-jest": "^27.0.3",
-    "typescript": "^4.3.3"
+    "typescript": "^4.3.4"
   }
 }

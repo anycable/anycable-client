@@ -1,2 +1,2 @@
-export { Cable } from './cable'
-export { Channel } from './channel'
+export { Cable } from './cable/index.js'
+export { Channel } from './channel/index.js'
