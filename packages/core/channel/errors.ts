@@ -1,19 +1,17 @@
 import { Channel } from './index.js'
-import { ConnectorCallback, Pipe } from '../index'
+import { ReceiveCallback, Line } from '../index'
 
-class Connector {
-  subscribe(
-    data: { channel: string; params: any },
-    callback: ConnectorCallback
-  ): Promise<Pipe> {
+class Cable {
+  subscribe(channel: string, params?: object): Promise<Line> {
     return Promise.resolve({
       close: () => Promise.resolve(),
-      send: () => Promise.resolve(null)
+      send: () => Promise.resolve(null),
+      receive: (cb: ReceiveCallback) => {}
     })
   }
 }
 
-const connector = new Connector()
+const cable = new Cable()
 
 new Channel(
   // THROWS Argument of type
@@ -23,9 +21,9 @@ new Channel(
 export class IdChannel extends Channel<{ id: string }> {}
 
 // THROWS Type 'number' is not assignable
-new IdChannel(connector, { id: 42 })
+new IdChannel({ id: 42 })
 
-const ch = new Channel(connector)
+const ch = new Channel()
 
 // THROWS Argument of type
 ch.on('start', (event: object) => {

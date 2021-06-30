@@ -1,2 +1,2 @@
-export { Client } from './client'
+export { Cable } from './cable'
 export { Channel } from './channel'

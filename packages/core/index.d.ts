@@ -1,10 +1,10 @@
-export { ClientOptions, Client } from './client'
+export { CableOptions, Cable } from './cable'
 export {
-  Connector,
-  ConnectorCallback,
+  Receiver,
+  ReceiveCallback,
   Channel,
-  Events,
+  ChannelEvents,
   Message,
-  Meta,
-  Pipe
+  MessageMeta,
+  Line
 } from './channel'

@@ -27,15 +27,15 @@ First, you need to create a _client_ (or _consumer_ as it's called in Action Cab
 
 ```js
 // anycable.js
-import { createClient } from 'anycable'
+import { createCable } from 'anycable'
 
-export default createClient()
+export default createCable()
 ```
 
 By default, the connection URL is looked up in meta tags (`action-cable-url` or `cable-url`), and if none found, fallbacks to `/cable`. You can also specify the URL explicitly:
 
 ```js
-createClient('ws://cable.example.com/my_cable')
+createCable('ws://cable.example.com/my_cable')
 ```
 
 ### Channels
@@ -50,8 +50,10 @@ You can add additional API methods, dispatch custom events, etc.
 Let's consider an example:
 
 ```js
+import { Channel } from 'anycable'
+
 // channels/chat.js
-export default class ChatChannel {
+export default class ChatChannel extends Channel {
   // Unique channel identifier (channel class for Action Cable)
   static identifier = 'ChatChannel'
 
@@ -59,26 +61,26 @@ export default class ChatChannel {
     return this.perform('speak', { message })
   }
 
-  handleIncoming(message) {
+  receive(message) {
     if (message.type === 'typing') {
       // Emit custom event when message type is 'typing'
       return this.emit('typing', message)
     }
 
-    super.handleIncoming(message)
+    super.receive(message)
   }
 }
 ```
 
 ```js
-import client from 'anycable'
+import cable from 'anycable'
 import { ChatChannel } from 'channels/chat'
 
 // Build an instance of a ChatChannel class.
-const channel = new ChatChannel(client, { roomId: '42' })
+const channel = new ChatChannel({ roomId: '42' })
 
 // Subscribe to the server channel via the client.
-await channel.connect()
+await channel.connect(cable)
 
 // Perform an action
 // NOTE: Action Cable doesn't implement a full-featured RPC with ACK messages,
@@ -107,9 +109,9 @@ _Headless_ subscriptions are very similar to Action Cable client-side subsriptio
 Let's rewrite the same example using headless subscriptions:
 
 ```js
-import client from 'anycable'
+import cable from 'anycable'
 
-const subscription = await client.subscribeTo('ChatChannel', { roomId: '42' })
+const subscription = await cable.subscribeTo('ChatChannel', { roomId: '42' })
 
 const _ = await channel.perform('speak', { msg: 'Hello' })
 

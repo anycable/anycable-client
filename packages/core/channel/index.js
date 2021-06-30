@@ -4,27 +4,23 @@ export class Channel {
   // Unique channel identifier
   static identifier = ''
 
-  constructor(connector, params = {}) {
+  constructor(params = {}) {
     this.emitter = createNanoEvents()
     this.params = Object.freeze(params)
-    this.connector = connector
     this.connected = false
-    this.handleIncoming = this.handleIncoming.bind(this)
+    this.receive = this.receive.bind(this)
   }
 
-  async connect() {
+  async connect(receiver) {
     if (this.connected) throw 'Already connected'
 
-    this.pendingSubscription = this.connector
-      .subscribe(
-        {
-          channel: this.constructor.identifier,
-          params: this.params
-        },
-        this.handleIncoming
-      )
-      .then(pipe => {
-        this.pipe = pipe
+    this.receiver = receiver
+
+    this.pendingSubscription = this.receiver
+      .subscribe(this.constructor.identifier, this.params)
+      .then(line => {
+        this.line = line
+        this.line.receive(this.receive)
         delete this.pendingSubscription
 
         this.connected = true
@@ -37,9 +33,9 @@ export class Channel {
   async disconnect() {
     await this.ensureConnected()
 
-    return this.pipe.close().then(() => {
+    return this.line.close().then(() => {
       this.connected = false
-      delete this.pipe
+      delete this.line
 
       this.emit('stop')
     })
@@ -48,10 +44,10 @@ export class Channel {
   async perform(action, payload) {
     await this.ensureConnected()
 
-    return this.pipe.send({ action, payload })
+    return this.line.send({ action, payload })
   }
 
-  handleIncoming(msg, meta) {
+  receive(msg, meta) {
     this.emit('data', msg, meta)
   }
 
