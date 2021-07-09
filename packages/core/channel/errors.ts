@@ -1,13 +1,16 @@
-import { Channel } from './index.js'
-import { ReceiveCallback, Line } from '../index'
+import { Channel, Message, MessageMeta } from '../index'
 
 class Cable {
-  subscribe(channel: string, params?: object): Promise<Line> {
-    return Promise.resolve({
-      close: () => Promise.resolve(),
-      send: () => Promise.resolve(null),
-      receive: (cb: ReceiveCallback) => {}
-    })
+  unsubscribe(id: string): Promise<void> {
+    return Promise.resolve()
+  }
+
+  perform(
+    id: string,
+    action: string,
+    payload: object
+  ): Promise<[Message, MessageMeta] | void> {
+    return Promise.resolve()
   }
 }
 
@@ -26,16 +29,19 @@ new IdChannel({ id: 42 })
 const ch = new Channel()
 
 // THROWS Argument of type
-ch.on('start', (event: object) => {
+ch.on('connect', (event: object) => {
   event
 })
+
 // THROWS Argument of type
-ch.on('stop', (event: object) => {
+ch.on('disconnect', (event: string) => {
   event
 })
+
 // THROWS Argument of type
-ch.on('data', (msg: object, meta: object) => {
+ch.on('message', (msg: object, meta: object) => {
   meta
 })
+
 // THROWS Argument of type
-ch.on('duta', (msg: object) => true)
+ch.on('data', (msg: object) => true)

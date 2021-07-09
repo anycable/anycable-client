@@ -1,5 +1,7 @@
 import { createNanoEvents } from 'nanoevents'
 
+const STATE = Symbol('state')
+
 export class Channel {
   // Unique channel identifier
   static identifier = ''
@@ -7,48 +9,73 @@ export class Channel {
   constructor(params = {}) {
     this.emitter = createNanoEvents()
     this.params = Object.freeze(params)
-    this.connected = false
-    this.receive = this.receive.bind(this)
+    this[STATE] = 'disconnected'
   }
 
-  async connect(receiver) {
-    if (this.connected) throw Error('Already connected')
+  get identifier() {
+    return this.constructor.identifier
+  }
+
+  get state() {
+    return this[STATE]
+  }
+
+  connecting(receiver) {
+    if (this.state === 'connected') throw Error('Already connected')
+    if (this.state === 'connecting') return
 
     this.receiver = receiver
+    this[STATE] = 'connecting'
+  }
 
-    this.pendingSubscription = this.receiver
-      .subscribe(this.constructor.identifier, this.params)
-      .then(line => {
-        this.line = line
-        this.line.receive(this.receive)
-        delete this.pendingSubscription
+  connected(id) {
+    if (this.state === 'connected') throw Error('Already connected')
 
-        this.connected = true
-        this.emit('start')
-      })
+    this.id = id
+    this[STATE] = 'connected'
 
-    return this.pendingSubscription
+    this.emit('connect')
+  }
+
+  disconnected(reason) {
+    if (this.state === 'disconnected') return
+
+    this[STATE] = 'disconnected'
+
+    this.emit('disconnect', { reason })
+  }
+
+  close(reason) {
+    if (this.state === 'disconnected') return
+
+    this[STATE] = 'disconnected'
+    delete this.receiver
+
+    this.emit('close', { reason })
   }
 
   async disconnect() {
-    await this.ensureConnected()
+    if (this.state === 'connecting') {
+      await this.pendingConnect()
+    }
 
-    return this.line.close().then(() => {
-      this.connected = false
-      delete this.line
+    if (this.state === 'disconnected') return Promise.resolve()
 
-      this.emit('stop')
-    })
+    return this.receiver.unsubscribe(this.id)
   }
 
   async perform(action, payload) {
-    await this.ensureConnected()
+    if (this.state === 'connecting') {
+      await this.pendingConnect()
+    }
 
-    return this.line.send({ action, payload })
+    if (this.state === 'disconnected') throw Error('No connection')
+
+    return this.receiver.perform(this.id, action, payload)
   }
 
   receive(msg, meta) {
-    this.emit('data', msg, meta)
+    this.emit('message', msg, meta)
   }
 
   on(event, callback) {
@@ -67,11 +94,32 @@ export class Channel {
     return this.emitter.emit(event, ...args)
   }
 
-  async ensureConnected() {
-    if (this.connected) return Promise.resolve()
+  pendingConnect() {
+    if (this._pendingConnect) return this._pendingConnect
 
-    if (this.pendingSubscription) return this.pendingSubscription
+    this._pendingConnect = new Promise((resolve, reject) => {
+      let unbind = [() => delete this._pendingConnect]
 
-    return Promise.reject(Error('Must be connected'))
+      unbind.push(
+        this.on('connect', () => {
+          unbind.forEach(clbk => clbk())
+          resolve()
+        })
+      )
+      unbind.push(
+        this.on('close', err => {
+          unbind.forEach(clbk => clbk())
+          reject(err)
+        })
+      )
+      unbind.push(
+        this.on('disconnect', err => {
+          unbind.forEach(clbk => clbk())
+          reject(err)
+        })
+      )
+    })
+
+    return this._pendingConnect
   }
 }

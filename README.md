@@ -12,8 +12,9 @@ There are multiple reasons that forced us to implement an alternative client lib
 
 - [AnyCable Pro][pro] features support (e.g., binary formats).
 - Multi-platform out-of-the-box (web, workers, React Native).
-- Future protocol extensions/modifications support.
+- TypeScript support.
 - Revisited client-side APIs.
+- Future protocol extensions/modifications support.
 
 ## Installation
 
@@ -80,7 +81,7 @@ import { ChatChannel } from 'channels/chat'
 const channel = new ChatChannel({ roomId: '42' })
 
 // Subscribe to the server channel via the client.
-await channel.connect(cable)
+await cable.subscribe(channel)
 
 // Perform an action
 // NOTE: Action Cable doesn't implement a full-featured RPC with ACK messages,
@@ -88,15 +89,18 @@ await channel.connect(cable)
 const _ = await channel.speak('Hello')
 
 // Handle incoming messages
-channel.on('data', msg => console.log(`${msg.name}: ${msg.text}`))
+channel.on('message', msg => console.log(`${msg.name}: ${msg.text}`))
 
 // Handle custom typing messages
 channel.on('typing', msg => console.log(`User ${msg.name} is typing`))
 
 // Or subscription close events
-channel.on('stop', () => console.log('Disconnected from chat'))
+channel.on('close', () => console.log('Disconnected from chat'))
 
-// Unsubscribe from the channel
+// Or temporary disconnect
+channel.on('disconnect', () => console.log('No chat connection'))
+
+// Unsubscribe from the channel (results in a 'close' event)
 channel.disconnect()
 ```
 
@@ -115,7 +119,7 @@ const subscription = await cable.subscribeTo('ChatChannel', { roomId: '42' })
 
 const _ = await channel.perform('speak', { msg: 'Hello' })
 
-channel.on('data', msg => {
+channel.on('message', msg => {
   if (msg.type === 'typing') {
     console.log(`User ${msg.name} is typing`)
   } else {

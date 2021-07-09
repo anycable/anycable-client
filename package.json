@@ -15,7 +15,7 @@
     "node": "^12.0.0 || ^14.0.0 || >=16.0.0"
   },
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/.bin/jest --coverage && check-dts",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest && check-dts",
     "lint": "eslint . && prettier --check 'packages/**/*.{js,ts}'"
   },
   "homepage": "https://anycable.io/",
@@ -46,9 +46,6 @@
   },
   "eslintConfig": {
     "extends": "@logux/eslint-config/esm",
-    "rules": {
-      "jest/no-conditional-expect": "off"
-    },
     "overrides": [
       {
         "files": ["**/*.js"],
@@ -59,10 +56,33 @@
         }
       },
       {
-        "files": ["**/*.test.ts"],
+        "files": [
+          "**/*.test.ts",
+          "**/types.ts",
+          "**/testing.ts"
+        ],
         "rules": {
           "@typescript-eslint/explicit-function-return-type": "off",
-          "@typescript-eslint/no-unused-vars": "off"
+          "@typescript-eslint/no-unused-vars": "off",
+          "jest/no-conditional-expect": "off",
+          "jest/no-done-callback": "off",
+          "import/extensions": "off"
+        }
+      },
+      {
+        "files": [
+          "**/action_cable/*.js"
+        ],
+        "rules": {
+          "consistent-return": "off"
+        }
+      },
+      {
+        "files": [
+          "**/*.{ts,js}"
+        ],
+        "rules": {
+          "node/no-unsupported-features/es-syntax": "off"
         }
       }
     ]

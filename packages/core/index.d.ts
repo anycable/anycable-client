@@ -1,10 +1,23 @@
-export { CableOptions, Cable } from './cable/index.js'
 export {
   Receiver,
-  ReceiveCallback,
   Channel,
   ChannelEvents,
   Message,
   MessageMeta,
-  Line
+  Identifier
 } from './channel/index.js'
+export { Transport } from './transport/index.js'
+export { Encoder } from './encoder/index.js'
+export {
+  Protocol,
+  Consumer,
+  SubscriptionRejected,
+  DisconnectedError,
+  CommandError,
+  ProcessedMessage
+} from './protocol/index.js'
+export { Hub } from './hub/index.js'
+export { Logger, LogLevel, BaseLogger, NoopLogger } from './logger/index.js'
+
+export { ActionCableProtocol } from './action_cable/index.js'
+export { CableOptions, Cable, NoConnectionError } from './cable/index.js'

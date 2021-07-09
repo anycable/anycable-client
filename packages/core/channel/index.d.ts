@@ -1,54 +1,67 @@
 import { Unsubscribe } from 'nanoevents'
 
-export type Message = object | string
+export type Identifier = string
+
+export type Message = object | string | number
 export type MessageMeta = {
   id: string
 }
 
-export type ReceiveCallback = (msg: Message, meta: MessageMeta) => void
-
-export interface Line {
-  send(data: { action: string; payload?: Message }): Promise<?Message>
-  receive(callback: ReceiveCallback): void
-  close(): Promise<void>
-}
-
 export interface Receiver {
-  subscribe(channel: string, params?: object): Promise<Line>
+  unsubscribe(id: Identifier): Promise<void>
+  perform(
+    id: Identifier,
+    action: string,
+    payload?: object
+  ): Promise<[Message, MessageMeta?] | void>
 }
 
 export type ChannelParamsMap = { [token: string]: boolean | number | string }
 
-export interface ChannelEvents {
-  start: () => void
-  stop: () => void
-  data: (msg: Message, meta?: MessageMeta) => void
+export type ChannelState = 'disconnected' | 'connecting' | 'connected'
+
+type DisconnectEvent = Partial<{
+  reason: string | Error
+}>
+
+export interface ChannelEvents<MessageType> {
+  connect: () => void
+  disconnect: (event: DisconnectEvent) => void
+  close: (event: DisconnectEvent) => void
+  message: (msg: MessageType, meta?: MessageMeta) => void
 }
 
-declare class Channel<
+export class Channel<
   ParamsType extends ChannelParamsMap = {},
-  EventsType extends ChannelEvents = ChannelEvents
+  MessageType = Message,
+  EventsType extends ChannelEvents<MessageType> = ChannelEvents<MessageType>
 > {
   static readonly identifier: string
 
   readonly params: ParamsType
-  readonly connected: boolean
-  readonly line: Line
+  readonly identifier: string
+  readonly state: ChannelState
+  readonly id: Identifier
 
   constructor(params?: ParamsType)
 
-  connect(receiver: Receiver): Promise<void>
-  disconnect(): Promise<void>
-  perform(action: string, payload?: Message): Promise<?Message>
-  protected receive(msg: Message, meta?: MessageMeta)
+  connecting(receiver: Receiver): void
+  connected(id: Identifier): void
+  restored(): void
+  disconnected(reason?: string | Error): void
 
-  on<E extends keyof EventsType>(
-    event: E,
-    callback: ChannelEvents[E]
-  ): Unsubscribe
+  disconnect(): Promise<void>
+  close(reason?: string | Error): void
+  perform(
+    action: string,
+    payload?: MessageType
+  ): Promise<?MessageType, ?MessageMeta>
+  receive(msg: MessageType, meta?: MessageMeta)
+
+  on<E extends keyof EventsType>(event: E, callback: EventsType[E]): Unsubscribe
   once<E extends keyof EventsType>(
     event: E,
-    callback: ChannelEvents[E]
+    callback: EventsType[E]
   ): Unsubscribe
   protected emit<K extends keyof EventsType>(
     event: K,
