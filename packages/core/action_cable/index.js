@@ -12,19 +12,21 @@ export class ActionCableProtocol {
     this.pendingSubscriptions = {}
   }
 
-  subscribe(identifier, params) {
+  subscribe(channel, params) {
     if (!params) {
       params = {}
     }
 
-    params.channel = identifier
+    params.channel = channel
 
     return new Promise((resolve, reject) => {
+      let identifier = JSON.stringify(params)
+
       this.pendingSubscriptions[identifier] = { resolve, reject }
 
       this.cable.send({
         command: 'subscribe',
-        identifier: JSON.stringify(params)
+        identifier
       })
     })
   }
@@ -56,7 +58,7 @@ export class ActionCableProtocol {
 
   receive(msg) {
     if (typeof msg !== 'object') {
-      this.logger.error('unsupported message type', { message: msg })
+      this.logger.error('unsupported message format', { message: msg })
       return
     }
 
@@ -101,7 +103,7 @@ export class ActionCableProtocol {
       return { identifier, message }
     }
 
-    this.logger.warn('unknown message', { message: msg })
+    this.logger.warn(`unknown message type: ${type}`, { message: msg })
   }
 
   reset(err) {

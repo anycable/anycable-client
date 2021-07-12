@@ -113,10 +113,17 @@ describe('receiver communicaton', () => {
   })
 
   it('double connecting', async () => {
-    client.subscribed(channel)
+    client.subscribe(channel)
+    client.subscribe(channel)
+
+    client.subscribed()
 
     expect(() => {
       client.subscribe(channel)
+    }).toThrow('Already connected')
+
+    expect(() => {
+      client.subscribed()
     }).toThrow('Already connected')
   })
 
@@ -164,17 +171,28 @@ describe('receiver communicaton', () => {
     )
   })
 
-  it('performs right after connect', done => {
+  it('performs right after connect', () => {
     client.subscribe(channel)
 
-    channel
-      .perform('do', { foo: 'bar' })
-      .then((res: [Message, MessageMeta]) => {
-        expect(res[0]).toMatchObject({ foo: 'bar', action: 'do' })
-        done()
-      })
+    let res = expect(channel.perform('do', { foo: 'bar' })).resolves.toEqual([
+      { foo: 'bar', action: 'do' }
+    ])
 
     client.subscribed()
+
+    return res
+  })
+
+  it('performs before connection failed', () => {
+    client.subscribe(channel)
+
+    let res = expect(channel.perform('do', { foo: 'bar' })).rejects.toEqual({
+      reason: 'connection lost'
+    })
+
+    channel.disconnected('connection lost')
+
+    return res
   })
 
   it('disconnects', async () => {
@@ -196,35 +214,58 @@ describe('receiver communicaton', () => {
     expect(channel.state).toEqual('disconnected')
   })
 
-  it('disconnect while connecting successfully', done => {
+  it('disconnect while connecting successfully', () => {
     client.subscribe(channel)
-    channel.disconnect().then(() => {
+    let res = channel.disconnect().then(() => {
       expect(channel.state).toEqual('disconnected')
-      done()
     })
 
     client.subscribed()
+
+    return res
   })
 
-  it('disconnect while connecting and rejected', done => {
+  it('disconnect while connecting and rejected', () => {
     client.subscribe(channel)
-    channel.disconnect().catch(() => {
+    let res = channel.disconnect().catch(() => {
       expect(channel.state).toEqual('disconnected')
-      done()
     })
 
     client.rejected()
+
+    return res
   })
 
-  it('disconnect right after connect', done => {
+  it('disconnect right after connect', () => {
     client.subscribe(channel)
 
-    channel.disconnect().then(() => {
+    let res = channel.disconnect().then(() => {
       expect(channel.state).toEqual('disconnected')
-      done()
     })
 
     client.subscribed()
+
+    return res
+  })
+
+  it('connect-perform-disconnect', () => {
+    client.subscribe(channel)
+
+    let p1 = channel
+      .perform('do', { foo: 'bar' })
+      .then((res: [Message, MessageMeta]) => {
+        expect(res[0]).toMatchObject({ foo: 'bar', action: 'do' })
+      })
+
+    let p2 = channel.disconnect()
+
+    let res = Promise.all([p1, p2]).then(() => {
+      expect(channel.state).toEqual('disconnected')
+    })
+
+    client.subscribed()
+
+    return res
   })
 })
 
@@ -269,6 +310,37 @@ describe('events', () => {
     channel.disconnected()
 
     expect(calls).toEqual(['ko'])
+  })
+
+  it('does not emit disconnect when disconnected', () => {
+    client.subscribed(channel)
+    channel.disconnected()
+
+    channel.on('disconnect', () => {
+      throw 'should not emit disconnect'
+    })
+
+    channel.disconnected()
+  })
+
+  it('emits close', () => {
+    channel.on('close', () => calls.push('ko'))
+
+    client.subscribed(channel)
+    channel.close('forbidden')
+
+    expect(calls).toEqual(['ko'])
+  })
+
+  it('does not emit close when disconnected', () => {
+    client.subscribed(channel)
+    channel.disconnected()
+
+    channel.on('close', () => {
+      throw 'should not emit close'
+    })
+
+    channel.close()
   })
 
   it('emits message', () => {

@@ -8,6 +8,7 @@ export type Options = Partial<{
 
 export class ActionCableProtocol implements Protocol {
   readonly cable: Consumer
+  readonly logger: Logger
 
   constructor(cable: Consumer, opts?: Options)
 

@@ -14,8 +14,10 @@
   "engines": {
     "node": "^12.0.0 || ^14.0.0 || >=16.0.0"
   },
+  "type": "module",
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/.bin/jest && check-dts",
+    "jest": "node --experimental-vm-modules node_modules/.bin/jest --coverage",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --coverage && check-dts",
     "lint": "eslint . && prettier --check 'packages/**/*.{js,ts}'"
   },
   "homepage": "https://anycable.io/",
@@ -42,7 +44,11 @@
       "global": {
         "statements": 100
       }
-    }
+    },
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      ".*/testing.ts"
+    ]
   },
   "eslintConfig": {
     "extends": "@logux/eslint-config/esm",
@@ -65,8 +71,9 @@
           "@typescript-eslint/explicit-function-return-type": "off",
           "@typescript-eslint/no-unused-vars": "off",
           "jest/no-conditional-expect": "off",
-          "jest/no-done-callback": "off",
-          "import/extensions": "off"
+          "import/extensions": "off",
+          "no-throw-literal": "off",
+          "jest/valid-expect": "off"
         }
       },
       {
