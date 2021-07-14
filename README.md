@@ -27,7 +27,7 @@ TBD
 First, you need to create a _client_ (or _consumer_ as it's called in Action Cable):
 
 ```js
-// anycable.js
+// cable.js
 import { createCable } from 'anycable'
 
 export default createCable()
@@ -68,13 +68,14 @@ export default class ChatChannel extends Channel {
       return this.emit('typing', message)
     }
 
+    // Fallback to the default behaviour
     super.receive(message)
   }
 }
 ```
 
 ```js
-import cable from 'anycable'
+import cable from 'cable'
 import { ChatChannel } from 'channels/chat'
 
 // Build an instance of a ChatChannel class.
@@ -86,7 +87,7 @@ await cable.subscribe(channel)
 // Perform an action
 // NOTE: Action Cable doesn't implement a full-featured RPC with ACK messages,
 // so return value is always undefined
-const _ = await channel.speak('Hello')
+let _ = await channel.speak('Hello')
 
 // Handle incoming messages
 channel.on('message', msg => console.log(`${msg.name}: ${msg.text}`))
@@ -104,8 +105,6 @@ channel.on('disconnect', () => console.log('No chat connection'))
 channel.disconnect()
 ```
 
-_TBD (testing class-based channels with a mock client)_
-
 #### Headless subscriptions
 
 _Headless_ subscriptions are very similar to Action Cable client-side subsriptions except from the fact that no mixins are allowed (you classes in case you need them).
@@ -113,7 +112,7 @@ _Headless_ subscriptions are very similar to Action Cable client-side subsriptio
 Let's rewrite the same example using headless subscriptions:
 
 ```js
-import cable from 'anycable'
+import cable from 'cable'
 
 const subscription = await cable.subscribeTo('ChatChannel', { roomId: '42' })
 
@@ -127,6 +126,68 @@ channel.on('message', msg => {
   }
 })
 ```
+
+### TypeScript support
+
+You can make your channels more strict by adding type constraints for parameters, incoming message types and custom events:
+
+```ts
+// ChatChannel.ts
+import { Channel, ChannelEvents } from 'anycable'
+
+type Params = {
+  roomId: string | number
+}
+
+type TypingMessage = {
+  type: 'typing'
+  username: string
+}
+
+type ChatMessage = {
+  type: 'message'
+  username: string
+  userId: string
+}
+
+type Message = TypingMessage | ChatMessage
+
+interface Events extends ChannelEvents<Message> {
+  typing: (msg: TypingMessage) => void
+}
+
+export class ChatChannel extends Channel<Params,Message,Events> {
+  static identifier = 'ChatChannel'
+
+  receive(message: Message) {
+    if (message.type === 'typing') {
+      return this.emit('typing', message)
+    }
+
+    super.receive(message)
+  }
+}
+```
+
+Now this typings information would help you to provide params or subscribe to events:
+
+```ts
+let channel: ChatChannel
+
+channel = new ChatChannel({roomId: '2021'}) //=> OK
+
+channel = new ChatChannel({room_id: '2021'}) //=> NOT OK: incorrect params key
+channel = new ChatChannel() //=> NOT OK: missing params
+
+channel.on('typing', (msg: TypingMessage) => {}) //=> OK
+
+channel.on('typing', (msg: string) => {}) //=> NOT OK: 'msg' type mismatch
+channel.on('types', (msg: TypingMessage) => {}) //=> NOT OK: unknown event
+```
+
+### Testing
+
+TBD
 
 [anycable]: https://anycable.io
 [protocol]: https://docs.anycable.io/misc/action_cable_protocol
