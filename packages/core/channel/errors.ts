@@ -26,6 +26,9 @@ export class IdChannel extends Channel<{ id: string }> {}
 // THROWS Type 'number' is not assignable
 new IdChannel({ id: 42 })
 
+// THROWS Expected 1 arguments, but got 0
+new IdChannel()
+
 const ch = new Channel()
 
 // THROWS Argument of type
@@ -43,7 +46,7 @@ ch.on('message', (msg: object, meta: object) => {
   meta
 })
 
-// THROWS Argument of type
+// THROWS Argument of type '"data"' is not assignable to parameter of type 'keyof ChannelEvents<Message>'
 ch.on('data', (msg: object) => true)
 
 interface CustomEvents extends ChannelEvents<{ tupe: number }> {

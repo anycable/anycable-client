@@ -44,7 +44,7 @@ export class Channel<
   readonly state: ChannelState
   readonly id: Identifier
 
-  constructor(params?: ParamsType)
+  constructor(...args: {} extends ParamsType ? [undefined?] : [ParamsType])
 
   connecting(receiver: Receiver): void
   connected(id: Identifier): void
