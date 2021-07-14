@@ -24,12 +24,12 @@ type DisconnectEvent = Partial<{
   reason: string | Error
 }>
 
-export interface ChannelEvents<MessageType> {
+export interface ChannelEvents<T> {
   connect: () => void
   disconnect: (event: DisconnectEvent) => void
   restore: () => void
   close: (event: DisconnectEvent) => void
-  message: (msg: MessageType, meta?: MessageMeta) => void
+  message: (msg: T, meta?: MessageMeta) => void
 }
 
 export class Channel<
@@ -53,16 +53,20 @@ export class Channel<
 
   disconnect(): Promise<void>
   close(reason?: string | Error): void
-  perform(action: string, payload?: MessageType): Promise<MessageType | void>
-  receive(msg: MessageType, meta?: MessageMeta)
+  perform(action: string, payload?: object): Promise<Message | void>
+  receive(msg: MessageType, meta?: MessageMeta): void
 
   on<E extends keyof EventsType>(event: E, callback: EventsType[E]): Unsubscribe
   once<E extends keyof EventsType>(
     event: E,
     callback: EventsType[E]
   ): Unsubscribe
-  protected emit<K extends keyof EventsType>(
-    event: K,
-    ...args: Parameters<EventsType[K]>
+
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  protected emit<E extends keyof EventsType>(
+    event: E,
+    ...args: EventsType[E] extends (...сargs: any) => any
+      ? Parameters<EventsType[E]>
+      : never
   ): void
 }

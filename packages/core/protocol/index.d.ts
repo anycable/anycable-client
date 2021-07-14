@@ -18,6 +18,7 @@ export type ProcessedMessage = Partial<{
 export interface Protocol {
   readonly cable: Consumer
 
+  attached(cable: Consumer): void
   subscribe(identifier: string, params?: object): Promise<string>
   unsubscribe(identifier: string): Promise<void>
   perform(

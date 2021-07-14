@@ -2,9 +2,9 @@ import { Protocol, Message, MessageMeta } from '../index.js'
 import { TestConsumer } from './testing'
 
 class P implements Protocol {
-  cable: TestConsumer
+  cable!: TestConsumer
 
-  constructor(cable: TestConsumer) {
+  attached(cable: TestConsumer) {
     this.cable = cable
   }
 

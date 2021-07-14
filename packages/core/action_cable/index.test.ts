@@ -11,11 +11,12 @@ let logger: TestLogger
 beforeEach(() => {
   logger = new TestLogger()
   cable = new TestConsumer()
-  protocol = new ActionCableProtocol(cable, { logger })
+  protocol = new ActionCableProtocol({ logger })
+  protocol.attached(cable)
 })
 
 it('uses NoopLogger by default', () => {
-  let proto = new ActionCableProtocol(cable)
+  let proto = new ActionCableProtocol()
   expect(proto.logger).toBeInstanceOf(NoopLogger)
 })
 

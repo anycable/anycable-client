@@ -3,7 +3,6 @@ import {
   Cable,
   JSONEncoder,
   Message,
-  MessageMeta,
   ProcessedMessage,
   DisconnectedError,
   Protocol,
@@ -16,12 +15,15 @@ import { TestTransport } from '../transport/testing'
 import { TestLogger } from '../logger/testing'
 
 class TestProtocol implements Protocol {
-  readonly cable: Cable
+  cable!: Cable
   counter: number
 
-  constructor(cable: Cable) {
-    this.cable = cable
+  constructor() {
     this.counter = 0
+  }
+
+  attached(cable: Cable) {
+    this.cable = cable
   }
 
   subscribe(identifier: string, params?: object) {
@@ -89,6 +91,7 @@ class TestChannel extends Channel<{ id: string }> {
   static identifier = 'TestChannel'
 }
 
+let protocol: TestProtocol
 let transport: TestTransport
 let logger: TestLogger
 let cable: Cable
@@ -98,8 +101,9 @@ beforeEach(() => {
   logger = new TestLogger()
   transport = new TestTransport()
   encoder = new JSONEncoder()
+  protocol = new TestProtocol()
   cable = new Cable({
-    protocol: TestProtocol,
+    protocol,
     encoder,
     logger,
     transport
@@ -119,7 +123,7 @@ describe('initialize', () => {
     let c = new Cable({
       transport,
       encoder,
-      protocol: TestProtocol
+      protocol
     })
 
     expect(c.logger).toBeInstanceOf(NoopLogger)
@@ -129,7 +133,7 @@ describe('initialize', () => {
     let c = new Cable({
       transport,
       encoder,
-      protocol: TestProtocol,
+      protocol,
       lazy: false
     })
 
@@ -262,7 +266,7 @@ describe('connect/disconnect', () => {
   it('receive is no-op when disconnected', () => {
     expect(cable.state).toEqual('disconnected')
 
-    let spy = jest.spyOn(cable.protocol, 'receive')
+    let spy = jest.spyOn(protocol, 'receive')
 
     transport.receive('{}')
 
@@ -334,7 +338,7 @@ describe('channels', () => {
   })
 
   it('subscribe rejected', () => {
-    jest.spyOn(cable.protocol, 'subscribe').mockImplementation(async () => {
+    jest.spyOn(protocol, 'subscribe').mockImplementation(async () => {
       throw new SubscriptionRejectedError()
     })
 
@@ -348,7 +352,7 @@ describe('channels', () => {
   })
 
   it('subscribe failure', () => {
-    jest.spyOn(cable.protocol, 'subscribe').mockImplementation(async () => {
+    jest.spyOn(protocol, 'subscribe').mockImplementation(async () => {
       throw Error('failed')
     })
 
@@ -413,7 +417,7 @@ describe('channels', () => {
     let identifier = await cable.subscribe(channel)
     expect(cable.hub.size).toEqual(1)
 
-    jest.spyOn(cable.protocol, 'unsubscribe').mockImplementation(async () => {
+    jest.spyOn(protocol, 'unsubscribe').mockImplementation(async () => {
       throw Error('failed')
     })
 
@@ -479,7 +483,7 @@ describe('channels', () => {
     expect(cable.hub.size).toEqual(1)
 
     jest
-      .spyOn(cable.protocol, 'perform')
+      .spyOn(protocol, 'perform')
       .mockImplementation(async (id, action, payload) => {
         expect(id).toEqual(identifier)
         expect(action).toEqual('ping')
@@ -496,7 +500,7 @@ describe('channels', () => {
     let identifier = await cable.subscribe(channel)
     expect(cable.hub.size).toEqual(1)
 
-    jest.spyOn(cable.protocol, 'perform').mockImplementation(async () => {
+    jest.spyOn(protocol, 'perform').mockImplementation(async () => {
       throw Error('failed')
     })
 

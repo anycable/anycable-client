@@ -18,7 +18,7 @@ export interface CableEvents {
 
 export type CableOptions = {
   transport: Transport
-  protocol: typeof Protocol
+  protocol: Protocol
   encoder: Encoder
   logger?: Logger
   lazy?: boolean

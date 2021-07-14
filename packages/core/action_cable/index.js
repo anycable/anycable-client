@@ -5,11 +5,14 @@ import {
 import { NoopLogger } from '../logger/index.js'
 
 export class ActionCableProtocol {
-  constructor(cable, opts = {}) {
+  constructor(opts = {}) {
     let { logger } = opts
     this.logger = logger || new NoopLogger()
-    this.cable = cable
     this.pendingSubscriptions = {}
+  }
+
+  attached(cable) {
+    this.cable = cable
   }
 
   subscribe(channel, params) {

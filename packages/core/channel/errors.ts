@@ -1,4 +1,4 @@
-import { Channel, Message, MessageMeta } from '../index'
+import { Channel, Message, MessageMeta, ChannelEvents } from '../index'
 
 class Cable {
   unsubscribe(id: string): Promise<void> {
@@ -45,3 +45,22 @@ ch.on('message', (msg: object, meta: object) => {
 
 // THROWS Argument of type
 ch.on('data', (msg: object) => true)
+
+interface CustomEvents extends ChannelEvents<{ tupe: number }> {
+  custom: () => void
+}
+
+// THROWS Type 'CustomEvents' does not satisfy the constraint 'ChannelEvents<{ type: string; }>'
+export class TypedChannel extends Channel<{}, { type: string }, CustomEvents> {}
+
+export class AnotherTypedChannel extends Channel<
+  {},
+  { tupe: number },
+  CustomEvents
+> {
+  trigger() {
+    this.emit('custom')
+    // THROWS Argument of type
+    this.emit('kustom')
+  }
+}

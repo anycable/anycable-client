@@ -20,7 +20,9 @@ export class Cable {
     this.transport = transport
     this.encoder = encoder
     this.logger = logger || new NoopLogger()
-    this.protocol = new protocol(this)
+    this.protocol = protocol
+
+    this.protocol.attached(this)
 
     this.hub = new Hub()
 
