@@ -1,15 +1,16 @@
 import { Unsubscribe } from 'nanoevents'
 
-export interface TransportEvents<T> {
+export type TransportEvents<T> = {
   open: () => void
-  close: () => void
+  close: (err?: Error) => void
   data: (payload: T) => void
 }
 
-export interface Transport<PayloadType, OptionsType = {}> {
-  constructor(url: string): void
-  constructor(url: string, params: OptionsType): void
+export interface Env {
+  [index: string]: string
+}
 
+export interface Transport<PayloadType = string> {
   open(): Promise<void>
   send(data: PayloadType): void
   close(): Promise<void>
@@ -24,7 +25,7 @@ export interface Transport<PayloadType, OptionsType = {}> {
     event: E,
     callback: TransportEvents<PayloadType>[E]
   ): Unsubscribe
-  protected emit<K extends keyof TransportEvents<PayloadType>>(
+  emit<K extends keyof TransportEvents<PayloadType>>(
     event: K,
     ...args: Parameters<TransportEvents<PayloadType>[K]>
   ): void

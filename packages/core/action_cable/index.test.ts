@@ -11,7 +11,7 @@ let logger: TestLogger
 beforeEach(() => {
   logger = new TestLogger()
   cable = new TestConsumer()
-  protocol = new ActionCableProtocol(cable, { logger: logger })
+  protocol = new ActionCableProtocol(cable, { logger })
 })
 
 it('uses NoopLogger by default', () => {
@@ -161,9 +161,9 @@ describe('subscriptions', () => {
     let p1 = protocol.subscribe('TestChannel')
     let p2 = protocol.subscribe('TestChannel', { id: 2021 })
 
-    let res = Promise.allSettled([p1, p2]).then(res => {
-      expect(res[0].status).toEqual('rejected')
-      expect(res[1].status).toEqual('rejected')
+    let res = Promise.allSettled([p1, p2]).then(results => {
+      expect(results[0].status).toEqual('rejected')
+      expect(results[1].status).toEqual('rejected')
     })
 
     protocol.reset(Error('Connection lost'))
@@ -210,7 +210,7 @@ describe('receive', () => {
   it('warns on unknown message type', () => {
     protocol.receive({ type: 'custom' })
 
-    expect(logger.warings).toHaveLength(1)
-    expect(logger.warings[0].message).toEqual('unknown message type: custom')
+    expect(logger.warnings).toHaveLength(1)
+    expect(logger.warnings[0].message).toEqual('unknown message type: custom')
   })
 })

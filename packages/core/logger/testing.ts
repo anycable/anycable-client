@@ -1,4 +1,4 @@
-import { BaseLogger } from './index.js'
+import { BaseLogger, LogLevel } from '../index.js'
 
 type LogEntry = {
   level: string
@@ -9,17 +9,17 @@ type LogEntry = {
 export class TestLogger extends BaseLogger {
   logs: LogEntry[]
 
-  constructor() {
-    super()
+  constructor(level?: LogLevel) {
+    super(level)
     this.logs = []
   }
 
   get errors() {
-    return this.logs.filter(log => log.level == 'error')
+    return this.logs.filter(log => log.level === 'error')
   }
 
-  get warings() {
-    return this.logs.filter(log => log.level == 'warn')
+  get warnings() {
+    return this.logs.filter(log => log.level === 'warn')
   }
 
   writeLogEntry(level: string, message: string, details: object) {

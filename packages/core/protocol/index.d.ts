@@ -24,9 +24,9 @@ export interface Protocol {
     identifier: string,
     action: string,
     payload?: object
-  ): Promise<[Message, MessageMeta?] | void>
+  ): Promise<Message | void>
   receive(msg: Message): ProcessedMessage | void
-  recoverableClosure(err: Error): boolean
+  recoverableClosure(err?: Error): boolean
   reset(err: Error): void
 }
 

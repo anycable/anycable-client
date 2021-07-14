@@ -7,7 +7,14 @@
     "skipLibCheck": true,
     "allowJs": true,
     "strict": true,
-    "noEmit": true
+    "noEmit": true,
+    "lib": [
+      "ES2020.Promise"
+    ],
+    "types": [
+      "node",
+      "jest"
+    ]
   },
   "exclude": [
     "**/errors.ts"

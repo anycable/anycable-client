@@ -6,6 +6,8 @@ export class Hub {
 
   add(id, channel) {
     this.registry[id] = channel
+
+    this.flush(id)
   }
 
   remove(id) {
@@ -19,6 +21,10 @@ export class Hub {
     return undefined
   }
 
+  get(id) {
+    return this.registry[id]
+  }
+
   transmit(id, msg, meta) {
     let channel = this.registry[id]
 
@@ -30,7 +36,6 @@ export class Hub {
   }
 
   close() {
-    this.registry = {}
     this.pending.length = 0
   }
 
@@ -40,5 +45,16 @@ export class Hub {
 
   get channels() {
     return Object.values(this.registry)
+  }
+
+  flush(id) {
+    let left = []
+
+    for (let item of this.pending) {
+      if (item[0] === id) this.transmit(item[0], item[1], item[2])
+      else left.push(item)
+    }
+
+    this.pending = left
   }
 }

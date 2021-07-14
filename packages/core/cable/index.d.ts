@@ -12,16 +12,16 @@ type DisconnectEvent = Partial<{
 
 export interface CableEvents {
   connect: () => void
-  disconnect: (event: DisconnectEvent) => void
-  close: (event: DisconnectEvent) => void
+  disconnect: (event?: DisconnectEvent) => void
+  close: (event?: DisconnectEvent) => void
 }
 
 export type CableOptions = {
   transport: Transport
   protocol: typeof Protocol
   encoder: Encoder
-  logger: Logger
-  lazy: boolean
+  logger?: Logger
+  lazy?: boolean
 }
 
 export type CableState = 'disconnected' | 'connecting' | 'connected'
@@ -37,13 +37,14 @@ export class Cable {
 
   constructor(opts: CableOptions)
 
+  connect(): Promise<void>
   subscribe(channel: Channel): Promise<Identifier>
   unsubscribe(id: Identifier): Promise<void>
   perform(
     id: Identifier,
     action: string,
     payload?: object
-  ): Promise<[Message, MessageMeta?] | void>
+  ): Promise<Message | void>
   disconnect(): void
   close(reason?: string | Error): void
 

@@ -57,6 +57,7 @@ export class ActionCableProtocol {
   }
 
   receive(msg) {
+    /* eslint-disable consistent-return */
     if (typeof msg !== 'object') {
       this.logger.error('unsupported message format', { message: msg })
       return

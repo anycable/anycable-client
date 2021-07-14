@@ -47,7 +47,7 @@ class TestReceiver implements Receiver {
     _sid: string,
     action: string,
     payload?: object
-  ): Promise<[Message, MessageMeta?] | void> {
+  ): Promise<Message | void> {
     let data = {}
     if (!payload) {
       data = { action }
@@ -55,7 +55,7 @@ class TestReceiver implements Receiver {
       data = { action, ...payload }
     }
 
-    return Promise.resolve([data])
+    return Promise.resolve(data)
   }
 
   send(msg: Message) {
@@ -119,12 +119,44 @@ describe('receiver communicaton', () => {
     client.subscribed()
 
     expect(() => {
-      client.subscribe(channel)
+      channel.connecting(new TestReceiver())
     }).toThrow('Already connected')
 
     expect(() => {
       client.subscribed()
     }).toThrow('Already connected')
+  })
+
+  it('restored', () => {
+    client.subscribed(channel)
+    channel.connecting(client)
+
+    expect(channel.state).toEqual('connecting')
+
+    let res = channel.perform('restore')
+    channel.restored()
+
+    return expect(res).resolves.toEqual({ action: 'restore' })
+  })
+
+  it('restored when connected', () => {
+    client.subscribed(channel)
+    expect(channel.state).toEqual('connected')
+
+    channel.restored()
+    expect(channel.state).toEqual('connected')
+  })
+
+  it('restored when disconnected', () => {
+    client.subscribed(channel)
+    expect(channel.state).toEqual('connected')
+
+    channel.disconnected()
+    expect(channel.state).toEqual('disconnected')
+
+    expect(() => {
+      channel.restored()
+    }).toThrow('Must be connecting')
   })
 
   it('performs action with payload', async () => {
@@ -174,9 +206,10 @@ describe('receiver communicaton', () => {
   it('performs right after connect', () => {
     client.subscribe(channel)
 
-    let res = expect(channel.perform('do', { foo: 'bar' })).resolves.toEqual([
-      { foo: 'bar', action: 'do' }
-    ])
+    let res = expect(channel.perform('do', { foo: 'bar' })).resolves.toEqual({
+      foo: 'bar',
+      action: 'do'
+    })
 
     client.subscribed()
 
@@ -251,11 +284,9 @@ describe('receiver communicaton', () => {
   it('connect-perform-disconnect', () => {
     client.subscribe(channel)
 
-    let p1 = channel
-      .perform('do', { foo: 'bar' })
-      .then((res: [Message, MessageMeta]) => {
-        expect(res[0]).toMatchObject({ foo: 'bar', action: 'do' })
-      })
+    let p1 = channel.perform('do', { foo: 'bar' }).then(res => {
+      expect(res).toMatchObject({ foo: 'bar', action: 'do' })
+    })
 
     let p2 = channel.disconnect()
 
@@ -330,6 +361,16 @@ describe('events', () => {
     channel.close('forbidden')
 
     expect(calls).toEqual(['ko'])
+  })
+
+  it('emits restore', () => {
+    channel.on('restore', () => calls.push('rrr'))
+
+    client.subscribed(channel)
+    channel.connecting(client)
+    channel.restored()
+
+    expect(calls).toEqual(['rrr'])
   })
 
   it('does not emit close when disconnected', () => {

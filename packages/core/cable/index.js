@@ -1,6 +1,10 @@
 import { createNanoEvents } from 'nanoevents'
 import { Hub } from '../hub/index.js'
-import { DisconnectedError } from '../protocol/index.js'
+import {
+  DisconnectedError,
+  SubscriptionRejectedError
+} from '../protocol/index.js'
+import { NoopLogger } from '../logger/index.js'
 
 export class NoConnectionError extends Error {
   constructor() {
@@ -15,7 +19,7 @@ export class Cable {
     this.emitter = createNanoEvents()
     this.transport = transport
     this.encoder = encoder
-    this.logger = logger
+    this.logger = logger || new NoopLogger()
     this.protocol = new protocol(this)
 
     this.hub = new Hub()
@@ -54,10 +58,9 @@ export class Cable {
   }
 
   connected() {
-    this.logger.debug('connected')
+    this.logger.info('connected')
 
     this[STATE] = 'connected'
-    this.emit('connect')
 
     if (this.recovering) {
       // Make sure channels moved to disconnect state
@@ -70,32 +73,38 @@ export class Cable {
     this.hub.channels.forEach(channel => this.subscribe(channel))
 
     this.recovering = false
+
+    this.emit('connect')
   }
 
   restored() {
     if (!this.recovering) return this.connected()
 
-    this.logger.debug('connection recovered')
+    this.logger.info('connection recovered')
 
     this[STATE] = 'connected'
-    this.emit('connect')
 
     // Transition channels to 'connected' state
     this.hub.channels.forEach(channel => channel.restored())
 
     this.recovering = false
+
+    this.emit('connect')
   }
 
   disconnected(reason) {
     this.logger.debug('server terminated connection', { reason })
 
-    this.handleClose(new DisconnectedError(reason))
+    let err =
+      typeof reason === 'string' ? new DisconnectedError(reason) : reason
+
+    this.handleClose(err)
   }
 
   handleClose(err) {
     if (this.state === 'disconnected') return
 
-    this.logger.debug('connection lost')
+    this.logger.info('disconnected', { reason: err })
 
     this[STATE] = 'disconnected'
 
@@ -103,7 +112,7 @@ export class Cable {
 
     if (this.recovering) {
       // Transition channels to 'connecting' state (so actions are pending the connection)
-      this.hub.channels.forEach(channel => channel.connecting())
+      this.hub.channels.forEach(channel => channel.connecting(this))
     } else {
       // Notify all channels
       this.hub.channels.forEach(channel => channel.disconnected(err))
@@ -113,13 +122,13 @@ export class Cable {
     this.hub.close()
     this.transport.close()
 
-    this.emit('disconnect')
+    this.emit('disconnect', err)
   }
 
   close(reason) {
     if (this.state === 'disconnected') return
 
-    this.logger.debug('terminate connection')
+    this.logger.info('closed', { reason })
 
     this[STATE] = 'disconnected'
 
@@ -128,7 +137,7 @@ export class Cable {
     this.protocol.reset(new DisconnectedError(reason))
     this.transport.close()
 
-    this.emit('close')
+    this.emit('close', { reason })
   }
 
   handleIncoming(raw) {
@@ -170,7 +179,7 @@ export class Cable {
   }
 
   async subscribe(channel) {
-    channel.connecting()
+    channel.connecting(this)
 
     if (this.state === 'connecting') {
       await this.pendingConnect()
@@ -186,14 +195,15 @@ export class Cable {
 
     return this.protocol
       .subscribe(channel.identifier, channel.params)
-      .then(({ identifier }) => {
+      .then(identifier => {
         this.hub.add(identifier, channel)
         channel.connected(identifier)
 
         this.logger.debug('subscribed', { id: identifier, ...channelMeta })
+        return identifier
       })
       .catch(err => {
-        if (err.message === 'Rejected') {
+        if (err && err instanceof SubscriptionRejectedError) {
           this.logger.warn('rejected', channelMeta)
           channel.close('Rejected')
         } else {
@@ -201,13 +211,24 @@ export class Cable {
             error: err,
             ...channelMeta
           })
+          channel.close(err)
         }
+
+        throw err
       })
   }
 
   async unsubscribe(identifier) {
+    let channel = this.hub.get(identifier)
+
+    if (!channel) throw Error(`Channel not found: ${identifier}`)
+
     if (this.state === 'connecting') {
       await this.pendingConnect()
+
+      if (channel.state === 'connecting') {
+        await channel.pendingConnect()
+      }
     }
 
     this.logger.debug('unsubscribing...', { id: identifier })
@@ -220,17 +241,32 @@ export class Cable {
       return
     }
 
-    return this.protocol.unsubscribe(identifier).then(() => {
-      let channel = this.hub.remove(identifier)
-      channel.close()
+    return this.protocol
+      .unsubscribe(identifier)
+      .then(() => {
+        let channel = this.hub.remove(identifier)
+        channel.close()
 
-      this.logger.debug('unsubscribed', { id: identifier })
-    })
+        this.logger.debug('unsubscribed', { id: identifier })
+      })
+      .catch(err => {
+        this.logger.error('unsubscribe failed', { id: identifier })
+
+        throw err
+      })
   }
 
   async perform(identifier, action, payload) {
+    let channel = this.hub.get(identifier)
+
+    if (!channel) throw Error(`Channel not found: ${identifier}`)
+
     if (this.state === 'connecting') {
       await this.pendingConnect()
+
+      if (channel.state === 'connecting') {
+        await channel.pendingConnect()
+      }
     }
 
     if (this.state === 'disconnected') throw new NoConnectionError()
@@ -247,10 +283,8 @@ export class Cable {
       .perform(identifier, action, payload)
       .then(res => {
         if (res) {
-          let [msg, meta] = res
           this.logger.debug('perform result', {
-            message: msg,
-            meta,
+            message: res,
             request: performMeta
           })
         }
@@ -258,13 +292,29 @@ export class Cable {
         return res
       })
       .catch(err => {
-        if (err) {
-          this.logger.error('perform failed', {
-            error: err,
-            request: performMeta
-          })
-        }
+        this.logger.error('perform failed', {
+          error: err,
+          request: performMeta
+        })
+
+        throw err
       })
+  }
+
+  on(event, callback) {
+    return this.emitter.on(event, callback)
+  }
+
+  once(event, callback) {
+    let unbind = this.emitter.on(event, (...args) => {
+      unbind()
+      callback(...args)
+    })
+    return unbind
+  }
+
+  emit(event, ...args) {
+    return this.emitter.emit(event, ...args)
   }
 
   pendingConnect() {

@@ -7,33 +7,33 @@ const LEVEL_TO_NAME = {
 
 export class BaseLogger {
   constructor(level) {
-    this.level = level || 'info'
+    this.level = level || 'warn'
   }
 
-  log(level, ...args) {
+  log(level, msg, details) {
     if (LEVEL_TO_NAME[level] < LEVEL_TO_NAME[this.level]) return
 
-    this.writeLogEntry(level, ...args)
+    this.writeLogEntry(level, msg, details)
   }
 
   writeLogEntry() {
     throw Error('Not implemented')
   }
 
-  debug(...args) {
-    this.log('debug', ...args)
+  debug(msg, details) {
+    this.log('debug', msg, details)
   }
 
-  info(...args) {
-    this.log('info', ...args)
+  info(msg, details) {
+    this.log('info', msg, details)
   }
 
-  warn(...args) {
-    this.log('warn', ...args)
+  warn(msg, details) {
+    this.log('warn', msg, details)
   }
 
-  error(...args) {
-    this.log('error', ...args)
+  error(msg, details) {
+    this.log('error', msg, details)
   }
 }
 

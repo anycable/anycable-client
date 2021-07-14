@@ -21,7 +21,9 @@ export class Channel {
   }
 
   connecting(receiver) {
-    if (this.state === 'connected') throw Error('Already connected')
+    if (this.state === 'connected' && this.receiver !== receiver) {
+      throw Error('Already connected')
+    }
     if (this.state === 'connecting') return
 
     this.receiver = receiver
@@ -35,6 +37,14 @@ export class Channel {
     this[STATE] = 'connected'
 
     this.emit('connect')
+  }
+
+  restored() {
+    if (this.state === 'connected') return
+    if (this.state !== 'connecting') throw Error('Must be connecting')
+
+    this[STATE] = 'connected'
+    this.emit('restore')
   }
 
   disconnected(reason) {
@@ -102,6 +112,12 @@ export class Channel {
 
       unbind.push(
         this.on('connect', () => {
+          unbind.forEach(clbk => clbk())
+          resolve()
+        })
+      )
+      unbind.push(
+        this.on('restore', () => {
           unbind.forEach(clbk => clbk())
           resolve()
         })

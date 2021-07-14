@@ -7,11 +7,11 @@ export {
   Identifier
 } from './channel/index.js'
 export { Transport } from './transport/index.js'
-export { Encoder } from './encoder/index.js'
+export { Encoder, JSONEncoder } from './encoder/index.js'
 export {
   Protocol,
   Consumer,
-  SubscriptionRejected,
+  SubscriptionRejectedError,
   DisconnectedError,
   CommandError,
   ProcessedMessage
