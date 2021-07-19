@@ -1088,9 +1088,10 @@ char-regex@^1.0.2:
   resolved "https://registry.yarnpkg.com/char-regex/-/char-regex-1.0.2.tgz#d744358226217f981ed58f479b1d6bcc29545dcf"
   integrity sha512-kWWXztvZ5SBQV+eRgKFeh8q5sLuZY2+8WUIzlxWVTg+oGwY14qylx1KbKzHd8P6ZYkAg0xyIDU9JMHhyJMZ1jw==
 
-check-dts@palkan/check-dts#fix/compiler-options-lib:
-  version "0.5.3"
-  resolved "https://codeload.github.com/palkan/check-dts/tar.gz/2542e799b0bc2f87dd749ff9578696afdb30d5cb"
+check-dts@^0.5.4:
+  version "0.5.4"
+  resolved "https://registry.yarnpkg.com/check-dts/-/check-dts-0.5.4.tgz#56825c8ebd0939a86e033f636b0e6e5bab6d2694"
+  integrity sha512-PVGX9gw5JG1R/31kElzEF8E67lfC69ee7vW5DvEUItWnyE7lLDa5OrEm4auodeoGRlbaSkT+wVvn589Kgt9SUQ==
   dependencies:
     colorette "^1.2.2"
     globby "^11.0.4"
