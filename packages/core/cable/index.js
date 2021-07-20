@@ -177,7 +177,7 @@ export class Cable {
   }
 
   keepalive(msg) {
-    // TODO: Implement keepalive monitor
+    this.emit('keepalive', msg)
   }
 
   async subscribe(channel) {

@@ -44,3 +44,5 @@ export class DisconnectedError extends Error {
 }
 
 export class CommandError extends Error {}
+
+export class StaleConnectionError extends Error {}

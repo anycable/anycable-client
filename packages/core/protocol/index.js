@@ -20,3 +20,10 @@ export class CommandError extends Error {
     this.name = 'CommandError'
   }
 }
+
+export class StaleConnectionError extends Error {
+  constructor(msg) {
+    super(msg)
+    this.name = 'StaleConnectionError'
+  }
+}

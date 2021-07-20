@@ -3,6 +3,7 @@ import {
   DisconnectedError,
   CommandError
 } from '../index.js'
+import { StaleConnectionError } from './index.js'
 
 describe('subscriptionRejectedError', () => {
   it('without reason', () => {
@@ -39,5 +40,13 @@ describe('commandError', () => {
     let err = new CommandError('failed')
     expect(err.name).toEqual('CommandError')
     expect(err.message).toEqual('failed')
+  })
+})
+
+describe('staleConnnectionError', () => {
+  it('has name', () => {
+    let err = new StaleConnectionError('stale')
+    expect(err.name).toEqual('StaleConnectionError')
+    expect(err.message).toEqual('stale')
   })
 })

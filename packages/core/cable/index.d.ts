@@ -14,6 +14,7 @@ export interface CableEvents {
   connect: () => void
   disconnect: (event?: DisconnectEvent) => void
   close: (event?: DisconnectEvent) => void
+  keepalive: (msg?: Message) => void
 }
 
 export type CableOptions = {

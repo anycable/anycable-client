@@ -14,10 +14,17 @@ export {
   SubscriptionRejectedError,
   DisconnectedError,
   CommandError,
-  ProcessedMessage
+  ProcessedMessage,
+  StaleConnectionError
 } from './protocol/index.js'
 export { Hub } from './hub/index.js'
 export { Logger, LogLevel, BaseLogger, NoopLogger } from './logger/index.js'
 
 export { ActionCableProtocol } from './action_cable/index.js'
-export { CableOptions, Cable, NoConnectionError } from './cable/index.js'
+export {
+  CableOptions,
+  Cable,
+  NoConnectionError,
+  CableEvents
+} from './cable/index.js'
+export { Monitor, Monitorable, MonitorOptions } from './monitor/index.js'

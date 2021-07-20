@@ -633,6 +633,11 @@ it('logs decode errors', () => {
   expect(logger.errors).toHaveLength(1)
 })
 
-it('keepalive', () => {
-  expect(cable.keepalive()).toBeUndefined()
+it('keepalive', done => {
+  cable.on('keepalive', data => {
+    expect(data).toEqual({ epoch: 7 })
+    done()
+  })
+
+  expect(cable.keepalive({ epoch: 7 })).toBeUndefined()
 })
