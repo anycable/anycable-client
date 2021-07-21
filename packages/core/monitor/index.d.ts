@@ -10,6 +10,15 @@ export interface MonitorOptions {
   reconnectStrategy?: ReconnectStrategy
 }
 
+export const backoffWithJitter: (
+  interval: number,
+  opts?: Partial<{
+    backoffRate: number
+    jitterRatio: number
+    maxInterval: number
+  }>
+) => ReconnectStrategy
+
 export interface Monitorable {
   connect(): void
   close(): void

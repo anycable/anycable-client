@@ -3,10 +3,32 @@ import { StaleConnectionError } from '../protocol/index.js'
 const defaults = {
   maxMissingPings: 2,
   maxReconnectAttempts: Infinity
-  // TODO: strategy
 }
 
 const now = () => Date.now()
+
+export const backoffWithJitter = (
+  interval,
+  { backoffRate, jitterRatio, maxInterval }
+) => {
+  backoffRate ||= 2
+  if (jitterRatio === undefined) jitterRatio = 0.5
+
+  return attempts => {
+    let left = interval * backoffRate ** attempts
+    let right = left * backoffRate
+
+    let delay = left + (right - left) * Math.random()
+
+    let deviation = 2 * (Math.random() - 0.5) * jitterRatio
+
+    delay = delay * (1 + deviation)
+
+    if (maxInterval && maxInterval < delay) delay = maxInterval
+
+    return delay
+  }
+}
 
 export class Monitor {
   constructor(target, { pingInterval, ...opts }) {
@@ -22,6 +44,10 @@ export class Monitor {
     this.maxMissingPings = opts.maxMissingPings
     this.maxReconnectAttempts = opts.maxReconnectAttempts
     this.strategy = opts.reconnectStrategy
+
+    if (!this.strategy) {
+      throw Error('Reconnect strategy must be provided')
+    }
 
     this.state = 'pending_connect'
     this.attempts = 0

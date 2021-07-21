@@ -27,4 +27,9 @@ export {
   NoConnectionError,
   CableEvents
 } from './cable/index.js'
-export { Monitor, Monitorable, MonitorOptions } from './monitor/index.js'
+export {
+  Monitor,
+  Monitorable,
+  MonitorOptions,
+  backoffWithJitter
+} from './monitor/index.js'

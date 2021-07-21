@@ -5,7 +5,8 @@ import {
   Monitor,
   Monitorable,
   CableEvents,
-  StaleConnectionError
+  StaleConnectionError,
+  backoffWithJitter
 } from '../index.js'
 
 class TestCable implements Monitorable {
@@ -53,6 +54,12 @@ it('requries pingInterval', () => {
   )
 })
 
+it('requries reconnectStrategy', () => {
+  expect(() => new Monitor(cable, { pingInterval: 1 })).toThrow(
+    /reconnect strategy must be provided/i
+  )
+})
+
 it('open - stale - disconnect - connect', () => {
   expect(monitor.state).toEqual('pending_connect')
 
@@ -87,7 +94,11 @@ it('open - stale - disconnect - connect', () => {
 
 it('open - stale - with custom maxMissingPings', () => {
   monitor.dispose()
-  monitor = new Monitor(cable, { pingInterval: 2000, maxMissingPings: 3 })
+  monitor = new Monitor(cable, {
+    pingInterval: 2000,
+    maxMissingPings: 3,
+    reconnectStrategy: strategy
+  })
 
   cable.emitter.emit('connect')
   expect(monitor.state).toEqual('connected')
@@ -238,5 +249,43 @@ describe('reconnectNow', () => {
     jest.advanceTimersByTime(INTERVAL * 4)
 
     expect(() => monitor.reconnectNow()).toThrow(/disconnected/i)
+  })
+})
+
+describe('backoffWithJitter', () => {
+  it('works', () => {
+    let backoff = backoffWithJitter(3, { jitterRatio: 0 })
+
+    // x \in [3, 6]
+    let delay = backoff(0)
+
+    expect(delay).toBeGreaterThanOrEqual(3.0)
+    expect(delay).toBeLessThanOrEqual(6.0)
+
+    // x \in [6, 12]
+    delay = backoff(1)
+
+    expect(delay).toBeGreaterThanOrEqual(6.0)
+    expect(delay).toBeLessThanOrEqual(12.0)
+
+    backoff = backoffWithJitter(2, { backoffRate: 3 })
+
+    // x \in [3 * 3 * 0.5 = 4.5, 3 * 3 * 3 * 1.5 = 40.5]
+    delay = backoff(1)
+
+    expect(delay).toBeGreaterThanOrEqual(4.5)
+    expect(delay).toBeLessThanOrEqual(40.5)
+  })
+
+  it('recognizes maxInterval', () => {
+    let backoff = backoffWithJitter(3, {
+      jitterRatio: 0,
+      backoffRate: 2,
+      maxInterval: 10
+    })
+
+    let delay = backoff(3)
+
+    expect(delay).toEqual(10)
   })
 })
