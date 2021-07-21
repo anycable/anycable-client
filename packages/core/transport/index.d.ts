@@ -3,6 +3,7 @@ import { Unsubscribe } from 'nanoevents'
 export type TransportEvents<T> = {
   open: () => void
   close: (err?: Error) => void
+  error: (err: Error) => void
   data: (payload: T) => void
 }
 
@@ -25,8 +26,4 @@ export interface Transport<PayloadType = string> {
     event: E,
     callback: TransportEvents<PayloadType>[E]
   ): Unsubscribe
-  emit<K extends keyof TransportEvents<PayloadType>>(
-    event: K,
-    ...args: Parameters<TransportEvents<PayloadType>[K]>
-  ): void
 }

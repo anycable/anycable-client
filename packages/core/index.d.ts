@@ -33,3 +33,4 @@ export {
   MonitorOptions,
   backoffWithJitter
 } from './monitor/index.js'
+export { WebSocketTransport, WebSocketOpts } from './websocket/index.js'
