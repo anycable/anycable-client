@@ -111,8 +111,8 @@ beforeEach(() => {
 })
 
 describe('initialize', () => {
-  it('is disconnected', () => {
-    expect(cable.state).toEqual('disconnected')
+  it('is idle', () => {
+    expect(cable.state).toEqual('idle')
   })
 
   it('uses passed logger', () => {
@@ -158,7 +158,7 @@ describe('connect/disconnect', () => {
   })
 
   it('double connect', () => {
-    expect(cable.state).toEqual('disconnected')
+    expect(cable.state).toEqual('idle')
 
     let res = Promise.allSettled([cable.connect(), cable.connect()]).then(
       results => {
@@ -263,8 +263,8 @@ describe('connect/disconnect', () => {
     expect(transport.opened).toBeFalsy()
   })
 
-  it('receive is no-op when disconnected', () => {
-    expect(cable.state).toEqual('disconnected')
+  it('receive is no-op when idle', () => {
+    expect(cable.state).toEqual('idle')
 
     let spy = jest.spyOn(protocol, 'receive')
 
@@ -302,6 +302,26 @@ describe('channels', () => {
         })
       )
     })
+  })
+
+  it('subscribe when idle', () => {
+    cable = new Cable({
+      protocol,
+      encoder,
+      logger,
+      transport
+    })
+
+    expect(cable.state).toEqual('idle')
+
+    let res = cable.subscribe(channel).then(() => {
+      expect(channel.state).toEqual('connected')
+      expect(cable.state).toEqual('connected')
+    })
+
+    cable.connected()
+
+    return res
   })
 
   it('subscribe when disconnected', () => {

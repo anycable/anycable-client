@@ -16,14 +16,13 @@ export class ActionCableProtocol {
   }
 
   subscribe(channel, params) {
-    if (!params) {
-      params = {}
+    let subscriptionPayload = { channel }
+    if (params) {
+      Object.assign(subscriptionPayload, params)
     }
 
-    params.channel = channel
-
     return new Promise((resolve, reject) => {
-      let identifier = JSON.stringify(params)
+      let identifier = JSON.stringify(subscriptionPayload)
 
       this.pendingSubscriptions[identifier] = { resolve, reject }
 
@@ -53,7 +52,7 @@ export class ActionCableProtocol {
     this.cable.send({
       command: 'message',
       identifier,
-      data: payload
+      data: JSON.stringify(payload)
     })
 
     return Promise.resolve()

@@ -1,6 +1,7 @@
 import { Unsubscribe } from 'nanoevents'
 
 import { CableEvents } from '../cable/index.js'
+import { Logger } from '../logger/index.js'
 
 export type ReconnectStrategy = (attempts: number) => number
 export interface MonitorOptions {
@@ -8,6 +9,7 @@ export interface MonitorOptions {
   maxMissingPings?: number
   maxReconnectAttempts?: number
   reconnectStrategy?: ReconnectStrategy
+  logger?: Logger
 }
 
 export const backoffWithJitter: (

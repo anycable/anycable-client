@@ -3,10 +3,11 @@ import {
   WebSocketTransport,
   JSONEncoder,
   Cable,
-  Monitor
+  backoffWithJitter
 } from '@anycable/core'
 
 import { Logger } from './logger/index.js'
+import { Monitor } from './monitor/index.js'
 
 export { Channel } from '@anycable/core'
 
@@ -16,18 +17,20 @@ const defaultUrl = '/cable'
 
 /* eslint-disable consistent-return */
 const fromMeta = key => {
-  metaPrefixes.forEach(prefix => {
-    let element = document.head.querySelector(`meta[name='${prefix}-${key}']`)
+  if (typeof document !== 'undefined' && document.head) {
+    metaPrefixes.forEach(prefix => {
+      let element = document.head.querySelector(`meta[name='${prefix}-${key}']`)
 
-    if (element) {
-      return element.getAttribute('content')
-    }
-  })
+      if (element) {
+        return element.getAttribute('content')
+      }
+    })
+  }
 }
 
 const defaultOpts = {
   protocol: 'actioncable-v1-json',
-  pingInterval: 3,
+  pingInterval: 3000,
   maxReconnectAttempts: Infinity,
   maxMissingPings: 2,
   logLevel: 'warn',
@@ -84,11 +87,14 @@ export function createCable(url, opts) {
     lazy
   })
 
-  new Monitor(cable, {
+  reconnectStrategy ||= backoffWithJitter(pingInterval)
+
+  cable.monitor = new Monitor(cable, {
     pingInterval,
     reconnectStrategy,
     maxMissingPings,
-    maxReconnectAttempts
+    maxReconnectAttempts,
+    logger
   })
 
   return cable

@@ -1,4 +1,5 @@
 import { StaleConnectionError } from '../protocol/index.js'
+import { NoopLogger } from '../logger/index.js'
 
 const defaults = {
   maxMissingPings: 2,
@@ -7,10 +8,9 @@ const defaults = {
 
 const now = () => Date.now()
 
-export const backoffWithJitter = (
-  interval,
-  { backoffRate, jitterRatio, maxInterval }
-) => {
+export const backoffWithJitter = (interval, opts) => {
+  opts ||= {}
+  let { backoffRate, jitterRatio, maxInterval } = opts
   backoffRate ||= 2
   if (jitterRatio === undefined) jitterRatio = 0.5
 
@@ -41,13 +41,14 @@ export class Monitor {
 
     opts = Object.assign({}, defaults, opts)
 
-    this.maxMissingPings = opts.maxMissingPings
-    this.maxReconnectAttempts = opts.maxReconnectAttempts
     this.strategy = opts.reconnectStrategy
-
     if (!this.strategy) {
       throw Error('Reconnect strategy must be provided')
     }
+
+    this.maxMissingPings = opts.maxMissingPings
+    this.maxReconnectAttempts = opts.maxReconnectAttempts
+    this.logger = opts.logger || new NoopLogger()
 
     this.state = 'pending_connect'
     this.attempts = 0
@@ -57,15 +58,16 @@ export class Monitor {
   }
 
   reconnectNow() {
-    if (this.state === 'disconnected' || this.state === 'pending_disconnect') {
-      throw Error('Monitor has been disconnected')
+    if (this.state === 'connected' || this.state === 'pending_connect') {
+      return false
     }
-    if (this.state === 'connected' || this.state === 'pending_connect') return
 
     this.cancelReconnect()
 
     this.state = 'pending_connect'
     this.target.connect()
+
+    return true
   }
 
   initListeners() {
@@ -146,6 +148,7 @@ export class Monitor {
     let diff = now() - this.pingedAt
 
     if (diff > this.maxMissingPings * this.pingInterval) {
+      this.logger.warn(`Stale connection: ${diff}ms without pings`)
       this.state = 'pending_disconnect'
       this.target.disconnected(new StaleConnectionError())
     }
@@ -160,6 +163,8 @@ export class Monitor {
     let delay = this.strategy(this.attempts)
 
     this.attempts++
+
+    this.logger.info(`Reconnecting in ${delay}ms (${this.attempts} attempt)`)
 
     this.state = 'pending_reconnect'
 

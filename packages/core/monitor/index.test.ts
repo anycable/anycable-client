@@ -248,7 +248,14 @@ describe('reconnectNow', () => {
     // Switch to pending_disconnect state due to stale check
     jest.advanceTimersByTime(INTERVAL * 4)
 
-    expect(() => monitor.reconnectNow()).toThrow(/disconnected/i)
+    expect(monitor.reconnectNow()).toBe(true)
+    expect(monitor.state).toEqual('pending_connect')
+  })
+
+  it('when connected', () => {
+    cable.emitter.emit('connect')
+
+    expect(monitor.reconnectNow()).toBe(false)
   })
 })
 

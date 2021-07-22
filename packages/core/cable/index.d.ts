@@ -5,6 +5,7 @@ import { Protocol } from '../protocol/index.js'
 import { Hub } from '../hub/index.js'
 import { Encoder } from '../encoder/index.js'
 import { Logger } from '../logger/index.js'
+import { Monitor } from '../monitor/index.js'
 
 type DisconnectEvent = Partial<{
   reason: string | Error
@@ -25,7 +26,7 @@ export type CableOptions = {
   lazy?: boolean
 }
 
-export type CableState = 'disconnected' | 'connecting' | 'connected'
+export type CableState = 'idle' | 'disconnected' | 'connecting' | 'connected'
 
 export class Cable {
   transport: Transport
@@ -33,6 +34,7 @@ export class Cable {
   protocol: Protocol
   encoder: Encoder
   logger: Logger
+  monitor?: Monitor
 
   readonly state: CableState
 

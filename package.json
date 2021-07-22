@@ -65,6 +65,19 @@
       },
       {
         "files": [
+          "**/examples/*.js"
+        ],
+        "parser": "@babel/eslint-parser",
+        "parserOptions": {
+          "requireConfigFile": false,
+          "sourceType": "module",
+          "babelOptions": {
+            "plugins": ["@babel/plugin-syntax-top-level-await"]
+          }
+        }
+      },
+      {
+        "files": [
           "**/*.test.ts",
           "**/types.ts",
           "**/testing.ts"
@@ -97,6 +110,7 @@
   "devDependencies": {
     "@babel/core": "^7.14.6",
     "@babel/eslint-parser": "^7.14.7",
+    "@babel/plugin-syntax-top-level-await": "^7.14.5",
     "@logux/eslint-config": "^45.4.6",
     "@types/jest": "^26.0.23",
     "@types/node": "^15.14.1",

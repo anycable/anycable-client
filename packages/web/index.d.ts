@@ -9,6 +9,9 @@ import {
 
 export { Channel } from '@anycable/core'
 
+export { Monitor } from './monitor/index.js'
+export { Logger } from './logger/index.js'
+
 export type ProtocolID =
   | 'actioncable-v1-json'
   | 'actioncable-v1-msgpack'

@@ -95,9 +95,9 @@ describe('subscriptions', () => {
 
   it('subscribes successfully with params', () => {
     identifier = JSON.stringify({
+      channel: 'TestChannel',
       id: 2021,
-      foo: 'bar',
-      channel: 'TestChannel'
+      foo: 'bar'
     })
 
     let res = expect(
@@ -143,7 +143,7 @@ describe('subscriptions', () => {
     expect(cable.mailbox[0]).toMatchObject({
       command: 'message',
       identifier: 'test_id',
-      data: { action: 'do' }
+      data: JSON.stringify({ action: 'do' })
     })
   })
 
@@ -154,7 +154,7 @@ describe('subscriptions', () => {
     expect(cable.mailbox[0]).toMatchObject({
       command: 'message',
       identifier: 'test_id',
-      data: { action: 'do', foo: 'bar' }
+      data: JSON.stringify({ foo: 'bar', action: 'do' })
     })
   })
 

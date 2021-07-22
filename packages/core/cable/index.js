@@ -26,7 +26,7 @@ export class Cable {
 
     this.hub = new Hub()
 
-    this[STATE] = 'disconnected'
+    this[STATE] = 'idle'
 
     this.handleClose = this.handleClose.bind(this)
     this.handleIncoming = this.handleIncoming.bind(this)
@@ -95,7 +95,7 @@ export class Cable {
   }
 
   disconnected(reason) {
-    this.logger.debug('server terminated connection', { reason })
+    this.logger.debug('closing connection', { reason })
 
     let err =
       typeof reason === 'string' ? new DisconnectedError(reason) : reason
@@ -104,7 +104,7 @@ export class Cable {
   }
 
   handleClose(err) {
-    if (this.state === 'disconnected') return
+    if (this.state === 'disconnected' || this.state === 'idle') return
 
     this.logger.info('disconnected', { reason: err })
 
@@ -128,7 +128,7 @@ export class Cable {
   }
 
   close(reason) {
-    if (this.state === 'disconnected') return
+    if (this.state === 'disconnected' || this.state === 'idle') return
 
     this.logger.info('closed', { reason })
 
@@ -143,7 +143,7 @@ export class Cable {
   }
 
   handleIncoming(raw) {
-    if (this.state === 'disconnected') return
+    if (this.state === 'disconnected' || this.state === 'idle') return
 
     let data = this.encoder.decode(raw)
 
@@ -152,10 +152,12 @@ export class Cable {
       return
     }
 
+    this.logger.debug('incoming data', data)
+
     let processed = this.protocol.receive(data)
 
     if (processed) {
-      this.logger.debug('incoming message', processed)
+      this.logger.debug('processed incoming message', processed)
 
       let { identifier, message, meta } = processed
 
@@ -186,6 +188,9 @@ export class Cable {
     if (this.state === 'connecting') {
       await this.pendingConnect()
     }
+    if (this.state === 'idle') {
+      await this.connect()
+    }
     if (this.state === 'disconnected') throw new NoConnectionError()
 
     let channelMeta = {
@@ -193,7 +198,7 @@ export class Cable {
       params: channel.params
     }
 
-    this.logger.debug('subscribing...', channelMeta)
+    this.logger.debug('subscribing', channelMeta)
 
     return this.protocol
       .subscribe(channel.identifier, channel.params)
