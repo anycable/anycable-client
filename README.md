@@ -1,3 +1,4 @@
+[![npm version](https://badge.fury.io/js/%40anycable%2Fcore.svg)](https://badge.fury.io/js/%40anycable%2Fcore)
 [![Test](https://github.com/anycable/anycable-client/workflows/Test/badge.svg)](https://github.com/anycable/anycable-client/actions)
 
 # AnyCable JavaScript Client
@@ -21,11 +22,11 @@ There are multiple reasons that forced us to implement an alternative client lib
 ### Install
 
 ```sh
-npm install anycable
+npm install @anycable/web
 
 # or
 
-yarn add anycable
+yarn add @anycable/web
 ```
 
 ### Initialization
@@ -34,7 +35,7 @@ First, you need to create a _client_ (or _consumer_ as it's called in Action Cab
 
 ```js
 // cable.js
-import { createCable } from 'anycable'
+import { createCable } from '@anycable/web'
 
 export default createCable()
 ```
@@ -57,7 +58,7 @@ You can add additional API methods, dispatch custom events, etc.
 Let's consider an example:
 
 ```js
-import { Channel } from 'anycable'
+import { Channel } from '@anycable/web'
 
 // channels/chat.js
 export default class ChatChannel extends Channel {
@@ -113,6 +114,8 @@ channel.disconnect()
 
 #### Headless subscriptions
 
+_⏳ Coming soon_
+
 _Headless_ subscriptions are very similar to Action Cable client-side subsriptions except from the fact that no mixins are allowed (you classes in case you need them).
 
 Let's rewrite the same example using headless subscriptions:
@@ -139,7 +142,7 @@ You can make your channels more strict by adding type constraints for parameters
 
 ```ts
 // ChatChannel.ts
-import { Channel, ChannelEvents } from 'anycable'
+import { Channel, ChannelEvents } from '@anycable/web'
 
 type Params = {
   roomId: string | number
@@ -191,9 +194,35 @@ channel.on('typing', (msg: string) => {}) //=> NOT OK: 'msg' type mismatch
 channel.on('types', (msg: TypingMessage) => {}) //=> NOT OK: unknown event
 ```
 
+### Supported protocols
+
+_⏳ Coming soon_
+
+By default, when you call `createCable()` we use the `actioncable-v1-json` protocol (supported by Action Cable).
+
+You can also use Msgpack and Protobuf protocols supported by [AnyCable Pro][pro]:
+
+```js
+// cable.js
+import { createCable, MsgpackEncoder } from '@anycable/web'
+
+export default createCable({protocol: 'actioncable-v1-msgpack', encoder: new MsgpackEncoder()})
+
+// or for protobuf
+import { createCable, ProtobufEncoder } from '@anycable/web'
+
+export default createCable({protocol: 'actioncable-v1-protobuf', encoder: new ProtobufEncoder()})
+```
+
 ### Testing
 
 TBD
+
+### Babel/Browserlist configuration
+
+This library uses ECMAScript 6 features (such as native classes), and thus, is not compatible with ES5 (for example, IE11 is not supported out-of-the-box).
+
+You should either configure Babel to transform the lib's source code or do not compile into ES5 (that could be done by specifying the following Browserlist query: `["defaults", "not IE 11"]`).
 
 [anycable]: https://anycable.io
 [protocol]: https://docs.anycable.io/misc/action_cable_protocol

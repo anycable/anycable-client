@@ -4,7 +4,7 @@ const STATE = Symbol('state')
 
 export class Channel {
   // Unique channel identifier
-  static identifier = ''
+  // static identifier = ''
 
   constructor(params = {}) {
     this.emitter = createNanoEvents()

@@ -22,11 +22,13 @@ export interface CreateOptions {
   logger: Logger
   logLevel: LogLevel
 
-  monitor: Monitor
+  monitor: Monitor | false
   pingInterval: number
 
   lazy: boolean
 }
+
+export const DEFAULT_OPTIONS: Partial<CreateOptions>
 
 export function createCable(url: string, opts?: Partial<CreateOptions>): Cable
 export function createCable(opts?: Partial<CreateOptions>): Cable

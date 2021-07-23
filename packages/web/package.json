@@ -1,6 +1,6 @@
 {
-  "name": "anycable",
-  "version": "0.0.1",
+  "name": "@anycable/web",
+  "version": "0.0.2",
   "description": "AnyCable JavaScript client for web",
   "keywords": [
     "anycable",
@@ -16,7 +16,11 @@
   "main": "index.js",
   "type": "module",
   "types": "./index.d.ts",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
   "dependencies": {
-    "@anycable/core": "^0.0.1"
+    "@anycable/core": "^0.0.2"
   }
 }

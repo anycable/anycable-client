@@ -1,6 +1,6 @@
 {
   "name": "@anycable/core",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "AnyCable JavaScript client library core functionality",
   "keywords": [
     "anycable",
@@ -15,6 +15,10 @@
   "main": "index.js",
   "type": "module",
   "types": "./index.d.ts",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
   "dependencies": {
     "nanoevents": "^6.0.0"
   }

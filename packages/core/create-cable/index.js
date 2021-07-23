@@ -5,7 +5,7 @@ import { NoopLogger } from '../logger/index.js'
 import { WebSocketTransport } from '../websocket/index.js'
 import { Monitor, backoffWithJitter } from '../monitor/index.js'
 
-export const DEFAULTS = {
+export const DEFAULT_OPTIONS = {
   protocol: 'actioncable-v1-json',
   pingInterval: 3000,
   maxReconnectAttempts: Infinity,
@@ -24,7 +24,7 @@ export function createCable(url, opts) {
 
   if (!url && !opts.transport) throw Error('URL or transport must be specified')
 
-  opts = Object.assign({}, DEFAULTS, opts)
+  opts = Object.assign({}, DEFAULT_OPTIONS, opts)
 
   let {
     protocol,
@@ -60,13 +60,15 @@ export function createCable(url, opts) {
 
   reconnectStrategy ||= backoffWithJitter(pingInterval)
 
-  monitor ||= new Monitor({
-    pingInterval,
-    reconnectStrategy,
-    maxMissingPings,
-    maxReconnectAttempts,
-    logger
-  })
+  if (monitor !== false) {
+    monitor ||= new Monitor({
+      pingInterval,
+      reconnectStrategy,
+      maxMissingPings,
+      maxReconnectAttempts,
+      logger
+    })
+  }
 
   let cable = new Cable({
     protocol,
@@ -76,7 +78,10 @@ export function createCable(url, opts) {
     lazy
   })
 
-  monitor.watch(cable)
+  if (monitor) {
+    monitor.watch(cable)
+    cable.monitor = monitor
+  }
 
   return cable
 }

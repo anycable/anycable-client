@@ -35,6 +35,9 @@
   "jest": {
     "preset": "ts-jest/presets/default-esm",
     "testEnvironment": "jsdom",
+    "testEnvironmentOptions": {
+      "url": "http://anycable.test/demo"
+    },
     "globals": {
       "ts-jest": {
         "useESM": true
@@ -47,7 +50,8 @@
     },
     "coveragePathIgnorePatterns": [
       "/node_modules/",
-      ".*/testing.ts"
+      ".*/testing.ts",
+      "packages/web"
     ]
   },
   "eslintConfig": {
@@ -72,7 +76,9 @@
           "requireConfigFile": false,
           "sourceType": "module",
           "babelOptions": {
-            "plugins": ["@babel/plugin-syntax-top-level-await"]
+            "plugins": [
+              "@babel/plugin-syntax-top-level-await"
+            ]
           }
         }
       },
@@ -113,6 +119,7 @@
     "@babel/plugin-syntax-top-level-await": "^7.14.5",
     "@logux/eslint-config": "^45.4.6",
     "@types/jest": "^26.0.23",
+    "@types/jsdom": "^16.2.13",
     "@types/node": "^15.14.1",
     "@types/ws": "^7.4.7",
     "@typescript-eslint/eslint-plugin": "^4.28.1",

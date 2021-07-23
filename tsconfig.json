@@ -8,7 +8,8 @@
     "strict": true,
     "noEmit": true,
     "lib": [
-      "ES2020.Promise"
+      "ES2020.Promise",
+      "DOM"
     ],
     "types": [
       "node",

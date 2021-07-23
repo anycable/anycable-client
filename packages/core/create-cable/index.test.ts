@@ -32,3 +32,9 @@ it('unsupported protocol', () => {
     createCable('ws://example', { protocol: 'actioncable-v1-msgpack' })
   ).toThrow(/protocol is not supported/i)
 })
+
+it('with monitor=false', () => {
+  let cable = createCable('ws://example', { monitor: false })
+
+  expect(cable.monitor).toBeUndefined()
+})
