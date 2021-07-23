@@ -9,9 +9,9 @@ const defaults = {
 const now = () => Date.now()
 
 export const backoffWithJitter = (interval, opts) => {
-  opts ||= {}
+  opts = opts || {}
   let { backoffRate, jitterRatio, maxInterval } = opts
-  backoffRate ||= 2
+  backoffRate = backoffRate || 2
   if (jitterRatio === undefined) jitterRatio = 0.5
 
   return attempts => {

@@ -38,8 +38,8 @@ export function createCable(url, opts) {
     url = undefined
   }
 
-  url ||= generateUrlFromDOM('url')
-  opts ||= {}
+  url = url || generateUrlFromDOM('url')
+  opts = opts || {}
 
   opts = Object.assign({}, DEFAULTS, opts)
 
@@ -52,17 +52,20 @@ export function createCable(url, opts) {
     maxReconnectAttempts
   } = opts
 
-  logger = opts.logger ||= new Logger(logLevel)
-  reconnectStrategy = opts.reconnectStrategy ||= backoffWithJitter(pingInterval)
+  logger = opts.logger = opts.logger || new Logger(logLevel)
+  reconnectStrategy = opts.reconnectStrategy =
+    opts.reconnectStrategy || backoffWithJitter(pingInterval)
 
   if (opts.monitor !== false) {
-    opts.monitor ||= new Monitor({
-      pingInterval,
-      reconnectStrategy,
-      maxMissingPings,
-      maxReconnectAttempts,
-      logger
-    })
+    opts.monitor =
+      opts.monitor ||
+      new Monitor({
+        pingInterval,
+        reconnectStrategy,
+        maxMissingPings,
+        maxReconnectAttempts,
+        logger
+      })
   }
 
   return coreCreateCable(url, opts)

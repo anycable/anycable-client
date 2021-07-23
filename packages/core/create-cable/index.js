@@ -20,7 +20,7 @@ export function createCable(url, opts) {
     url = undefined
   }
 
-  opts ||= {}
+  opts = opts || {}
 
   if (!url && !opts.transport) throw Error('URL or transport must be specified')
 
@@ -49,25 +49,29 @@ export function createCable(url, opts) {
     throw Error(`Protocol is not supported yet: ${protocol}`)
   }
 
-  transport ||= new WebSocketTransport(url, {
-    websocketImplementation,
-    subprotocol
-  })
+  transport =
+    transport ||
+    new WebSocketTransport(url, {
+      websocketImplementation,
+      subprotocol
+    })
 
-  encoder ||= new JSONEncoder()
+  encoder = encoder || new JSONEncoder()
 
-  logger ||= new NoopLogger(logLevel)
+  logger = logger || new NoopLogger(logLevel)
 
-  reconnectStrategy ||= backoffWithJitter(pingInterval)
+  reconnectStrategy = reconnectStrategy || backoffWithJitter(pingInterval)
 
   if (monitor !== false) {
-    monitor ||= new Monitor({
-      pingInterval,
-      reconnectStrategy,
-      maxMissingPings,
-      maxReconnectAttempts,
-      logger
-    })
+    monitor =
+      monitor ||
+      new Monitor({
+        pingInterval,
+        reconnectStrategy,
+        maxMissingPings,
+        maxReconnectAttempts,
+        logger
+      })
   }
 
   let cable = new Cable({
