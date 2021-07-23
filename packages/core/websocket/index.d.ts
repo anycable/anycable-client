@@ -18,6 +18,7 @@ export class WebSocketTransport<
 > implements Transport<DataType>
 {
   readonly ws?: WS
+  readonly url: string
   readonly connected: boolean
   constructor(url: string, opts?: WebSocketOpts)
 

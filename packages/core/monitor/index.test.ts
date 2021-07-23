@@ -37,10 +37,11 @@ const INTERVAL = 3000
 
 beforeEach(() => {
   cable = new TestCable()
-  monitor = new Monitor(cable, {
+  monitor = new Monitor({
     pingInterval: INTERVAL,
     reconnectStrategy: strategy
   })
+  monitor.watch(cable)
   jest.useFakeTimers()
 })
 
@@ -49,13 +50,13 @@ afterEach(() => {
 })
 
 it('requries pingInterval', () => {
-  expect(() => new Monitor(cable, { pingInterval: 0 })).toThrow(
+  expect(() => new Monitor({ pingInterval: 0 })).toThrow(
     /incorrect pinginterval/i
   )
 })
 
 it('requries reconnectStrategy', () => {
-  expect(() => new Monitor(cable, { pingInterval: 1 })).toThrow(
+  expect(() => new Monitor({ pingInterval: 1 })).toThrow(
     /reconnect strategy must be provided/i
   )
 })
@@ -94,11 +95,12 @@ it('open - stale - disconnect - connect', () => {
 
 it('open - stale - with custom maxMissingPings', () => {
   monitor.dispose()
-  monitor = new Monitor(cable, {
+  monitor = new Monitor({
     pingInterval: 2000,
     maxMissingPings: 3,
     reconnectStrategy: strategy
   })
+  monitor.watch(cable)
 
   cable.emitter.emit('connect')
   expect(monitor.state).toEqual('connected')
@@ -145,11 +147,12 @@ it('open - keepalive - keepalive', () => {
 
 it('open - stale - reconnect failed', () => {
   monitor.dispose()
-  monitor = new Monitor(cable, {
+  monitor = new Monitor({
     pingInterval: 1000,
     maxReconnectAttempts: 2,
     reconnectStrategy: strategy
   })
+  monitor.watch(cable)
 
   cable.emitter.emit('connect')
   expect(monitor.state).toEqual('connected')
@@ -176,11 +179,12 @@ it('open - stale - reconnect failed', () => {
 
 it('open - disconnect - reconnect failed - reconnect success', () => {
   monitor.dispose()
-  monitor = new Monitor(cable, {
+  monitor = new Monitor({
     pingInterval: 1000,
     maxReconnectAttempts: 2,
     reconnectStrategy: strategy
   })
+  monitor.watch(cable)
 
   cable.emitter.emit('connect')
   expect(monitor.state).toEqual('connected')

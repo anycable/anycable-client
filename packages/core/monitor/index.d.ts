@@ -40,9 +40,10 @@ export class Monitor {
     | 'pending_reconnect'
     | 'disconnected'
 
-  readonly target: Monitorable
+  readonly target?: Monitorable
 
-  constructor(target: Monitorable, opts: MonitorOptions)
+  constructor(opts: MonitorOptions)
+  watch(target: Monitorable): void
   reconnectNow(): boolean
   dispose(): void
 }

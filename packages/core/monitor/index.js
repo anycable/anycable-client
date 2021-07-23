@@ -31,8 +31,7 @@ export const backoffWithJitter = (interval, opts) => {
 }
 
 export class Monitor {
-  constructor(target, { pingInterval, ...opts }) {
-    this.target = target
+  constructor({ pingInterval, ...opts }) {
     this.pingInterval = pingInterval
 
     if (!this.pingInterval) {
@@ -53,7 +52,10 @@ export class Monitor {
     this.state = 'pending_connect'
     this.attempts = 0
     this.disconnectedAt = now()
+  }
 
+  watch(target) {
+    this.target = target
     this.initListeners()
   }
 

@@ -1,12 +1,23 @@
+/*
+Use this example to communicate with the BenchmarkChannel from the terminal.
+
+BenchmarkChannel MUST implement `#echo` action.
+Existing implementations: `anyt --only-rails`, gobench (from anycable-go), websocket-shootout
+
+NOTE: Run with modules support enabled:
+
+  node --experimental-vm-modules examples/benchmark_channel.js
+*/
 import WebSocket from 'ws'
 import { exit } from 'process'
+import { createCable, Channel } from '@anycable/core'
 
-import { createCable, Channel } from '../packages/web/index.js'
 import { Logger } from '../packages/web/logger/index.js'
 
 let logger = new Logger('debug')
+let url = process.env.URL || 'ws://localhost:8080/cable'
 
-let cable = createCable('ws://localhost:8080/cable', {
+let cable = createCable(url, {
   websocketImplementation: WebSocket,
   logger
 })

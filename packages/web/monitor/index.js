@@ -1,8 +1,8 @@
 import { Monitor as BaseMonitor } from '@anycable/core'
 
 export class Monitor extends BaseMonitor {
-  constructor(cable, opts) {
-    super(cable, opts)
+  constructor(opts) {
+    super(opts)
 
     this.initActivityListeners()
   }

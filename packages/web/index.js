@@ -1,10 +1,8 @@
 import {
-  ActionCableProtocol,
-  WebSocketTransport,
-  JSONEncoder,
-  Cable,
+  createCable as coreCreateCable,
   backoffWithJitter
 } from '@anycable/core'
+import { DEFAULTS } from '@anycable/core/create-cable/index.js'
 
 import { Logger } from './logger/index.js'
 import { Monitor } from './monitor/index.js'
@@ -28,15 +26,6 @@ const fromMeta = key => {
   }
 }
 
-const defaultOpts = {
-  protocol: 'actioncable-v1-json',
-  pingInterval: 3000,
-  maxReconnectAttempts: Infinity,
-  maxMissingPings: 2,
-  logLevel: 'warn',
-  lazy: true
-}
-
 export function createCable(url, opts) {
   if (typeof url === 'object' && typeof opts === 'undefined') {
     opts = url
@@ -46,50 +35,21 @@ export function createCable(url, opts) {
   url ||= fromMeta('url') || defaultUrl
   opts ||= {}
 
-  opts = Object.assign({}, defaultOpts, opts)
+  opts = Object.assign({}, DEFAULTS, opts)
 
   let {
-    protocol,
-    websocketImplementation,
     logLevel,
     logger,
-    transport,
-    encoder,
-    lazy,
     pingInterval,
     reconnectStrategy,
     maxMissingPings,
     maxReconnectAttempts
   } = opts
 
-  let subprotocol = protocol
+  logger = opts.logger ||= new Logger(logLevel)
+  reconnectStrategy = opts.reconnectStrategy ||= backoffWithJitter(pingInterval)
 
-  if (protocol === 'actioncable-v1-json') {
-    protocol = new ActionCableProtocol()
-  } else {
-    throw Error(`Protocol is not supported yet: ${protocol}`)
-  }
-
-  transport ||= new WebSocketTransport(url, {
-    websocketImplementation,
-    subprotocol
-  })
-
-  encoder ||= new JSONEncoder()
-
-  logger ||= new Logger(logLevel)
-
-  let cable = new Cable({
-    protocol,
-    transport,
-    encoder,
-    logger,
-    lazy
-  })
-
-  reconnectStrategy ||= backoffWithJitter(pingInterval)
-
-  cable.monitor = new Monitor(cable, {
+  opts.monitor = new Monitor({
     pingInterval,
     reconnectStrategy,
     maxMissingPings,
@@ -97,5 +57,5 @@ export function createCable(url, opts) {
     logger
   })
 
-  return cable
+  return coreCreateCable(url, opts)
 }

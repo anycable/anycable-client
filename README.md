@@ -16,11 +16,17 @@ There are multiple reasons that forced us to implement an alternative client lib
 - Revisited client-side APIs.
 - Future protocol extensions/modifications support.
 
-## Installation
+## Usage: Web
 
-TBD
+### Install
 
-## Usage
+```sh
+npm install anycable
+
+# or
+
+yarn add anycable
+```
 
 ### Initialization
 
