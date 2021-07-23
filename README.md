@@ -19,6 +19,8 @@ There are multiple reasons that forced us to implement an alternative client lib
 
 ## Usage: Web
 
+> See the [demo application](https://github.com/anycable/anycable_rails_demo/pull/21) using AnyCable web client
+
 ### Install
 
 ```sh
