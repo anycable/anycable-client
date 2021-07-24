@@ -33,6 +33,12 @@ it('unsupported protocol', () => {
   ).toThrow(/protocol is not supported/i)
 })
 
+it('missing protocol', () => {
+  expect(() => createCable('ws://example', { protocol: undefined })).toThrow(
+    /protocol must be specified/i
+  )
+})
+
 it('with monitor=false', () => {
   let cable = createCable('ws://example', { monitor: false })
 

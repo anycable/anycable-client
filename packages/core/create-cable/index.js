@@ -7,6 +7,7 @@ import { Monitor, backoffWithJitter } from '../monitor/index.js'
 
 export const DEFAULT_OPTIONS = {
   protocol: 'actioncable-v1-json',
+  websocketFormat: 'text',
   pingInterval: 3000,
   maxReconnectAttempts: Infinity,
   maxMissingPings: 2,
@@ -29,6 +30,7 @@ export function createCable(url, opts) {
   let {
     protocol,
     websocketImplementation,
+    websocketFormat,
     logLevel,
     logger,
     transport,
@@ -38,22 +40,26 @@ export function createCable(url, opts) {
     pingInterval,
     reconnectStrategy,
     maxMissingPings,
-    maxReconnectAttempts
+    maxReconnectAttempts,
+    subprotocol
   } = opts
 
-  let subprotocol = protocol
+  if (typeof protocol === 'string') subprotocol = subprotocol || protocol
 
   if (protocol === 'actioncable-v1-json') {
     protocol = new ActionCableProtocol()
-  } else {
+  } else if (typeof protocol === 'string') {
     throw Error(`Protocol is not supported yet: ${protocol}`)
   }
+
+  if (!protocol) throw Error('Protocol must be specified')
 
   transport =
     transport ||
     new WebSocketTransport(url, {
       websocketImplementation,
-      subprotocol
+      subprotocol,
+      format: websocketFormat
     })
 
   encoder = encoder || new JSONEncoder()
