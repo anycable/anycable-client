@@ -16,7 +16,8 @@
   },
   "type": "module",
   "scripts": {
-    "test": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage && check-dts",
+    "test:dev": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "test": "yarn test:dev --coverage && check-dts",
     "lint": "eslint . && prettier --check 'packages/**/*.{js,ts}'"
   },
   "homepage": "https://anycable.io/",
