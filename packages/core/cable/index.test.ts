@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals'
+
 import {
   Cable,
   JSONEncoder,
@@ -28,10 +29,9 @@ class TestProtocol implements Protocol {
 
   subscribe(identifier: string, params?: object) {
     return new Promise<string>((resolve, reject) => {
-      return setTimeout(
-        () => resolve(JSON.stringify({ identifier, ...params })),
-        0
-      )
+      return setTimeout(() => {
+        resolve(JSON.stringify({ identifier, ...params }))
+      }, 0)
     })
   }
 
@@ -48,6 +48,7 @@ class TestProtocol implements Protocol {
     return Promise.resolve()
   }
 
+  /* eslint-disable consistent-return */
   receive(msg: Message): ProcessedMessage | void {
     this.counter++
 
@@ -63,8 +64,6 @@ class TestProtocol implements Protocol {
 
     if (typeof msg === 'object') {
       let data = msg as { identifier: string; payload: object }
-
-      if (!data) return
 
       let { identifier, payload } = data
 
@@ -82,6 +81,7 @@ class TestProtocol implements Protocol {
     return err.message === 'recover_me'
   }
 
+  /* eslint-disable node/handle-callback-err */
   reset(err: Error): void {
     this.counter = 0
   }
@@ -138,16 +138,17 @@ describe('initialize', () => {
     })
 
     expect(c.state).toEqual('connecting')
-    expect(transport.opened).toBeTruthy()
+    expect(transport.opened).toBe(true)
   })
 })
 
+/* eslint-disable jest/no-done-callback */
 describe('connect/disconnect', () => {
   it('connect', () => {
     cable.connect()
 
     expect(cable.state).toEqual('connecting')
-    expect(transport.opened).toBeTruthy()
+    expect(transport.opened).toBe(true)
   })
 
   it('connected', done => {
@@ -157,22 +158,19 @@ describe('connect/disconnect', () => {
     expect(cable.state).toEqual('connected')
   })
 
-  it('double connect', () => {
+  it('double connect', async () => {
     expect(cable.state).toEqual('idle')
 
-    let res = Promise.allSettled([cable.connect(), cable.connect()]).then(
-      results => {
-        expect(results[0].status).toEqual('fulfilled')
-        expect(results[1].status).toEqual('fulfilled')
-
-        expect(cable.state).toEqual('connected')
-        expect(transport.opened).toBeTruthy()
-      }
-    )
+    let p1 = cable.connect()
+    let p2 = cable.connect()
 
     cable.connected()
 
-    return res
+    await p1
+    await p2
+
+    expect(cable.state).toEqual('connected')
+    expect(transport.opened).toBe(true)
   })
 
   it('connect when connected', async () => {
@@ -211,7 +209,7 @@ describe('connect/disconnect', () => {
     cable.close('test')
 
     expect(cable.state).toEqual('disconnected')
-    expect(transport.opened).toBeFalsy()
+    expect(transport.opened).toBe(false)
 
     cable.close('test2')
   })
@@ -228,7 +226,7 @@ describe('connect/disconnect', () => {
     cable.disconnected('test2')
 
     expect(cable.state).toEqual('disconnected')
-    expect(transport.opened).toBeFalsy()
+    expect(transport.opened).toBe(false)
   })
 
   it('handles transport close', done => {
@@ -249,7 +247,7 @@ describe('connect/disconnect', () => {
     transport.receive(JSON.stringify('disconnect'))
 
     expect(cable.state).toEqual('disconnected')
-    expect(transport.opened).toBeFalsy()
+    expect(transport.opened).toBe(false)
   })
 
   it('handles server initiated close', done => {
@@ -260,7 +258,7 @@ describe('connect/disconnect', () => {
     transport.receive(JSON.stringify('close'))
 
     expect(cable.state).toEqual('disconnected')
-    expect(transport.opened).toBeFalsy()
+    expect(transport.opened).toBe(false)
   })
 
   it('receive is no-op when idle', () => {
@@ -409,7 +407,9 @@ describe('channels', () => {
       return res.then(() => {
         // Make sure there is no race conditions between unsubscribe and subscribe during reconnect
         return new Promise<void>((resolve, reject) => {
-          channel.once('connect', () => reject('Channel reconnected'))
+          channel.once('connect', () => {
+            reject(Error('Channel reconnected'))
+          })
           setTimeout(resolve, 200)
         })
       })
@@ -629,7 +629,7 @@ it('logs encode errors', () => {
   jest
     .spyOn(encoder, 'encode')
     .mockImplementation((msg: object): string | undefined => {
-      return
+      return undefined
     })
 
   expect(logger.errors).toHaveLength(0)
@@ -642,7 +642,7 @@ it('logs decode errors', () => {
   jest
     .spyOn(encoder, 'decode')
     .mockImplementation((msg: string): object | undefined => {
-      return
+      return undefined
     })
 
   cable.connected()
@@ -659,5 +659,5 @@ it('keepalive', done => {
     done()
   })
 
-  expect(cable.keepalive({ epoch: 7 })).toBeUndefined()
+  cable.keepalive({ epoch: 7 })
 })

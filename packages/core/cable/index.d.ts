@@ -1,5 +1,6 @@
 import { Unsubscribe } from 'nanoevents'
-import { Channel, Message, MessageMeta, Identifier } from '../channel/index.js'
+
+import { Channel, Message, Identifier } from '../channel/index.js'
 import { Transport } from '../transport/index.js'
 import { Protocol } from '../protocol/index.js'
 import { Hub } from '../hub/index.js'

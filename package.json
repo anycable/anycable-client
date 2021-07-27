@@ -109,9 +109,7 @@
     ]
   },
   "eslintIgnore": [
-    "**/errors.ts",
-    "**/cable/*.js",
-    "**/cable/*.ts"
+    "**/errors.ts"
   ],
   "devDependencies": {
     "@babel/core": "^7.14.6",

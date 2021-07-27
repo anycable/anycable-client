@@ -1,4 +1,5 @@
 import { createNanoEvents } from 'nanoevents'
+
 import { Hub } from '../hub/index.js'
 import {
   DisconnectedError,
@@ -9,6 +10,7 @@ import { NoopLogger } from '../logger/index.js'
 export class NoConnectionError extends Error {
   constructor() {
     super('No connection')
+    this.name = 'NoConnectionError'
   }
 }
 
@@ -80,7 +82,10 @@ export class Cable {
   }
 
   restored() {
-    if (!this.recovering) return this.connected()
+    if (!this.recovering) {
+      this.connected()
+      return
+    }
 
     this.logger.info('connection recovered')
 
@@ -147,7 +152,7 @@ export class Cable {
 
     let data = this.encoder.decode(raw)
 
-    if (data === void 0) {
+    if (data === undefined) {
       this.logger.error('failed to decode message', { message: raw })
       return
     }
@@ -168,7 +173,7 @@ export class Cable {
   send(msg) {
     let data = this.encoder.encode(msg)
 
-    if (data === void 0) {
+    if (data === undefined) {
       this.logger.error('failed to encode message', { message: msg })
       return
     }
@@ -241,18 +246,18 @@ export class Cable {
     this.logger.debug('unsubscribing...', { id: identifier })
 
     if (this.state === 'disconnected') {
-      let channel = this.hub.remove(identifier)
-      channel.close()
+      let instance = this.hub.remove(identifier)
+      instance.close()
 
       this.logger.debug('unsubscribed', { id: identifier })
-      return
+      return Promise.resolve()
     }
 
     return this.protocol
       .unsubscribe(identifier)
       .then(() => {
-        let channel = this.hub.remove(identifier)
-        channel.close()
+        let instance = this.hub.remove(identifier)
+        instance.close()
 
         this.logger.debug('unsubscribed', { id: identifier })
       })
@@ -280,8 +285,8 @@ export class Cable {
 
     let performMeta = {
       id: identifier,
-      action: action,
-      payload: payload
+      action,
+      payload
     }
 
     this.logger.debug('perform', performMeta)
