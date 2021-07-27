@@ -54,7 +54,7 @@ AnyCable client provide multiple ways to subscribe to channels: class-based subs
 
 #### Class-based subscriptions
 
-Class-based APIs allows provides an abstraction layer to hide implementaion details of subscriptions.
+Class-based APIs allows provides an abstraction layer to hide implementation details of subscriptions.
 You can add additional API methods, dispatch custom events, etc.
 
 Let's consider an example:
@@ -118,7 +118,7 @@ channel.disconnect()
 
 _⏳ Coming soon_
 
-_Headless_ subscriptions are very similar to Action Cable client-side subsriptions except from the fact that no mixins are allowed (you classes in case you need them).
+_Headless_ subscriptions are very similar to Action Cable client-side subscriptions except from the fact that no mixins are allowed (you classes in case you need them).
 
 Let's rewrite the same example using headless subscriptions:
 
