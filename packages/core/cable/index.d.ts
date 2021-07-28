@@ -1,6 +1,11 @@
 import { Unsubscribe } from 'nanoevents'
 
-import { Channel, Message, Identifier } from '../channel/index.js'
+import {
+  Channel,
+  Message,
+  Identifier,
+  ChannelParamsMap
+} from '../channel/index.js'
 import { Transport } from '../transport/index.js'
 import { Protocol } from '../protocol/index.js'
 import { Hub } from '../hub/index.js'
@@ -29,6 +34,8 @@ export type CableOptions = {
 
 export type CableState = 'idle' | 'disconnected' | 'connecting' | 'connected'
 
+export class GhostChannel extends Channel {}
+
 export class Cable {
   transport: Transport
   hub: Hub
@@ -51,6 +58,8 @@ export class Cable {
   ): Promise<Message | void>
   disconnect(): void
   close(reason?: string | Error): void
+
+  subscribeTo(channel: string, params?: ChannelParamsMap): Promise<GhostChannel>
 
   connected(): void
   restored(): void

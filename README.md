@@ -116,8 +116,6 @@ channel.disconnect()
 
 #### Headless subscriptions
 
-_⏳ Coming soon_
-
 _Headless_ subscriptions are very similar to Action Cable client-side subscriptions except from the fact that no mixins are allowed (you classes in case you need them).
 
 Let's rewrite the same example using headless subscriptions:

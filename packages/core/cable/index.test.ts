@@ -3,14 +3,14 @@ import { jest } from '@jest/globals'
 import {
   Cable,
   JSONEncoder,
-  Message,
   ProcessedMessage,
   DisconnectedError,
   Protocol,
   NoopLogger,
   Channel,
   Encoder,
-  SubscriptionRejectedError
+  SubscriptionRejectedError,
+  Message
 } from '../index.js'
 import { TestTransport } from '../transport/testing'
 import { TestLogger } from '../logger/testing'
@@ -660,4 +660,35 @@ it('keepalive', done => {
   })
 
   cable.keepalive({ epoch: 7 })
+})
+
+describe('subscribeTo', () => {
+  beforeEach(() => {
+    cable.connect()
+    cable.connected()
+  })
+
+  it('subscribes', async () => {
+    let channel = await cable.subscribeTo('some_channel', { id: '2020' })
+
+    expect(cable.hub.size).toEqual(1)
+    expect(channel.state).toEqual('connected')
+
+    let message = { foo: 'bar' }
+
+    let p = new Promise<Message>(resolve => channel.on('message', resolve))
+
+    let identifier = JSON.stringify({ identifier: 'some_channel', id: '2020' })
+
+    transport.receive(
+      JSON.stringify({
+        identifier,
+        payload: message
+      })
+    )
+
+    let received = await p
+
+    expect(received).toEqual(message)
+  })
 })

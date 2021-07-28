@@ -6,11 +6,27 @@ import {
   SubscriptionRejectedError
 } from '../protocol/index.js'
 import { NoopLogger } from '../logger/index.js'
+import { Channel } from '../channel/index.js'
 
 export class NoConnectionError extends Error {
   constructor() {
     super('No connection')
     this.name = 'NoConnectionError'
+  }
+}
+
+export class GhostChannel extends Channel {
+  constructor(identifier, params) {
+    super(params)
+    this.identifier = identifier
+  }
+
+  set identifier(val) {
+    this._identifier = val
+  }
+
+  get identifier() {
+    return this._identifier
   }
 }
 
@@ -356,5 +372,11 @@ export class Cable {
     })
 
     return this._pendingConnect
+  }
+
+  subscribeTo(channelName, params) {
+    let channel = new GhostChannel(channelName, params)
+
+    return this.subscribe(channel).then(() => channel)
   }
 }
