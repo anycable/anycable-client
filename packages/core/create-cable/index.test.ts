@@ -1,5 +1,4 @@
 import { jest } from '@jest/globals'
-import exp from 'constants'
 
 import {
   createCable,
@@ -36,7 +35,7 @@ it('defaults', () => {
 
 it('unsupported protocol', () => {
   expect(() =>
-    createCable('ws://example', { protocol: 'actioncable-v1-msgpack' })
+    createCable('ws://example', { protocol: 'actioncable-v1-protobuf' })
   ).toThrow(/protocol is not supported/i)
 })
 
@@ -44,6 +43,12 @@ it('missing protocol', () => {
   expect(() => createCable('ws://example', { protocol: undefined })).toThrow(
     /protocol must be specified/i
   )
+})
+
+it('missing encoder when required', () => {
+  expect(() =>
+    createCable('ws://example', { protocol: 'actioncable-v1-msgpack' })
+  ).toThrow(/encoder must be specified/i)
 })
 
 it('with monitor=false', () => {

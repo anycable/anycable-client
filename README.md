@@ -220,12 +220,14 @@ You can also use Msgpack and Protobuf protocols supported by [AnyCable Pro][pro]
 
 ```js
 // cable.js
-import { createCable, MsgpackEncoder } from '@anycable/web'
+import { createCable } from '@anycable/web'
+import { MsgpackEncoder } from '@anycable/msgpack-encoder'
 
 export default createCable({protocol: 'actioncable-v1-msgpack', encoder: new MsgpackEncoder()})
 
 // or for protobuf
-import { createCable, ProtobufEncoder } from '@anycable/web'
+import { createCable } from '@anycable/web'
+import {ProtobufEncoder } from '@anycable/protobuf-encoder'
 
 export default createCable({protocol: 'actioncable-v1-protobuf', encoder: new ProtobufEncoder()})
 ```

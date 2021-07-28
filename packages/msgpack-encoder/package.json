@@ -1,0 +1,25 @@
+{
+  "name": "@anycable/msgpack-encoder",
+  "version": "0.0.4",
+  "description": "Msgpack encoder for AnyCable client",
+  "keywords": [
+    "anycable",
+    "msgpack"
+  ],
+  "homepage": "https://anycable.io/",
+  "repository": "https://github.com/anycable/anycable-client",
+  "author": "Vladimir Dementyev",
+  "license": "MIT",
+  "sideEffects": false,
+  "main": "index.js",
+  "type": "module",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@anycable/core": "^0.0.4",
+    "@ygoe/msgpack": "^1.0.0"
+  }
+}

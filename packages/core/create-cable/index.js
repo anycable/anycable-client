@@ -49,6 +49,16 @@ export function createCable(url, opts) {
 
   if (protocol === 'actioncable-v1-json') {
     protocol = new ActionCableProtocol()
+    encoder = encoder || new JSONEncoder()
+    websocketFormat = websocketFormat || 'text'
+  } else if (protocol === 'actioncable-v1-msgpack') {
+    protocol = new ActionCableProtocol()
+    websocketFormat = websocketFormat || 'binary'
+    if (!encoder) {
+      throw Error(
+        'Msgpack encoder must be specified explicitly. Use `@anycable/msgpack-encoder` package or build your own'
+      )
+    }
   } else if (typeof protocol === 'string') {
     throw Error(`Protocol is not supported yet: ${protocol}`)
   }
@@ -62,8 +72,6 @@ export function createCable(url, opts) {
       subprotocol,
       format: websocketFormat
     })
-
-  encoder = encoder || new JSONEncoder()
 
   logger = logger || new NoopLogger(logLevel)
 
