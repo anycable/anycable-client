@@ -1,6 +1,6 @@
 {
   "name": "@anycable/msgpack-encoder",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Msgpack encoder for AnyCable client",
   "keywords": [
     "anycable",
@@ -19,7 +19,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@anycable/core": "^0.0.4",
+    "@anycable/core": "^0.0.5",
     "@ygoe/msgpack": "^1.0.0"
   }
 }

@@ -227,14 +227,14 @@ export default createCable({protocol: 'actioncable-v1-msgpack', encoder: new Msg
 
 // or for protobuf
 import { createCable } from '@anycable/web'
-import {ProtobufEncoder } from '@anycable/protobuf-encoder'
+import { ProtobufEncoder } from '@anycable/protobuf-encoder'
 
 export default createCable({protocol: 'actioncable-v1-protobuf', encoder: new ProtobufEncoder()})
 ```
 
 ### Testing
 
-TBD
+_⏳ Coming soon_
 
 ### Babel/Browserlist configuration
 
