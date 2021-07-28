@@ -242,6 +242,36 @@ This library uses ECMAScript 6 features (such as native classes), and thus, is n
 
 You should either configure Babel to transform the lib's source code or do not compile into ES5 (that could be done by specifying the following Browserlist query: `["defaults", "not IE 11"]`).
 
+## Usage: Node.js
+
+Currently, we do not provide a dedicated Node.js package. You can use `@anycable/core` with Node.js:
+
+```js
+// WebSocket implementation compatible with the web WebSocket API is required
+import WebSocket from 'ws'
+import { createCable } from '@anycable/core'
+
+// NOTE: Passing url is required
+let cable = createCable(url, {
+  websocketImplementation: WebSocket
+})
+```
+
+**IMPORTANT:** We use ES modules, hence setting `NODE_OPTIONS='--experimental-vm-modules'` is currently required.
+
+See also `examples/benchmark_channel.js`.
+
+## Usage: React Native
+
+Currently, we do not provide a dedicated React Native package. You can use `@anycable/core` just like with Node.js:
+
+```js
+import { createCable } from '@anycable/core'
+
+// NOTE: Passing url is required
+let cable = createCable(url)
+```
+
 [anycable]: https://anycable.io
 [protocol]: https://docs.anycable.io/misc/action_cable_protocol
 [pro]: https://anycable.io/#pro
