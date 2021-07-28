@@ -12,4 +12,10 @@ export { ActionCableProtocol } from './action_cable/index.js'
 export { Cable, NoConnectionError } from './cable/index.js'
 export { Monitor, backoffWithJitter } from './monitor/index.js'
 export { WebSocketTransport } from './websocket/index.js'
-export { createCable, DEFAULT_OPTIONS } from './create-cable/index.js'
+export {
+  createCable,
+  DEFAULT_OPTIONS,
+  createConsumer,
+  ActionCableConsumer,
+  ActionCableSubscriptions
+} from './create-cable/index.js'

@@ -37,5 +37,9 @@ export { WebSocketTransport, WebSocketOpts } from './websocket/index.js'
 export {
   CreateOptions,
   createCable,
-  DEFAULT_OPTIONS
+  DEFAULT_OPTIONS,
+  createConsumer,
+  ActionCableConsumer,
+  ActionCableMixin,
+  ActionCableSubscriptions
 } from './create-cable/index.js'

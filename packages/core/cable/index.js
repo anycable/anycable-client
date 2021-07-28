@@ -233,7 +233,7 @@ export class Cable {
       .catch(err => {
         if (err && err instanceof SubscriptionRejectedError) {
           this.logger.warn('rejected', channelMeta)
-          channel.close('Rejected')
+          channel.close(err)
         } else {
           this.logger.error('failed to subscribe', {
             error: err,

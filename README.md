@@ -136,6 +136,22 @@ channel.on('message', msg => {
 })
 ```
 
+#### Action Cable compatibility mode
+
+We provide an Action Cable compatible APIs for smoother migrations.
+
+All you need is to change the imports:
+
+```diff
+- import { createConsumer } from "@rails/actioncable";
++ import { createConsumer } from "@anycable/web";
+
+ // createConsumer accepts all the options available to createCable
+ export default createConsumer();
+```
+
+Then you can use `consumer.subscriptions.create` as before (under the hood a headless channel would be create).
+
 ### TypeScript support
 
 You can make your channels more strict by adding type constraints for parameters, incoming message types and custom events:
