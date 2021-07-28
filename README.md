@@ -212,11 +212,9 @@ channel.on('types', (msg: TypingMessage) => {}) //=> NOT OK: unknown event
 
 ### Supported protocols
 
-_⏳ Coming soon_
-
 By default, when you call `createCable()` we use the `actioncable-v1-json` protocol (supported by Action Cable).
 
-You can also use Msgpack and Protobuf protocols supported by [AnyCable Pro][pro]:
+You can also use Msgpack and Protobuf (_soon_) protocols supported by [AnyCable Pro][pro]:
 
 ```js
 // cable.js
@@ -231,6 +229,8 @@ import { ProtobufEncoder } from '@anycable/protobuf-encoder'
 
 export default createCable({protocol: 'actioncable-v1-protobuf', encoder: new ProtobufEncoder()})
 ```
+
+**NOTE:** You MUST install the corresponding encoder package yourself, e.g., `yarn add @anycable/msgpack-encoder`.
 
 ### Testing
 
