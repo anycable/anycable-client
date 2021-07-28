@@ -1,7 +1,8 @@
 import {
   createCable as coreCreateCable,
   backoffWithJitter,
-  DEFAULT_OPTIONS as DEFAULTS
+  DEFAULT_OPTIONS as DEFAULTS,
+  ActionCableConsumer
 } from '@anycable/core'
 
 import { Logger } from './logger/index.js'
@@ -69,4 +70,10 @@ export function createCable(url, opts) {
   }
 
   return coreCreateCable(url, opts)
+}
+
+export function createConsumer(url, opts) {
+  let cable = createCable(url, opts)
+
+  return new ActionCableConsumer(cable)
 }
