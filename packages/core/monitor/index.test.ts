@@ -16,7 +16,7 @@ class TestCable implements Monitorable {
     this.emitter = createNanoEvents()
   }
 
-  connect() {}
+  async connect() {}
   disconnected(err: string | Error) {} // eslint-disable-line
   close() {}
 

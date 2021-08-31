@@ -67,7 +67,7 @@ export class Monitor {
     this.cancelReconnect()
 
     this.state = 'pending_connect'
-    this.target.connect()
+    this.target.connect().catch(err => {})
 
     return true
   }
