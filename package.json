@@ -51,7 +51,8 @@
     "coveragePathIgnorePatterns": [
       "/node_modules/",
       ".*/testing.ts",
-      "packages/web"
+      "packages/web",
+      "packages/protobuf-encoder/generated"
     ]
   },
   "eslintConfig": {
@@ -110,7 +111,8 @@
     ]
   },
   "eslintIgnore": [
-    "**/errors.ts"
+    "**/errors.ts",
+    "packages/protobuf-encoder/*"
   ],
   "devDependencies": {
     "@babel/core": "^7.14.6",

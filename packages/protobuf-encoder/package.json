@@ -1,0 +1,25 @@
+{
+  "name": "@anycable/protobuf-encoder",
+  "version": "0.0.1",
+  "description": "Protobuf encoder for AnyCable client",
+  "keywords": [
+    "anycable",
+    "protobuf"
+  ],
+  "homepage": "https://anycable.io/",
+  "repository": "https://github.com/anycable/anycable-client",
+  "author": "Timur Ramazanov",
+  "license": "MIT",
+  "sideEffects": false,
+  "main": "index.js",
+  "type": "module",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "protobufjs": "^6.11.2",
+    "@ygoe/msgpack": "^1.0.0"
+  }
+}

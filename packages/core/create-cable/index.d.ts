@@ -20,7 +20,7 @@ export interface CreateOptions {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   websocketImplementation: any
 
-  encoder: Encoder
+  encoder: Encoder<object, string | Uint8Array>
 
   logger: Logger
   logLevel: LogLevel

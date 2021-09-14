@@ -2,14 +2,14 @@ import { createNanoEvents, Emitter, Unsubscribe } from 'nanoevents'
 
 import { Transport, Env, TransportEvents } from './index'
 
-type Events = TransportEvents<string>
+type Events = TransportEvents<string | Uint8Array>
 
 export class TestTransport implements Transport<string> {
   url: string
   emitter: Emitter<Events>
   state: Env
   opened: boolean
-  sent: string[]
+  sent: (string | Uint8Array)[]
 
   constructor(url: string) {
     this.url = url
@@ -33,11 +33,11 @@ export class TestTransport implements Transport<string> {
     return Promise.resolve()
   }
 
-  send(data: string) {
+  send(data: string | Uint8Array) {
     this.sent.push(data)
   }
 
-  receive(msg: string) {
+  receive(msg: string | Uint8Array) {
     this.emit('data', msg)
   }
 

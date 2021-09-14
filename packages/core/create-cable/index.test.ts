@@ -36,7 +36,12 @@ it('defaults', () => {
 
 it('unsupported protocol', () => {
   expect(() =>
-    createCable('ws://example', { protocol: 'actioncable-v1-protobuf' })
+    // We want to make sure, that `createCable` throws an error
+    // for unsupported protocols in runtime. Since TS doesn't allow to
+    // pass arbitrary string as protocol, we ignore it for this particular test
+    //
+    // @ts-ignore
+    createCable('ws://example', { protocol: 'actioncable-v1-whatever' })
   ).toThrow(/protocol is not supported/i)
 })
 
@@ -49,6 +54,10 @@ it('missing protocol', () => {
 it('missing encoder when required', () => {
   expect(() =>
     createCable('ws://example', { protocol: 'actioncable-v1-msgpack' })
+  ).toThrow(/encoder must be specified/i)
+
+  expect(() =>
+    createCable('ws://example', { protocol: 'actioncable-v1-protobuf' })
   ).toThrow(/encoder must be specified/i)
 })
 

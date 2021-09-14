@@ -60,6 +60,14 @@ export function createCable(url, opts) {
         'Msgpack encoder must be specified explicitly. Use `@anycable/msgpack-encoder` package or build your own'
       )
     }
+  } else if (protocol === 'actioncable-v1-protobuf') {
+    protocol = new ActionCableProtocol()
+    websocketFormat = websocketFormat || 'binary'
+    if (!encoder) {
+      throw Error(
+        'Protobuf encoder must be specified explicitly. Use `@anycable/protobuf-encoder` package or build your own'
+      )
+    }
   } else if (typeof protocol === 'string') {
     throw Error(`Protocol is not supported yet: ${protocol}`)
   }

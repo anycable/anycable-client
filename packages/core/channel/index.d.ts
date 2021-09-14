@@ -4,7 +4,7 @@ import { ReasonError } from '../protocol/index.js'
 
 export type Identifier = string
 
-export type Message = object | string | number
+export type Message = object | string | number | Uint8Array
 export type MessageMeta = Partial<{
   id: string
 }>
