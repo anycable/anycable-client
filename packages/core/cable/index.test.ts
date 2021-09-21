@@ -195,7 +195,9 @@ describe('connect/disconnect', () => {
 
     cable.close('Connection closed')
 
-    return expect(res).rejects.toEqual({ reason: 'Connection closed' })
+    return expect(res).rejects.toEqual(
+      new DisconnectedError('Connection closed')
+    )
   })
 
   it('close', done => {
@@ -216,14 +218,13 @@ describe('connect/disconnect', () => {
 
   it('disconnected with reason', done => {
     cable.on('disconnect', ev => {
-      let event = ev as { reason: string }
-      expect(event.reason).toEqual('test')
+      expect(ev.reason).toEqual('test')
       done()
     })
 
     cable.connected()
-    cable.disconnected('test')
-    cable.disconnected('test2')
+    cable.disconnected(new DisconnectedError('test'))
+    cable.disconnected(new DisconnectedError('test2'))
 
     expect(cable.state).toEqual('disconnected')
     expect(transport.opened).toBe(false)

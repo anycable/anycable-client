@@ -1,5 +1,7 @@
 import { Unsubscribe } from 'nanoevents'
 
+import { ReasonError } from '../protocol/index.js'
+
 export type Identifier = string
 
 export type Message = object | string | number
@@ -21,7 +23,7 @@ export type ChannelParamsMap = { [token: string]: boolean | number | string }
 export type ChannelState = 'disconnected' | 'connecting' | 'connected'
 
 type DisconnectEvent = Partial<{
-  reason: string | Error
+  reason: ReasonError
 }>
 
 export interface ChannelEvents<T> {
@@ -49,10 +51,10 @@ export class Channel<
   connecting(receiver: Receiver): void
   connected(id: Identifier): void
   restored(): void
-  disconnected(reason?: string | Error): void
+  disconnected(reason?: ReasonError): void
 
   disconnect(): Promise<void>
-  close(reason?: string | Error): void
+  close(reason?: ReasonError): void
   perform(action: string, payload?: object): Promise<Message | void>
   receive(msg: MessageType, meta?: MessageMeta): void
 

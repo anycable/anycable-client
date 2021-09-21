@@ -47,21 +47,21 @@ export class Channel {
     this.emit('restore')
   }
 
-  disconnected(reason) {
+  disconnected(err) {
     if (this.state === 'disconnected') return
 
     this[STATE] = 'disconnected'
 
-    this.emit('disconnect', { reason })
+    this.emit('disconnect', err)
   }
 
-  close(reason) {
+  close(err) {
     if (this.state === 'disconnected') return
 
     this[STATE] = 'disconnected'
     delete this.receiver
 
-    this.emit('close', { reason })
+    this.emit('close', err)
   }
 
   async disconnect() {

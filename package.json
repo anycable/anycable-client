@@ -95,7 +95,8 @@
           "jest/no-conditional-expect": "off",
           "import/extensions": "off",
           "no-throw-literal": "off",
-          "jest/valid-expect": "off"
+          "jest/valid-expect": "off",
+          "jest/lowercase-name": "off"
         }
       },
       {

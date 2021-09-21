@@ -7,20 +7,20 @@ import {
   ChannelParamsMap
 } from '../channel/index.js'
 import { Transport } from '../transport/index.js'
-import { Protocol } from '../protocol/index.js'
+import { Protocol, ReasonError } from '../protocol/index.js'
 import { Hub } from '../hub/index.js'
 import { Encoder } from '../encoder/index.js'
 import { Logger } from '../logger/index.js'
 import { Monitor } from '../monitor/index.js'
 
 type DisconnectEvent = Partial<{
-  reason: string | Error
+  reason: string
 }>
 
 export interface CableEvents {
   connect: () => void
-  disconnect: (event?: DisconnectEvent) => void
-  close: (event?: DisconnectEvent) => void
+  disconnect: (event: DisconnectEvent) => void
+  close: (event: DisconnectEvent) => void
   keepalive: (msg?: Message) => void
 }
 
@@ -57,13 +57,13 @@ export class Cable {
     payload?: object
   ): Promise<Message | void>
   disconnect(): void
-  close(reason?: string | Error): void
+  close(reason?: string | ReasonError): void
 
   subscribeTo(channel: string, params?: ChannelParamsMap): Promise<GhostChannel>
 
   connected(): void
   restored(): void
-  disconnected(reason?: string | Error): void
+  disconnected(reason?: ReasonError): void
 
   keepalive(msg?: Message): void
 

@@ -120,10 +120,7 @@ export class Cable {
   disconnected(reason) {
     this.logger.debug('closing connection', { reason })
 
-    let err =
-      typeof reason === 'string' ? new DisconnectedError(reason) : reason
-
-    this.handleClose(err)
+    this.handleClose(reason)
   }
 
   handleClose(err) {
@@ -157,12 +154,15 @@ export class Cable {
 
     this[STATE] = 'disconnected'
 
-    this.hub.channels.forEach(channel => channel.close(reason))
+    let err =
+      typeof reason === 'string' ? new DisconnectedError(reason) : reason
+
+    this.hub.channels.forEach(channel => channel.close(err))
     this.hub.close()
-    this.protocol.reset(new DisconnectedError(reason))
+    this.protocol.reset()
     this.transport.close()
 
-    this.emit('close', { reason })
+    this.emit('close', err)
   }
 
   handleIncoming(raw) {

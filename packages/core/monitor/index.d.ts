@@ -2,6 +2,7 @@ import { Unsubscribe } from 'nanoevents'
 
 import { CableEvents } from '../cable/index.js'
 import { Logger } from '../logger/index.js'
+import { ReasonError } from '../protocol/index.js'
 
 export type ReconnectStrategy = (attempts: number) => number
 export interface MonitorOptions {
@@ -24,7 +25,7 @@ export const backoffWithJitter: (
 export interface Monitorable {
   connect(): Promise<void>
   close(): void
-  disconnected(err: string | Error): void
+  disconnected(err: ReasonError): void
 
   on<E extends keyof CableEvents>(
     event: E,

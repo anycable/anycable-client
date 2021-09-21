@@ -1,5 +1,6 @@
 export { Channel } from './channel/index.js'
 export {
+  ReasonError,
   SubscriptionRejectedError,
   DisconnectedError,
   CommandError,

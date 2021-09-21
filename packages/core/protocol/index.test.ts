@@ -1,11 +1,20 @@
 import {
+  ReasonError,
   SubscriptionRejectedError,
   DisconnectedError,
   CommandError
 } from '../index.js'
 import { StaleConnectionError } from './index.js'
 
-describe('subscriptionRejectedError', () => {
+describe('ReasonError', () => {
+  it('has reasons and message', () => {
+    let err = new ReasonError('failure', 'just because')
+    expect(err.reason).toEqual('just because')
+    expect(err.message).toEqual('failure')
+  })
+})
+
+describe('SubscriptionRejectedError', () => {
   it('without reason', () => {
     let err = new SubscriptionRejectedError()
     expect(err.reason).toBeUndefined()
@@ -20,7 +29,7 @@ describe('subscriptionRejectedError', () => {
   })
 })
 
-describe('disconnectedError', () => {
+describe('DisconnectedError', () => {
   it('without reason', () => {
     let err = new DisconnectedError()
     expect(err.reason).toBeUndefined()
@@ -35,7 +44,7 @@ describe('disconnectedError', () => {
   })
 })
 
-describe('commandError', () => {
+describe('CommandError', () => {
   it('has name', () => {
     let err = new CommandError('failed')
     expect(err.name).toEqual('CommandError')
@@ -43,7 +52,7 @@ describe('commandError', () => {
   })
 })
 
-describe('staleConnnectionError', () => {
+describe('StaleConnnectionError', () => {
   it('has name', () => {
     let err = new StaleConnectionError('stale')
     expect(err.name).toEqual('StaleConnectionError')

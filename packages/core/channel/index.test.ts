@@ -6,7 +6,10 @@ import {
   Receiver,
   Message,
   Identifier,
-  MessageMeta
+  MessageMeta,
+  ReasonError,
+  DisconnectedError,
+  SubscriptionRejectedError
 } from '../index.js'
 
 class TestReceiver implements Receiver {
@@ -35,7 +38,7 @@ class TestReceiver implements Receiver {
   }
 
   rejected() {
-    this.channel.close('Rejected')
+    this.channel.close(new SubscriptionRejectedError('Rejected'))
   }
 
   unsubscribe(_sid: Identifier): Promise<void> {
@@ -219,11 +222,11 @@ describe('receiver communicaton', () => {
   it('performs before connection failed', () => {
     client.subscribe(channel)
 
-    let res = expect(channel.perform('do', { foo: 'bar' })).rejects.toEqual({
-      reason: 'connection lost'
-    })
+    let res = expect(channel.perform('do', { foo: 'bar' })).rejects.toEqual(
+      new DisconnectedError('connection lost')
+    )
 
-    channel.disconnected('connection lost')
+    channel.disconnected(new DisconnectedError('connection lost'))
 
     return res
   })
@@ -358,7 +361,7 @@ describe('events', () => {
     channel.on('close', () => calls.push('ko'))
 
     client.subscribed(channel)
-    channel.close('forbidden')
+    channel.close(new ReasonError('forbidden'))
 
     expect(calls).toEqual(['ko'])
   })

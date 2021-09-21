@@ -2,6 +2,7 @@ import { jest } from '@jest/globals'
 import { createNanoEvents, Emitter, Unsubscribe } from 'nanoevents'
 
 import {
+  ReasonError,
   Monitor,
   Monitorable,
   CableEvents,
@@ -18,7 +19,7 @@ class TestCable implements Monitorable {
   }
 
   async connect() {}
-  disconnected(err: string | Error) {} // eslint-disable-line
+  disconnected(err: ReasonError) {} // eslint-disable-line
   close() {}
 
   on<E extends keyof CableEvents>(

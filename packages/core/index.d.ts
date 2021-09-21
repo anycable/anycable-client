@@ -11,6 +11,7 @@ export { Encoder, JSONEncoder } from './encoder/index.js'
 export {
   Protocol,
   Consumer,
+  ReasonError,
   SubscriptionRejectedError,
   DisconnectedError,
   CommandError,

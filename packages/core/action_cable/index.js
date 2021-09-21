@@ -74,12 +74,13 @@ export class ActionCableProtocol {
     }
 
     if (type === 'disconnect') {
-      this.reset(new DisconnectedError(reason))
+      let err = new DisconnectedError(reason)
+      this.reset(err)
 
       if (reconnect === false) {
-        this.cable.close(reason)
+        this.cable.close(err)
       } else {
-        this.cable.disconnected(reason)
+        this.cable.disconnected(err)
       }
       return
     }

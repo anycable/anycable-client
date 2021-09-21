@@ -121,7 +121,7 @@ class ActionCableChannel extends GhostChannel {
     )
     this.on('message', val => this.notify('_ac_received', val))
     this.on('close', err => {
-      if (err && err.reason instanceof SubscriptionRejectedError) {
+      if (err && err instanceof SubscriptionRejectedError) {
         this.notify('_ac_rejected')
       } else {
         this.notify('_ac_disconnected', { allowReconnect: false })

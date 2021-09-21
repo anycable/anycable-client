@@ -1,11 +1,25 @@
 import { MessageMeta, Message, Identifier } from '../channel/index.js'
 
+export class ReasonError extends Error {
+  readonly reason?: string
+
+  constructor(msg?: string, reason?: string)
+}
+
+export class SubscriptionRejectedError extends ReasonError {}
+
+export class DisconnectedError extends ReasonError {}
+
+export class CommandError extends Error {}
+
+export class StaleConnectionError extends Error {}
+
 export interface Consumer {
   connected(): void
   restored(): void
-  disconnected(reason?: string): void
+  disconnected(reason?: ReasonError): void
   keepalive(msg?: Message): void
-  close(reason?: string): void
+  close(reason?: string | ReasonError): void
   send(msg: object): void
 }
 
@@ -30,19 +44,3 @@ export interface Protocol {
   recoverableClosure(err?: Error): boolean
   reset(err: Error): void
 }
-
-export class SubscriptionRejectedError extends Error {
-  readonly reason?: string
-
-  constructor(reason?: string)
-}
-
-export class DisconnectedError extends Error {
-  readonly reason?: string
-
-  constructor(reason?: string)
-}
-
-export class CommandError extends Error {}
-
-export class StaleConnectionError extends Error {}

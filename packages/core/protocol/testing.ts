@@ -1,4 +1,4 @@
-import { Consumer } from '../index.js'
+import { Consumer, ReasonError } from '../index.js'
 
 type State = 'idle' | 'connected' | 'restored' | 'disconnected' | 'closed'
 
@@ -20,10 +20,10 @@ export class TestConsumer implements Consumer {
     this.state = 'restored'
   }
 
-  disconnected(reason?: string) {
+  disconnected(err?: ReasonError) {
     this.state = 'disconnected'
-    if (reason) {
-      this.mailbox.push({ type: 'disconnect', reason })
+    if (err?.reason) {
+      this.mailbox.push({ type: 'disconnect', reason: err.reason })
     }
   }
 
@@ -31,8 +31,12 @@ export class TestConsumer implements Consumer {
     this.mailbox.push(msg)
   }
 
-  close(reason?: string) {
+  close(err?: string | ReasonError) {
     this.state = 'closed'
+    if (!err) return
+
+    let reason = typeof err === 'string' ? err : err.reason
+
     if (reason) {
       this.mailbox.push({ type: 'close', reason })
     }

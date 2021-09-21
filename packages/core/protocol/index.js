@@ -1,15 +1,21 @@
-export class SubscriptionRejectedError extends Error {
-  constructor(reason) {
-    super('Rejected')
+export class ReasonError extends Error {
+  constructor(msg, reason) {
+    super(msg)
     this.reason = reason
+    this.name = 'ReasonError'
+  }
+}
+
+export class SubscriptionRejectedError extends ReasonError {
+  constructor(reason) {
+    super('Rejected', reason)
     this.name = 'SubscriptionRejectedError'
   }
 }
 
-export class DisconnectedError extends Error {
+export class DisconnectedError extends ReasonError {
   constructor(reason) {
-    super('Disconnected')
-    this.reason = reason
+    super('Disconnected', reason)
     this.name = 'DisconnectedError'
   }
 }
