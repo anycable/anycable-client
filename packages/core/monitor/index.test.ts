@@ -8,7 +8,6 @@ import {
   StaleConnectionError,
   backoffWithJitter
 } from '../index.js'
-
 import { TestLogger } from '../logger/testing'
 
 class TestCable implements Monitorable {
@@ -44,7 +43,7 @@ beforeEach(() => {
   monitor = new Monitor({
     pingInterval: INTERVAL,
     reconnectStrategy: strategy,
-    logger: logger
+    logger
   })
   monitor.watch(cable)
   jest.useFakeTimers()
@@ -266,9 +265,9 @@ describe('reconnectNow', () => {
     // Switch to pending_disconnect state due to stale check
     jest.advanceTimersByTime(INTERVAL * 4)
 
-    let spy = jest
+    jest
       .spyOn(cable, 'connect')
-      .mockImplementation(() => Promise.reject('Failure'))
+      .mockImplementation(() => Promise.reject(Error('Failure')))
 
     expect(monitor.reconnectNow()).toBe(true)
     expect(monitor.state).toEqual('pending_connect')
