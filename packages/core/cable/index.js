@@ -52,7 +52,9 @@ export class Cable {
     this.transport.on('close', this.handleClose)
     this.transport.on('data', this.handleIncoming)
 
-    if (lazy === false) this.connect()
+    if (lazy === false) {
+      this.connect().catch(() => {})
+    }
   }
 
   get state() {
