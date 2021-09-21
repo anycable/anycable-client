@@ -9,6 +9,8 @@ import {
   backoffWithJitter
 } from '../index.js'
 
+import { TestLogger } from '../logger/testing'
+
 class TestCable implements Monitorable {
   emitter: Emitter
 
@@ -16,7 +18,7 @@ class TestCable implements Monitorable {
     this.emitter = createNanoEvents()
   }
 
-  connect() {}
+  async connect() {}
   disconnected(err: string | Error) {} // eslint-disable-line
   close() {}
 
@@ -30,6 +32,7 @@ class TestCable implements Monitorable {
 
 let cable: TestCable
 let monitor: Monitor
+let logger: TestLogger
 
 let strategy = (attempts: number) => 2 ** attempts * 1000
 
@@ -37,9 +40,11 @@ const INTERVAL = 3000
 
 beforeEach(() => {
   cable = new TestCable()
+  logger = new TestLogger('info')
   monitor = new Monitor({
     pingInterval: INTERVAL,
-    reconnectStrategy: strategy
+    reconnectStrategy: strategy,
+    logger: logger
   })
   monitor.watch(cable)
   jest.useFakeTimers()
@@ -254,6 +259,24 @@ describe('reconnectNow', () => {
 
     expect(monitor.reconnectNow()).toBe(true)
     expect(monitor.state).toEqual('pending_connect')
+  })
+
+  it('when connect throws an exception prints to log', async () => {
+    cable.emitter.emit('connect')
+    // Switch to pending_disconnect state due to stale check
+    jest.advanceTimersByTime(INTERVAL * 4)
+
+    let spy = jest
+      .spyOn(cable, 'connect')
+      .mockImplementation(() => Promise.reject('Failure'))
+
+    expect(monitor.reconnectNow()).toBe(true)
+    expect(monitor.state).toEqual('pending_connect')
+
+    // Flush connect promise
+    await Promise.resolve()
+
+    expect(logger.infos).toHaveLength(1)
   })
 
   it('when connected', () => {

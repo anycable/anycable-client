@@ -14,6 +14,10 @@ export class TestLogger extends BaseLogger {
     this.logs = []
   }
 
+  get infos() {
+    return this.logs.filter(log => log.level === 'info')
+  }
+
   get errors() {
     return this.logs.filter(log => log.level === 'error')
   }
