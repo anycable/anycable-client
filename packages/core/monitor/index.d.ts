@@ -22,7 +22,7 @@ export const backoffWithJitter: (
 ) => ReconnectStrategy
 
 export interface Monitorable {
-  connect(): void
+  connect(): Promise<void>
   close(): void
   disconnected(err: string | Error): void
 
