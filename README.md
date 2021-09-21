@@ -272,6 +272,10 @@ import { createCable } from '@anycable/core'
 let cable = createCable(url)
 ```
 
+## Further reading
+
+- [Architecture](./docs/architecture.md)
+
 [anycable]: https://anycable.io
 [protocol]: https://docs.anycable.io/misc/action_cable_protocol
 [pro]: https://anycable.io/#pro
