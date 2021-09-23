@@ -1,4 +1,9 @@
-import { CreateOptions, Cable, ActionCableConsumer } from '@anycable/core'
+import {
+  CreateOptions,
+  Cable,
+  ActionCableConsumer,
+  TokenRefresher
+} from '@anycable/core'
 
 export { Channel } from '@anycable/core'
 
@@ -15,3 +20,7 @@ export function createConsumer(
 export function createConsumer(
   opts?: Partial<CreateOptions>
 ): ActionCableConsumer
+
+export function fetchTokenFromHTML(
+  opts?: Partial<{ url: string }>
+): TokenRefresher

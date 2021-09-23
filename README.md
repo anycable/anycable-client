@@ -232,6 +232,48 @@ export default createCable({protocol: 'actioncable-v1-protobuf', encoder: new Pr
 
 **NOTE:** You MUST install the corresponding encoder package yourself, e.g., `yarn add @anycable/msgpack-encoder`.
 
+### Refreshing authentication tokens
+
+If you use a token-based authentication with expirable tokens (e.g., like [AnyCable PRO JWT identification](https://docs.anycable.io/anycable-go/jwt_identification)), you need a mechanism to refresh tokens for a long-lived clients (to let them reconnect in case of a connection failure).
+
+AnyCable client can help you to make this process as simple as possible: just provide a function, which could retrieve a new token and update the connection url. AnyCable will take care of everything else (tracking expiration and reconnecting). Here is an example:
+
+```js
+// cable.js
+import { createCable } from '@anycable/web'
+
+export default createCable({
+  tokenRefresher: async transport => {
+    let response = await fetch('/token.json')
+    let data = await response.json()
+
+    // Update URL for the underlying transport
+    transport.setURL('ws://example.com/cable?token=' + data['token'])
+  }
+})
+```
+
+For browser usage, we provide a built-in helper method, which allows you to extract a new connection URL from an HTML page (requested via `fetch`):
+
+```js
+// cable.js
+import { createCable, fetchTokenFromHTML } from '@anycable/web'
+
+// By default, the current page is loaded in the background,
+// and the action-cable-url (or cable-url) meta tag is used to update
+// the connection url
+export default createCable({tokenRefresher: fetchTokenFromHTML()})
+
+// You can also specify an alternative URL
+export default createCable({
+  tokenRefresher: fetchTokenFromHTML({ url: '/custom-token-refresh-endpoint' })
+})
+```
+
+**NOTE:** the `tokenRefresher` only activates when a server sends a disconnection message with reason `token_expired` (i.e., `{"type":"disconnect","reason":"token_expired"}`).
+
+**NODE:** the `fetchTokenFromHTML` performs an HTTP request with a specific header attached (`X-ANYCABLE-OPERATION=token-refresh`), which you could use to minimize the amount of HTML to return in response.
+
 ### Testing
 
 _⏳ Coming soon_

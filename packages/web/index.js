@@ -15,15 +15,21 @@ const metaPrefixes = ['cable', 'action-cable']
 const defaultUrl = '/cable'
 
 /* eslint-disable consistent-return */
-const generateUrlFromDOM = key => {
-  if (typeof document !== 'undefined' && document.head) {
-    for (let prefix of metaPrefixes) {
-      let element = document.head.querySelector(`meta[name='${prefix}-${key}']`)
+const fetchMeta = (doc, key) => {
+  for (let prefix of metaPrefixes) {
+    let element = doc.head.querySelector(`meta[name='${prefix}-${key}']`)
 
-      if (element) {
-        return element.getAttribute('content')
-      }
+    if (element) {
+      return element.getAttribute('content')
     }
+  }
+}
+
+/* eslint-disable consistent-return */
+const generateUrlFromDOM = () => {
+  if (typeof document !== 'undefined' && document.head) {
+    let url = fetchMeta(document, 'url')
+    if (url) return url
   }
 
   if (typeof window !== 'undefined') {
@@ -39,7 +45,7 @@ export function createCable(url, opts) {
     url = undefined
   }
 
-  url = url || generateUrlFromDOM('url')
+  url = url || generateUrlFromDOM()
   opts = opts || {}
 
   opts = Object.assign({}, DEFAULTS, opts)
@@ -76,4 +82,45 @@ export function createConsumer(url, opts) {
   let cable = createCable(url, opts)
 
   return new ActionCableConsumer(cable)
+}
+
+export function fetchTokenFromHTML(opts) {
+  let url = opts ? opts.url : undefined
+
+  if (!url) {
+    if (typeof window !== 'undefined') {
+      url = window.location.href
+    } else {
+      throw Error('An URL to fetch the HTML with a token MUST be specified')
+    }
+  }
+
+  return async transport => {
+    let response = await fetch(url, {
+      credentials: 'same-origin',
+      cache: 'no-cache',
+      headers: {
+        'Accept': 'text/html, application/xhtml+xml',
+        'X-ANYCABLE-OPERATION': 'token-refresh'
+      }
+    })
+
+    if (!response.ok) {
+      throw Error(
+        'Failed to fetch a page to refresh a token: ' + response.status
+      )
+    }
+
+    let html = await response.text()
+
+    let doc = new DOMParser().parseFromString(html, 'text/html')
+
+    let newURL = fetchMeta(doc, 'url')
+
+    if (newURL) {
+      transport.setURL(newURL)
+    } else {
+      throw Error("Couldn't find a token on the page")
+    }
+  }
 }
