@@ -47,6 +47,10 @@ export class WebSocketTransport {
     })
   }
 
+  setURL(url) {
+    this.url = url
+  }
+
   set() {}
 
   send(data) {

@@ -26,6 +26,7 @@ export class WebSocketTransport<
   send(data: DataType): void
   close(): Promise<void>
 
+  setURL(url: string): void
   set(key: string, value: string): void
 
   on<E extends keyof TransportEvents<DataType>>(

@@ -29,3 +29,10 @@ it('close when not connected', () => {
 
   expect(() => t.close()).not.toThrow()
 })
+
+it('setURL', () => {
+  let t = new WebSocketTransport('ws://')
+
+  t.setURL('wss://')
+  expect(t.url).toEqual('wss://')
+})

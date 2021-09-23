@@ -6,8 +6,9 @@ import {
   WebSocketTransport,
   Message,
   createConsumer,
-  Channel,
-  SubscriptionRejectedError
+  Transport,
+  SubscriptionRejectedError,
+  DisconnectedError
 } from '../index.js'
 import { TestTransport } from '../transport/testing'
 
@@ -16,7 +17,7 @@ it('requires url or transport', () => {
 })
 
 it('with transport', () => {
-  let tt = new TestTransport()
+  let tt = new TestTransport('ws://anycable.test')
   let cable = createCable({ transport: tt })
 
   expect(cable.transport).toBe(tt)
@@ -57,6 +58,119 @@ it('with monitor=false', () => {
   expect(cable.monitor).toBeUndefined()
 })
 
+describe('with tokenRefresher', () => {
+  let transport: TestTransport
+
+  beforeEach(() => {
+    transport = new TestTransport('ws://anycable.test')
+  })
+
+  it('success', () => {
+    let refresher = (t: Transport) => {
+      t.setURL('ws://anycable-new.test')
+      return Promise.resolve()
+    }
+
+    let cable = createCable('ws://example', {
+      tokenRefresher: refresher,
+      transport
+    })
+    cable.connected()
+    cable.close('token_expired')
+
+    let spy = jest.spyOn(cable, 'connect')
+
+    return new Promise<void>(resolve => {
+      transport.once('open', () => {
+        cable.connected()
+        expect(transport.url).toEqual('ws://anycable-new.test')
+        expect(spy).toHaveBeenCalledTimes(1)
+        resolve()
+      })
+    })
+  })
+
+  it('when not updated', () => {
+    let called = 0
+    let refresher = (t: Transport) => {
+      called++
+      t.setURL('ws://anycable-new.test')
+      return Promise.reject(Error('no token in the response'))
+    }
+
+    let cable = createCable('ws://example', {
+      tokenRefresher: refresher,
+      transport
+    })
+    cable.connected()
+    let spy = jest.spyOn(cable, 'connect')
+
+    cable.close('token_expired')
+    expect(spy).toHaveBeenCalledTimes(0)
+    expect(called).toEqual(1)
+
+    // Check that we're ignoring subsequent disconnects
+    cable.connected()
+    cable.close('token_expired')
+
+    expect(called).toEqual(1)
+  })
+
+  it('multiple expirations', async () => {
+    let called = 0
+    let refresher = (t: Transport) => {
+      called++
+      t.setURL('ws://anycable-new.test')
+      return Promise.resolve()
+    }
+
+    let cable = createCable('ws://example', {
+      tokenRefresher: refresher,
+      transport
+    })
+    cable.connected()
+    cable.close('token_expired')
+
+    expect(called).toEqual(1)
+    expect(transport.url).toEqual('ws://anycable-new.test')
+
+    cable.connected()
+
+    // A hack to make sure all async functions have been resolved
+    await new Promise<void>(resolve => setTimeout(resolve, 100))
+
+    cable.close('token_expired')
+    expect(called).toEqual(2)
+  })
+
+  it('when connection failed', () => {
+    let called = 0
+    let refresher = (t: Transport) => {
+      called++
+      t.setURL('ws://anycable-new.test')
+      return Promise.resolve()
+    }
+
+    let cable = createCable('ws://example', {
+      tokenRefresher: refresher,
+      transport
+    })
+    cable.connected()
+    jest
+      .spyOn(cable, 'connect')
+      .mockImplementation(() => Promise.reject(new DisconnectedError('failed')))
+
+    cable.close('token_expired')
+    expect(called).toEqual(1)
+
+    // Check that we're ignoring subsequent disconnects
+    cable.connected()
+    cable.close('token_expired')
+
+    expect(called).toEqual(1)
+  })
+})
+
 type TestMixin = {
   initialized: () => void
   connected: () => void
@@ -67,7 +181,6 @@ type TestMixin = {
   messages: Message[]
 }
 
-type ActionChannel = Channel & TestMixin
 describe('createConsumer', () => {
   let mixin: TestMixin
 

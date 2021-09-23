@@ -9,7 +9,7 @@ it('defaults', () => {
   expect(cable.protocol).toBeInstanceOf(ActionCableProtocol)
   expect(cable.transport).toBeInstanceOf(WebSocketTransport)
 
-  let ws = cable.transport as WebSocketTransport
+  let ws = cable.transport
   expect(ws.url).toEqual(`ws://anycable.test/cable`)
 
   expect(cable.logger).toBeInstanceOf(Logger)
@@ -29,7 +29,7 @@ it('uses url from cable-url meta', () => {
     <meta name="cable-url" content="ws://anycable.go:2313/cable">
   `
   let cable = createCable()
-  let ws = cable.transport as WebSocketTransport
+  let ws = cable.transport
   expect(ws.url).toEqual(`ws://anycable.go:2313/cable`)
 })
 
@@ -38,6 +38,6 @@ it('uses url from action-cable-url meta', () => {
     <meta name="action-cable-url" content="ws://anycable.go:2313/cable">
   `
   let cable = createCable()
-  let ws = cable.transport as WebSocketTransport
+  let ws = cable.transport
   expect(ws.url).toEqual(`ws://anycable.go:2313/cable`)
 })

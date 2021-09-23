@@ -99,7 +99,7 @@ let encoder: Encoder
 
 beforeEach(() => {
   logger = new TestLogger()
-  transport = new TestTransport()
+  transport = new TestTransport('ws:///')
   encoder = new JSONEncoder()
   protocol = new TestProtocol()
   cable = new Cable({

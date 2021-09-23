@@ -42,7 +42,8 @@ export function createCable(url, opts) {
     reconnectStrategy,
     maxMissingPings,
     maxReconnectAttempts,
-    subprotocol
+    subprotocol,
+    tokenRefresher
   } = opts
 
   if (typeof protocol === 'string') subprotocol = subprotocol || protocol
@@ -102,7 +103,32 @@ export function createCable(url, opts) {
     cable.monitor = monitor
   }
 
+  if (tokenRefresher) {
+    watchForExpiredToken(cable, async () => {
+      try {
+        await tokenRefresher(transport)
+        await cable.connect()
+        return true
+      } catch (err) {
+        logger.info('Failed to refresh authentication token: ' + err)
+      }
+
+      return false
+    })
+  }
+
   return cable
+}
+
+function watchForExpiredToken(cable, callback) {
+  let unbind = cable.on('close', async ev => {
+    if (ev.reason === 'token_expired') {
+      unbind()
+      let result = await callback()
+
+      if (result) watchForExpiredToken(cable, callback)
+    }
+  })
 }
 
 class ActionCableChannel extends GhostChannel {

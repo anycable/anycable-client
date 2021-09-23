@@ -11,6 +11,8 @@ export type ProtocolID =
   | 'actioncable-v1-msgpack'
   | 'actioncable-v1-protobuf'
 
+export type TokenRefresher = (transport: Transport) => Promise<void>
+
 export interface CreateOptions {
   protocol: ProtocolID | Protocol
 
@@ -27,6 +29,8 @@ export interface CreateOptions {
   pingInterval: number
 
   lazy: boolean
+
+  tokenRefresher: TokenRefresher
 }
 
 export const DEFAULT_OPTIONS: Partial<CreateOptions>

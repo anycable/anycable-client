@@ -12,10 +12,13 @@ export interface Env {
 }
 
 export interface Transport<PayloadType = string> {
+  readonly url: string
+
   open(): Promise<void>
   send(data: PayloadType): void
   close(): Promise<void>
 
+  setURL(url: string): void
   set(key: string, value: string): void
 
   on<E extends keyof TransportEvents<PayloadType>>(

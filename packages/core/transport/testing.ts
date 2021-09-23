@@ -5,16 +5,22 @@ import { Transport, Env, TransportEvents } from './index'
 type Events = TransportEvents<string>
 
 export class TestTransport implements Transport<string> {
+  url: string
   emitter: Emitter<Events>
   state: Env
   opened: boolean
   sent: string[]
 
-  constructor() {
+  constructor(url: string) {
+    this.url = url
     this.emitter = createNanoEvents()
     this.state = {}
     this.opened = false
     this.sent = []
+  }
+
+  setURL(url: string) {
+    this.url = url
   }
 
   set(key: string, value: string) {

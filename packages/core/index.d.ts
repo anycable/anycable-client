@@ -42,5 +42,6 @@ export {
   createConsumer,
   ActionCableConsumer,
   ActionCableMixin,
-  ActionCableSubscriptions
+  ActionCableSubscriptions,
+  TokenRefresher
 } from './create-cable/index.js'
