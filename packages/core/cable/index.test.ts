@@ -641,7 +641,7 @@ it('logs encode errors', () => {
 
 it('logs decode errors', () => {
   jest
-    .spyOn(encoder, 'decode')
+    .spyOn(encoder as JSONEncoder, 'decode')
     .mockImplementation((msg: string): object | undefined => {
       return undefined
     })

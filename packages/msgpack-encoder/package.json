@@ -19,7 +19,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@anycable/core": "^0.0.5",
+    "@anycable/core": "^0.1.0",
     "@ygoe/msgpack": "^1.0.0"
   }
 }
