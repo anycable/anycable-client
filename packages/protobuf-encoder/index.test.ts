@@ -1,4 +1,6 @@
-import { ProtobufEncoder } from './'
+import msgpack from '@ygoe/msgpack'
+
+import { ProtobufEncoder, MessageObject } from './'
 import { action_cable as protos } from './generated/message_pb.js'
 import { TestTransport } from '../core/transport/testing'
 import { createCable } from '../core/create-cable'
@@ -30,12 +32,86 @@ const identifier = JSON.stringify({ channel: 'test', id: '21' })
 describe('encode', () => {
   it('raises error on invalid input', () => {
     expect(() => {
+      // We ignore TypeScript here to pass a property
+      // with a wrong type in order to break encoding
+      // @ts-ignore
       encoder.encode({ identifier: 1 })
     }).toThrow('identifier: string expected')
   })
+
+  describe('enum encoding', () => {
+    it('sets enum values to 0, if no values provided', () => {
+      let encoded = encoder.encode({})
+      let decoded = Message.decode(encoded)
+
+      // Zero is default value for enums by Protobuf protocol
+      expect(decoded.command).toBe(0)
+      expect(decoded.type).toBe(0)
+    })
+
+    it('converts enum values to ids', () => {
+      let encoded = encoder.encode({
+        command: 'message',
+        // normally `type` and `command` aren't used together,
+        // here we just want to test everything at once
+        type: 'no_type'
+      })
+
+      let decoded = Message.decode(encoded)
+
+      expect(decoded.command).toEqual(3)
+      expect(decoded.type).toEqual(0)
+    })
+  })
+
+  describe('message field encoding', () => {
+    it('encodes message, using msgpack', () => {
+      let payload = { foo: 'bar', bar: 123 }
+      let encoded = encoder.encode({ message: payload })
+      let decoded = Message.decode(encoded)
+
+      expect(msgpack.deserialize(decoded.message)).toEqual(payload)
+    })
+  })
 })
 
-describe('protobuf message encoding/decoding', () => {
+describe('decode', () => {
+  describe('enum decoding', () => {
+    it('converts enum ids to string names', () => {
+      // normally `type` and `command` aren't used together,
+      // here we just want to test everything at once
+      let encoded = Message.encode({ command: 3, type: 3 }).finish()
+      let decoded = encoder.decode(encoded) as MessageObject
+
+      expect(decoded).toBeDefined()
+      expect(decoded.type).toEqual('ping')
+      expect(decoded.command).toEqual('message')
+    })
+
+    it('sets defaults, if no values provided', () => {
+      let encoded = Message.encode({}).finish()
+      let decoded = encoder.decode(encoded) as MessageObject
+
+      expect(decoded).toBeDefined()
+      expect(decoded.type).toEqual('no_type')
+      expect(decoded.command).toEqual('unknown_command')
+    })
+  })
+
+  describe('message field decoding', () => {
+    it('decodes message, using msgpack', () => {
+      let payload = { foo: 'bar', bar: 123 }
+      let encoded = Message.encode({
+        message: msgpack.serialize(payload)
+      }).finish()
+      let decoded = encoder.decode(encoded) as MessageObject
+
+      expect(decoded.message).toEqual(payload)
+    })
+  })
+})
+
+describe('protobuf message e2e sending', () => {
   beforeEach(() => {
     channel = new TestChannel({ id: '21' })
 

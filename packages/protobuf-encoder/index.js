@@ -1,16 +1,17 @@
 import msgpack from '@ygoe/msgpack'
 
 import { action_cable as protos } from './generated/message_pb.js'
+import { EnumWrapper } from './enum_wrapper.js'
 
 const Message = protos.Message
-const MessageType = protos.Type
-const Command = protos.Command
+const MessageType = new EnumWrapper(protos.Type)
+const Command = new EnumWrapper(protos.Command)
 
 export class ProtobufEncoder {
   encode(msg) {
     // convert enum value names to corresponding integers
-    msg.command = Command[msg.command]
-    msg.type = MessageType[msg.type]
+    msg.command = Command.getIdByValue(msg.command)
+    msg.type = MessageType.getIdByValue(msg.type)
 
     if (msg.message !== undefined) {
       msg.message = msgpack.serialize(msg.message)
@@ -30,12 +31,12 @@ export class ProtobufEncoder {
     try {
       let decodedMessage = Message.decode(data)
 
-      if (decodedMessage.type !== undefined) {
-        let messageTypesById = Object.getPrototypeOf(MessageType)
-        decodedMessage.type = messageTypesById[decodedMessage.type]
-      }
+      // We can't skip check for presence here, since enums always have
+      // zero value by default in protobuf, even if nothing was passed
+      decodedMessage.type = MessageType.getValueById(decodedMessage.type)
+      decodedMessage.command = Command.getValueById(decodedMessage.command)
 
-      if (decodedMessage.message) {
+      if (decodedMessage.message && decodedMessage.message.length > 0) {
         decodedMessage.message = msgpack.deserialize(decodedMessage.message)
       }
 

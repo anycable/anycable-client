@@ -1,6 +1,21 @@
-import { Encoder } from '@anycable/core'
+import { AnyObject, Encoder } from '@anycable/core'
 
-export class ProtobufEncoder implements Encoder<object, Uint8Array> {
-  encode(msg: object): Uint8Array
-  decode(raw: Uint8Array): object | void
+export interface MessageObject {
+  command?: string
+  type?: string
+  message?: AnyObject
+  identifier?: string
+  reason?: string
+  reconnect?: boolean
+}
+
+export class EnumWrapper {
+  constructor(values: AnyObject)
+  getIdByValue(value: string): number
+  getValueById(id: number): string
+}
+
+export class ProtobufEncoder implements Encoder<MessageObject, Uint8Array> {
+  encode(msg: MessageObject): Uint8Array
+  decode(raw: Uint8Array): MessageObject | void
 }
