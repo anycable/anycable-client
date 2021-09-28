@@ -1,4 +1,4 @@
-export interface Encoder<MessageType = object, WireType = string> {
+export interface Encoder<MessageType = object, WireType = string | Uint8Array> {
   encode(msg: MessageType): WireType | void
   decode(raw: WireType): MessageType | void
 }

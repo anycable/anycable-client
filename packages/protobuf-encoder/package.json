@@ -1,14 +1,14 @@
 {
-  "name": "@anycable/msgpack-encoder",
-  "version": "0.0.5",
-  "description": "Msgpack encoder for AnyCable client",
+  "name": "@anycable/protobuf-encoder",
+  "version": "0.0.1",
+  "description": "Protobuf encoder for AnyCable client",
   "keywords": [
     "anycable",
-    "msgpack"
+    "protobuf"
   ],
   "homepage": "https://anycable.io/",
   "repository": "https://github.com/anycable/anycable-client",
-  "author": "Vladimir Dementyev",
+  "author": "Timur Ramazanov",
   "license": "MIT",
   "sideEffects": false,
   "main": "index.js",
@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@anycable/core": "^0.1.0",
+    "protobufjs": "^6.11.2",
     "@ygoe/msgpack": "^1.0.0"
   }
 }
