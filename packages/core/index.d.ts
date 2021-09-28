@@ -45,8 +45,3 @@ export {
   ActionCableSubscriptions,
   TokenRefresher
 } from './create-cable/index.js'
-
-export interface AnyObject {
-  /* eslint-disable @typescript-eslint/no-explicit-any */
-  [key: string]: any
-}

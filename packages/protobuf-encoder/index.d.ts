@@ -1,4 +1,9 @@
-import { AnyObject, Encoder } from '@anycable/core'
+import { Encoder } from '@anycable/core'
+
+interface AnyObject {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  [key: string]: any
+}
 
 export interface MessageObject {
   command?: string
