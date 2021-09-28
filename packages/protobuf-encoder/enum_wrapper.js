@@ -12,19 +12,16 @@
 //
 // This class leverages that feature
 export class EnumWrapper {
-  #values
-  #valuesById
-
   constructor(enumValues) {
-    this.#values = enumValues
-    this.#valuesById = Object.getPrototypeOf(enumValues)
+    this.values = enumValues
+    this.valuesById = Object.getPrototypeOf(enumValues)
   }
 
   getIdByValue(value) {
-    return this.#values[value]
+    return this.values[value]
   }
 
   getValueById(id) {
-    return this.#valuesById[id]
+    return this.valuesById[id]
   }
 }
