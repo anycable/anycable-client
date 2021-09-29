@@ -1,21 +1,16 @@
 import { Encoder } from '@anycable/core'
 
-interface AnyObject {
-  /* eslint-disable @typescript-eslint/no-explicit-any */
-  [key: string]: any
-}
-
 export interface MessageObject {
   command?: string
   type?: string
-  message?: AnyObject
+  message?: object
   identifier?: string
   reason?: string
   reconnect?: boolean
 }
 
 export class EnumWrapper {
-  constructor(values: AnyObject)
+  constructor(values: object)
   getIdByValue(value: string): number
   getValueById(id: number): string
 }
