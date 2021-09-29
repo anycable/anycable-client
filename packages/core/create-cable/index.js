@@ -8,7 +8,6 @@ import { SubscriptionRejectedError } from '../protocol/index.js'
 
 export const DEFAULT_OPTIONS = {
   protocol: 'actioncable-v1-json',
-  websocketFormat: 'text',
   pingInterval: 3000,
   maxReconnectAttempts: Infinity,
   maxMissingPings: 2,
@@ -54,7 +53,7 @@ export function createCable(url, opts) {
     websocketFormat = websocketFormat || 'text'
   } else if (protocol === 'actioncable-v1-msgpack') {
     protocol = new ActionCableProtocol()
-    websocketFormat = websocketFormat || 'binary'
+    websocketFormat = 'binary'
     if (!encoder) {
       throw Error(
         'Msgpack encoder must be specified explicitly. Use `@anycable/msgpack-encoder` package or build your own'
