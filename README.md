@@ -230,7 +230,7 @@ import { ProtobufEncoder } from '@anycable/protobuf-encoder'
 export default createCable({protocol: 'actioncable-v1-protobuf', encoder: new ProtobufEncoder()})
 ```
 
-**NOTE:** You MUST install the corresponding encoder package yourself, e.g., `yarn add @anycable/msgpack-encoder`.
+**NOTE:** You MUST install the corresponding encoder package yourself, e.g., `yarn add @anycable/msgpack-encoder` or `yarn add @anycable/protobuf-encoder`.
 
 ### Refreshing authentication tokens
 
