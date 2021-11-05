@@ -1,6 +1,7 @@
 # Change log
 
 ## master
+- Added a cable implementation (`TestCable`) for unit testing purpose to `@anycable/core`. ([@TheSeally][])
 
 ## 0.1.1 (2020-09-29)
 
@@ -16,3 +17,4 @@
 [@tienle]: https://github.com/tienle
 [@gydroperit]: https://github.com/gydroperit
 [@charlie-wasp]: https://github.com/charlie-wasp
+[@TheSeally]: https://github.com/TheSeally
