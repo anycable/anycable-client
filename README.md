@@ -276,7 +276,63 @@ export default createCable({
 
 ### Testing
 
-_⏳ Coming soon_
+For testing your channel you can use test cable implementation from `@anycable/core/testing`.
+
+By using test cable implementation you can test channel's output actions. All actions store in cable `outgoing` property.
+Also test implementation helps to test channel `disconnect` event.
+
+For example we have the following channel implementation.
+
+```js
+import { Channel } from "@anycable/core";
+
+class ChatChannel extends Channel {
+  static identifier = "ChatChannel";
+
+  async speak(message) {
+    return this.perform("speak", { message });
+  }
+
+  async leave() {
+    // some custom logic
+    return this.disconnect();
+  }
+}
+```
+
+We can test it like this (using `Jest`):
+
+```js
+import { Channel } from './channel.js'
+import { TestCable } from '@anycable/core/testing'
+
+describe('ChatChannel', () => {
+  let channel: Channel
+  let cable: TestCable
+
+  beforeEach(() => {
+    cable = new TestCable()
+    channel = new Channel()
+    cable.subscribe(channel)
+  })
+
+  it('perform an speak action', async () => {
+    await channel.speak('hello')
+    await channel.speak('bye')
+
+    expect(cable.outgoing).toEqual([
+      { action: 'speak', payload: { message: 'hello' } },
+      { action: 'speak', payload: { message: 'bye' } }
+    ])
+  })
+
+  it('disconnects when leave', async () => {
+    await channel.leave()
+
+    expect(channel.state).toEqual('disconnected')
+  })
+})
+```
 
 ### Babel/Browserlist configuration
 
