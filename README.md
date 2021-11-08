@@ -15,6 +15,7 @@ There are multiple reasons that forced us to implement an alternative client lib
 - Multi-platform out-of-the-box (web, workers, React Native).
 - TypeScript support.
 - Revisited client-side APIs.
+- [Testability](#testing)
 - Future protocol extensions/modifications support.
 
 ## Usage: Web
