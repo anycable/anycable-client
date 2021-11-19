@@ -29,6 +29,10 @@ export class ProtobufEncoder {
   /* eslint-disable consistent-return */
   decode(data) {
     try {
+      if (data instanceof ArrayBuffer) {
+        data = new Uint8Array(data)
+      }
+
       let decodedMessage = Message.decode(data)
 
       // We can't skip check for presence here, since enums always have

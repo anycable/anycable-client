@@ -109,6 +109,25 @@ describe('decode', () => {
       expect(decoded.message).toEqual(payload)
     })
   })
+
+  describe('ArrayBuffer decoding', () => {
+    it('converts message to Uint8Array and decodes it', () => {
+      let payload = { type: 3 }
+      let encoded = Message.encode(payload).finish()
+
+      var encodedArrayBuffer = new ArrayBuffer(encoded.length);
+      var view = new Uint8Array(encodedArrayBuffer);
+
+      for (var i = 0; i < encoded.length; ++i) {
+        view[i] = encoded[i];
+      }
+
+      // @ts-ignore
+      let decoded = encoder.decode(encodedArrayBuffer) as MessageObject
+
+      expect(decoded.type).toEqual('ping')
+    })
+  })
 })
 
 describe('protobuf message e2e sending', () => {
