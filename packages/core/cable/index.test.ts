@@ -216,6 +216,20 @@ describe('connect/disconnect', () => {
     cable.close('test2')
   })
 
+  it('disconnect', done => {
+    cable.once('close', ev => {
+      let event = ev as { reason: string }
+      expect(event.reason).toEqual('manual')
+      done()
+    })
+
+    cable.connected()
+    cable.disconnect()
+
+    expect(cable.state).toEqual('disconnected')
+    expect(transport.opened).toBe(false)
+  })
+
   it('disconnected with reason', done => {
     cable.on('disconnect', ev => {
       expect(ev.reason).toEqual('test')

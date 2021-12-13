@@ -165,6 +165,10 @@ export class Cable {
     this.emit('close', err)
   }
 
+  disconnect() {
+    this.close(new DisconnectedError('manual'))
+  }
+
   handleIncoming(raw) {
     if (this.state === 'disconnected' || this.state === 'idle') return
 
