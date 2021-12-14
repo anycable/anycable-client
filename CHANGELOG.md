@@ -2,6 +2,8 @@
 
 ## master
 
+## 0.3.0 (2021-12-14)
+
 - Added optional memoization to `cable.subscribeTo`. ([@palkan][])
 
 - Added `cable.subscribeTo(channelClass, params)` support. ([@palkan][])
