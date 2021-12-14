@@ -6,6 +6,7 @@ export {
   MessageMeta,
   Identifier
 } from './channel/index.js'
+export { ChannelsCache } from './channels-cache/index.js'
 export { Transport } from './transport/index.js'
 export { Encoder, JSONEncoder } from './encoder/index.js'
 export {

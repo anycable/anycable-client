@@ -6,6 +6,7 @@ export {
   CommandError,
   StaleConnectionError
 } from './protocol/index.js'
+export { ChannelsCache } from './channels-cache/index.js'
 export { Hub } from './hub/index.js'
 export { BaseLogger, NoopLogger } from './logger/index.js'
 export { JSONEncoder } from './encoder/index.js'
