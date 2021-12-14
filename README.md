@@ -115,6 +115,77 @@ channel.on('disconnect', () => console.log('No chat connection'))
 channel.disconnect()
 ```
 
+It is safe to call `cable.subscribe(channel)` multiple times—only a single subscription (from the protocol point of view) is made, i.e., this action is idempotent. The reasoning behind this is to make it possible to use the same channel from multiple indepependent places in your code without worrying about whether the channels has been already subscribed or not.
+
+Let's consider an example. Suppose you have two _components_ relying on the same channel:
+
+```js
+// component-one.js
+import cable from 'cable'
+import { NotificationsChannel } from 'channels/notifications_channel'
+
+// Build an instance of a NotificationChannel class.
+const channel = new NotificationChannel()
+
+// Subscribe to the server channel via the client.
+await cable.subscribe(channel)
+
+channel.on('message', msg => console.log("component one received message", `${msg.name}: ${msg.text}`))
+
+// component-two.js
+import cable from 'cable'
+import { NotificationsChannel } from 'channels/notifications_channel'
+
+// Build an instance of a NotificationChannel class.
+const channel = new NotificationChannel()
+
+// Subscribe to the server channel via the client.
+await cable.subscribe(channel)
+
+channel.on('message', msg => console.log("component two received message", `${msg.name}: ${msg.text}`))
+```
+
+The code above would try to create two subscriptions with the same identifiers—an invalid operation from the protocol (Action Cable) point of view. A client MAY only subscribe to the same channel (with the same parameters) once.
+
+To resolve this issue we may extract the channel instance into its own _module_ and reuse it:
+
+```js
+// channels/notifications_channel.js
+import { Channel } from "@anycable/core"
+
+export class NotificationsChannel extends Channel {
+  // ...
+}
+
+let instance
+
+export function createChannel() {
+  if (!instance) {
+    instance = new NotificationChannel()
+  }
+
+  return instance
+}
+
+// component-one.js
+import cable from 'cable'
+import { createChannel } from 'channels/notifications_channel'
+
+const channel = createChannel()
+await cable.subscribe(channel)
+
+channel.on('message', msg => console.log("component one received message", `${msg.name}: ${msg.text}`))
+
+// component-two.js
+import cable from 'cable'
+import { createChannel } from 'channels/notifications_channel'
+
+const channel = createChannel()
+await cable.subscribe(channel)
+
+channel.on('message', msg => console.log("component two received message", `${msg.name}: ${msg.text}`))
+```
+
 #### Headless subscriptions
 
 _Headless_ subscriptions are very similar to Action Cable client-side subscriptions except from the fact that no mixins are allowed (you classes in case you need them).

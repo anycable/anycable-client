@@ -45,6 +45,7 @@ export class Cable {
     this.hub = new Hub()
 
     this[STATE] = 'idle'
+    this.pendingSubscriptions = {}
 
     this.handleClose = this.handleClose.bind(this)
     this.handleIncoming = this.handleIncoming.bind(this)
@@ -210,6 +211,26 @@ export class Cable {
   }
 
   async subscribe(channel) {
+    if (channel.state === 'connected') {
+      if (channel.receiver !== this) {
+        throw Error('Already connected to another cable')
+      }
+
+      return channel.identifier
+    }
+
+    let pendingSubscribe = this.pendingSubscriptions[channel]
+
+    if (pendingSubscribe) return pendingSubscribe
+
+    return (this.pendingSubscriptions[channel] = this.doSubscribe(
+      channel
+    ).finally(() => {
+      delete this.pendingSubscriptions[channel]
+    }))
+  }
+
+  async doSubscribe(channel) {
     channel.connecting(this)
 
     if (this.state === 'connecting') {

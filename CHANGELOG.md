@@ -1,5 +1,9 @@
 # Change log
 
+## master
+
+- Made `cable.subscribe(channel)` idemponent. ([@palkan][])
+
 ## 0.2.0 (2021-11-08)
 
 - Added a cable implementation (`TestCable`) for unit testing purpose to `@anycable/core`. ([@TheSeally][])

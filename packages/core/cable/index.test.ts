@@ -317,6 +317,26 @@ describe('channels', () => {
     })
   })
 
+  it('double-subscribe the same channel', async () => {
+    cable.subscribe(channel)
+    await cable.subscribe(channel)
+    await cable.subscribe(channel)
+
+    expect(cable.hub.size).toEqual(1)
+    expect(channel.state).toEqual('connected')
+
+    // subscribing to another cable should fail
+    let newCable = new Cable({ protocol, encoder, logger, transport })
+
+    expect(newCable.subscribe(channel)).rejects.toEqual(
+      Error('Already connected to another cable')
+    )
+
+    await channel.disconnect()
+
+    expect(newCable.subscribe(channel)).resolves.toEqual(channel.identifier)
+  })
+
   it('subscribe when idle', () => {
     cable = new Cable({
       protocol,
