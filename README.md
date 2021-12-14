@@ -463,6 +463,52 @@ channelTwo.state // 'disconnected'
 channelOne === channelTwo // true
 ```
 
+### Channels memoization
+
+We also provide a way to automatically memoize channel instances. This feature is built into a `cable.subscribeTo` function, and could be activated by providing a cache store instance during the cable creation. For example:
+
+```js
+import { ChannelsCache } from '@anycable/core'
+import { createCable } from '@anycable/web'
+
+let channelsCache = new ChannelsCache()
+
+export default createCable({ channelsCache })
+```
+
+After that, calling `subscribeTo` with the same channel names (or classes) and params would return the same channel instance:
+
+```js
+const channelOne = await cable.subscribeTo('SomeChannel', { id: '42' })
+const channelTwo = await cable.subscribeTo('SomeChannel', { id: '42' })
+
+channelOne === channelTwo // => true
+
+const channelNew = await cable.subscribeTo('SomeChannel', { id: '2021' })
+channelNew === channelOne // => false
+```
+
+Since `subscribeTo` works with channel classes, too, we can rewrite our original example as:
+
+```js
+import cable from 'cable'
+import { NotificationsChannel } from 'channels/notifications_channel'
+
+const channel = await cable.subscribeTo(NotificationChannel)
+
+channel.on('message', msg => console.log("component one received message", `${msg.name}: ${msg.text}`))
+
+// component-two.js
+import cable from 'cable'
+import { NotificationsChannel } from 'channels/notifications_channel'
+
+const channel = await cable.subscribeTo(NotificationChannel)
+
+channel.on('message', msg => console.log("component two received message", `${msg.name}: ${msg.text}`))
+```
+
+**IMPORTANT:** Please, keep in mind, that cache is not cleared automatically. That's your responsibility (though, usually, the number of active channels per session is limited).
+
 ## Further reading
 
 - [Architecture](./docs/architecture.md)

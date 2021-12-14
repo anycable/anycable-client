@@ -28,7 +28,8 @@ export {
   CableOptions,
   Cable,
   NoConnectionError,
-  CableEvents
+  CableEvents,
+  Cache
 } from './cable/index.js'
 export {
   Monitor,

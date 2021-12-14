@@ -2,6 +2,10 @@
 
 ## master
 
+- Added optional memoization to `cable.subscribeTo`. ([@palkan][])
+
+- Added `cable.subscribeTo(channelClass, params)` support. ([@palkan][])
+
 - Support multiple `cable.subscribe(channel)` and `cable.unsubscribe(identifier)`. ([@palkan][])
 
 It is possible to reuse the same channel instance independently from different _components_.

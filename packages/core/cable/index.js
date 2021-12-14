@@ -16,6 +16,7 @@ export class NoConnectionError extends Error {
 }
 
 export class GhostChannel extends Channel {
+  static identifier = '__ghost__'
   constructor(identifier, params) {
     super(params)
     this.identifier = identifier
@@ -33,12 +34,13 @@ export class GhostChannel extends Channel {
 const STATE = Symbol('state')
 
 export class Cable {
-  constructor({ transport, protocol, encoder, logger, lazy }) {
+  constructor({ transport, protocol, encoder, logger, lazy, channelsCache }) {
     this.emitter = createNanoEvents()
     this.transport = transport
     this.encoder = encoder
     this.logger = logger || new NoopLogger()
     this.protocol = protocol
+    this.cache = channelsCache
 
     this.protocol.attached(this)
 
@@ -421,8 +423,30 @@ export class Cable {
     return this._pendingConnect
   }
 
-  subscribeTo(channelName, params) {
-    let channel = new GhostChannel(channelName, params)
+  subscribeTo(ChannelClass, params) {
+    let channel
+    let ghostName
+
+    if (typeof ChannelClass === 'string') {
+      ghostName = ChannelClass
+      ChannelClass = GhostChannel
+    }
+
+    let identifier = ChannelClass.identifier
+
+    if (this.cache) {
+      channel = this.cache.read(identifier, params)
+    }
+
+    if (!channel) {
+      channel = ghostName
+        ? new ChannelClass(ghostName, params)
+        : new ChannelClass(params)
+
+      if (this.cache) {
+        this.cache.write(channel, identifier, params)
+      }
+    }
 
     return this.subscribe(channel).then(() => channel)
   }

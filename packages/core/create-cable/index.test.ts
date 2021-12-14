@@ -8,7 +8,8 @@ import {
   createConsumer,
   Transport,
   SubscriptionRejectedError,
-  DisconnectedError
+  DisconnectedError,
+  ChannelsCache
 } from '../index.js'
 import { TestTransport } from '../transport/testing'
 
@@ -21,6 +22,13 @@ it('with transport', () => {
   let cable = createCable({ transport: tt })
 
   expect(cable.transport).toBe(tt)
+})
+
+it('with cache', () => {
+  let store = new ChannelsCache()
+  let cable = createCable('ws://example', { channelsCache: store })
+
+  expect(cable.cache).toBe(store)
 })
 
 it('defaults', () => {

@@ -10,7 +10,8 @@ import {
   Channel,
   Encoder,
   SubscriptionRejectedError,
-  Message
+  Message,
+  ChannelsCache
 } from '../index.js'
 import { TestTransport } from '../transport/testing'
 import { TestLogger } from '../logger/testing'
@@ -830,5 +831,33 @@ describe('subscribeTo', () => {
     let received = await p
 
     expect(received).toEqual(message)
+  })
+
+  it('caches channels when cache is present', async () => {
+    cable.cache = new ChannelsCache()
+
+    let channel = await cable.subscribeTo('some_channel', { id: '2020' })
+
+    expect(cable.hub.size).toEqual(1)
+    expect(channel.state).toEqual('connected')
+
+    let another = await cable.subscribeTo('some_channel', { id: '2020' })
+
+    expect(cable.hub.size).toEqual(1)
+    expect(another).toBe(channel)
+  })
+
+  it('caches channels via classes', async () => {
+    cable.cache = new ChannelsCache()
+
+    let channel = await cable.subscribeTo(TestChannel, { id: '2020' })
+
+    expect(cable.hub.size).toEqual(1)
+    expect(channel.state).toEqual('connected')
+
+    let another = await cable.subscribeTo(TestChannel, { id: '2020' })
+
+    expect(cable.hub.size).toEqual(1)
+    expect(another).toBe(channel)
   })
 })
