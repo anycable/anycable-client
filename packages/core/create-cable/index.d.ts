@@ -2,7 +2,7 @@ import { Transport } from '../transport/index.js'
 import { Logger, LogLevel } from '../logger/index.js'
 import { Encoder } from '../encoder/index.js'
 import { Monitor } from '../monitor/index.js'
-import { Cable } from '../cable/index.js'
+import { Cable, Cache } from '../cable/index.js'
 import { Protocol } from '../protocol/index.js'
 import { Channel, Message, ChannelParamsMap } from '../channel/index.js'
 
@@ -31,6 +31,8 @@ export interface CreateOptions {
   lazy: boolean
 
   tokenRefresher: TokenRefresher
+
+  channelsCache: Cache<Channel>
 }
 
 export const DEFAULT_OPTIONS: Partial<CreateOptions>

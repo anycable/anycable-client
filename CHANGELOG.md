@@ -1,5 +1,16 @@
 # Change log
 
+## master
+
+- Added optional memoization to `cable.subscribeTo`. ([@palkan][])
+
+- Added `cable.subscribeTo(channelClass, params)` support. ([@palkan][])
+
+- Support multiple `cable.subscribe(channel)` and `cable.unsubscribe(identifier)`. ([@palkan][])
+
+It is possible to reuse the same channel instance independently from different _components_.
+Each component takes care of subscribing and unsubsribing; the actual subscription (or unsubscription) only happens once.
+
 ## 0.2.0 (2021-11-08)
 
 - Added a cable implementation (`TestCable`) for unit testing purpose to `@anycable/core`. ([@TheSeally][])

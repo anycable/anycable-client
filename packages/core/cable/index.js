@@ -16,6 +16,7 @@ export class NoConnectionError extends Error {
 }
 
 export class GhostChannel extends Channel {
+  static identifier = '__ghost__'
   constructor(identifier, params) {
     super(params)
     this.identifier = identifier
@@ -33,12 +34,13 @@ export class GhostChannel extends Channel {
 const STATE = Symbol('state')
 
 export class Cable {
-  constructor({ transport, protocol, encoder, logger, lazy }) {
+  constructor({ transport, protocol, encoder, logger, lazy, channelsCache }) {
     this.emitter = createNanoEvents()
     this.transport = transport
     this.encoder = encoder
     this.logger = logger || new NoopLogger()
     this.protocol = protocol
+    this.cache = channelsCache
 
     this.protocol.attached(this)
 
@@ -210,6 +212,27 @@ export class Cable {
   }
 
   async subscribe(channel) {
+    if (channel.state === 'connected') {
+      if (channel.receiver !== this) {
+        throw Error('Already connected to another cable')
+      }
+
+      this.hub.entryFor(channel).mark()
+
+      return channel.identifier
+    }
+
+    let entry = this.hub.entryFor(channel)
+    entry.mark()
+
+    if (entry.isPending()) {
+      return entry.pending()
+    }
+
+    return entry.pending(this._subscribe(channel))
+  }
+
+  async _subscribe(channel) {
     channel.connecting(this)
 
     if (this.state === 'connecting') {
@@ -257,6 +280,25 @@ export class Cable {
 
     if (!channel) throw Error(`Channel not found: ${identifier}`)
 
+    let entry = this.hub.entryFor(channel)
+
+    // In case we try to unsubscribe already unsubscribed channel
+    // (that shouldn't really happen)
+    if (entry.isFree()) return true
+
+    entry.unmark()
+
+    // Someone is still using this channel
+    if (!entry.isFree()) return false
+
+    return this._unsubscribe(identifier, channel).catch(err => {
+      // Restore mark state in case of failed unsubscription
+      entry.mark()
+      throw err
+    })
+  }
+
+  async _unsubscribe(identifier, channel) {
     if (this.state === 'connecting') {
       await this.pendingConnect()
 
@@ -282,6 +324,7 @@ export class Cable {
         instance.close()
 
         this.logger.debug('unsubscribed', { id: identifier })
+        return true
       })
       .catch(err => {
         this.logger.error('unsubscribe failed', { id: identifier })
@@ -380,8 +423,30 @@ export class Cable {
     return this._pendingConnect
   }
 
-  subscribeTo(channelName, params) {
-    let channel = new GhostChannel(channelName, params)
+  subscribeTo(ChannelClass, params) {
+    let channel
+    let ghostName
+
+    if (typeof ChannelClass === 'string') {
+      ghostName = ChannelClass
+      ChannelClass = GhostChannel
+    }
+
+    let identifier = ChannelClass.identifier
+
+    if (this.cache) {
+      channel = this.cache.read(identifier, params)
+    }
+
+    if (!channel) {
+      channel = ghostName
+        ? new ChannelClass(ghostName, params)
+        : new ChannelClass(params)
+
+      if (this.cache) {
+        this.cache.write(channel, identifier, params)
+      }
+    }
 
     return this.subscribe(channel).then(() => channel)
   }

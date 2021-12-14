@@ -10,7 +10,8 @@ import {
   Channel,
   Encoder,
   SubscriptionRejectedError,
-  Message
+  Message,
+  ChannelsCache
 } from '../index.js'
 import { TestTransport } from '../transport/testing'
 import { TestLogger } from '../logger/testing'
@@ -638,6 +639,131 @@ describe('channels', () => {
       })
     })
   })
+
+  describe('multi-subscribe', () => {
+    it('subscribing multiple times performs actual subscription once', async () => {
+      let spy = jest
+        .spyOn(protocol, 'subscribe')
+        .mockImplementation(async () => {
+          return 'channel:id'
+        })
+
+      cable.subscribe(channel)
+      await cable.subscribe(channel)
+      await cable.subscribe(channel)
+
+      expect(cable.hub.size).toEqual(1)
+      expect(channel.id).toEqual('channel:id')
+      expect(channel.state).toEqual('connected')
+
+      expect(spy).toHaveBeenCalledTimes(1)
+    })
+
+    it('is not possible to subscribe to different cables', async () => {
+      await cable.subscribe(channel)
+      let prevId = channel.id
+
+      // subscribing to another cable should fail
+      let newCable = new Cable({ protocol, encoder, logger, transport })
+
+      expect(newCable.subscribe(channel)).rejects.toEqual(
+        Error('Already connected to another cable')
+      )
+
+      await channel.disconnect()
+
+      // Subscribes with the same ID
+      expect(newCable.subscribe(channel)).resolves.toEqual(prevId)
+    })
+
+    it('all attemts are rejected in case of a failure', () => {
+      jest.spyOn(protocol, 'subscribe').mockImplementation(async () => {
+        throw new SubscriptionRejectedError()
+      })
+
+      let p1 = cable.subscribe(channel)
+      let p2 = cable.subscribe(channel)
+
+      expect(p1).rejects.toBeInstanceOf(SubscriptionRejectedError)
+      expect(p2).rejects.toBeInstanceOf(SubscriptionRejectedError)
+    })
+
+    it('unsubscribe should be called the same number of times as subscribe to actually unsubscribe', async () => {
+      let subscribeSpy = jest
+        .spyOn(protocol, 'subscribe')
+        .mockImplementation(async () => {
+          return 'channel:id'
+        })
+      let unsubscribeSpy = jest
+        .spyOn(protocol, 'unsubscribe')
+        .mockImplementation(async (identifier: string) => {
+          expect(identifier).toEqual('channel:id')
+        })
+
+      cable.subscribe(channel)
+      await cable.subscribe(channel)
+
+      expect(subscribeSpy).toHaveBeenCalledTimes(1)
+
+      expect(cable.hub.size).toEqual(1)
+      expect(channel.state).toEqual('connected')
+
+      let res = await channel.disconnect()
+      // First disconnect shouldn't unsubscribe the channel
+      expect(res).toEqual(false)
+      expect(channel.state).toEqual('connected')
+      expect(unsubscribeSpy).toHaveBeenCalledTimes(0)
+
+      await cable.subscribe(channel)
+      expect(subscribeSpy).toHaveBeenCalledTimes(1)
+      await channel.disconnect()
+
+      res = await channel.disconnect()
+      expect(res).toEqual(true)
+      expect(channel.state).toEqual('disconnected')
+      expect(unsubscribeSpy).toHaveBeenCalledTimes(1)
+
+      await cable.subscribe(channel)
+      expect(channel.state).toEqual('connected')
+      expect(subscribeSpy).toHaveBeenCalledTimes(2)
+    })
+
+    it('unsubscribe more times than subscribe', async () => {
+      await cable.subscribe(channel)
+
+      let p = cable.unsubscribe(channel.id)
+      let res = await cable.unsubscribe(channel.id)
+      expect(res).toEqual(true)
+      expect(p).resolves.toEqual(true)
+    })
+
+    it('unsubscribe failure', async () => {
+      let counter = 0
+
+      let unsubscribeSpy = jest
+        .spyOn(protocol, 'unsubscribe')
+        .mockImplementation(async (_identifier: string) => {
+          counter++
+          if (counter === 1) throw Error('Something went wrong')
+        })
+
+      await cable.subscribe(channel)
+
+      let thrown
+
+      try {
+        await channel.disconnect()
+      } catch (err) {
+        thrown = err
+      }
+
+      expect(thrown).toEqual(Error('Something went wrong'))
+
+      expect(channel.disconnect()).resolves.toEqual(true)
+
+      expect(unsubscribeSpy).toHaveBeenCalledTimes(2)
+    })
+  })
 })
 
 it('logs encode errors', () => {
@@ -705,5 +831,33 @@ describe('subscribeTo', () => {
     let received = await p
 
     expect(received).toEqual(message)
+  })
+
+  it('caches channels when cache is present', async () => {
+    cable.cache = new ChannelsCache()
+
+    let channel = await cable.subscribeTo('some_channel', { id: '2020' })
+
+    expect(cable.hub.size).toEqual(1)
+    expect(channel.state).toEqual('connected')
+
+    let another = await cable.subscribeTo('some_channel', { id: '2020' })
+
+    expect(cable.hub.size).toEqual(1)
+    expect(another).toBe(channel)
+  })
+
+  it('caches channels via classes', async () => {
+    cable.cache = new ChannelsCache()
+
+    let channel = await cable.subscribeTo(TestChannel, { id: '2020' })
+
+    expect(cable.hub.size).toEqual(1)
+    expect(channel.state).toEqual('connected')
+
+    let another = await cable.subscribeTo(TestChannel, { id: '2020' })
+
+    expect(cable.hub.size).toEqual(1)
+    expect(another).toBe(channel)
   })
 })

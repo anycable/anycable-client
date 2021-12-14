@@ -1,7 +1,49 @@
+export class Entry {
+  constructor() {
+    this.refs = 0
+    this.pendingSubscription = undefined
+  }
+
+  mark() {
+    this.refs++
+  }
+
+  unmark() {
+    this.refs--
+  }
+
+  isFree() {
+    return this.refs === 0
+  }
+
+  isPending() {
+    return !!this.pendingSubscription
+  }
+
+  pending(promise) {
+    if (this.pendingSubscription) return this.pendingSubscription
+
+    return (this.pendingSubscription = promise.finally(() => {
+      delete this.pendingSubscription
+    }))
+  }
+}
+
 export class Hub {
   constructor() {
     this.registry = {}
-    this.pending = []
+    this.entries = {}
+    this.pendingMessages = []
+  }
+
+  entryFor(channel) {
+    let entry = this.entries[channel]
+
+    if (!entry) {
+      this.entries[channel] = new Entry()
+    }
+
+    return this.entries[channel]
   }
 
   add(id, channel) {
@@ -15,6 +57,7 @@ export class Hub {
 
     if (channel) {
       delete this.registry[id]
+      delete this.entries[channel]
       return channel
     }
 
@@ -31,12 +74,12 @@ export class Hub {
     if (channel) {
       channel.receive(msg, meta)
     } else {
-      this.pending.push([id, msg, meta])
+      this.pendingMessages.push([id, msg, meta])
     }
   }
 
   close() {
-    this.pending.length = 0
+    this.pendingMessages.length = 0
   }
 
   get size() {
@@ -50,11 +93,11 @@ export class Hub {
   flush(id) {
     let left = []
 
-    for (let item of this.pending) {
+    for (let item of this.pendingMessages) {
       if (item[0] === id) this.transmit(item[0], item[1], item[2])
       else left.push(item)
     }
 
-    this.pending = left
+    this.pendingMessages = left
   }
 }

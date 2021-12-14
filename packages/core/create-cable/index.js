@@ -42,7 +42,8 @@ export function createCable(url, opts) {
     maxMissingPings,
     maxReconnectAttempts,
     subprotocol,
-    tokenRefresher
+    tokenRefresher,
+    channelsCache
   } = opts
 
   if (typeof protocol === 'string') subprotocol = subprotocol || protocol
@@ -102,7 +103,8 @@ export function createCable(url, opts) {
     transport,
     encoder,
     logger,
-    lazy
+    lazy,
+    channelsCache
   })
 
   if (monitor) {

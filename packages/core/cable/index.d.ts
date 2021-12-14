@@ -24,12 +24,19 @@ export interface CableEvents {
   keepalive: (msg?: Message) => void
 }
 
+export interface Cache<T> {
+  read(identifier: string, params?: ChannelParamsMap): T | undefined
+  write(channel: T, identifier: string, params?: ChannelParamsMap): void
+  delete(identifier: string, params?: ChannelParamsMap): boolean
+}
+
 export type CableOptions = {
   transport: Transport
   protocol: Protocol
   encoder: Encoder
   logger?: Logger
   lazy?: boolean
+  channelsCache?: Cache<Channel>
 }
 
 export type CableState = 'idle' | 'disconnected' | 'connecting' | 'connected'
@@ -43,6 +50,7 @@ export class Cable {
   encoder: Encoder
   logger: Logger
   monitor?: Monitor
+  cache?: Cache<Channel>
 
   readonly state: CableState
 
@@ -50,7 +58,7 @@ export class Cable {
 
   connect(): Promise<void>
   subscribe(channel: Channel): Promise<Identifier>
-  unsubscribe(id: Identifier): Promise<void>
+  unsubscribe(id: Identifier): Promise<boolean>
   perform(
     id: Identifier,
     action: string,
@@ -60,6 +68,12 @@ export class Cable {
   close(reason?: string | ReasonError): void
 
   subscribeTo(channel: string, params?: ChannelParamsMap): Promise<GhostChannel>
+  subscribeTo<P extends ChannelParamsMap, T extends Channel<P>>(
+    channel: {
+      new (...args: {} extends P ? [undefined?] : [P]): T
+    },
+    ...args: {} extends P ? [undefined?] : [P]
+  ): Promise<T>
 
   connected(): void
   restored(): void
