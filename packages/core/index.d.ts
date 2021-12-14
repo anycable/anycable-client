@@ -20,6 +20,7 @@ export {
 } from './protocol/index.js'
 export { Hub } from './hub/index.js'
 export { Logger, LogLevel, BaseLogger, NoopLogger } from './logger/index.js'
+export { stringifyParams } from './stringify-params/index.js'
 
 export { ActionCableProtocol } from './action_cable/index.js'
 export {
