@@ -10,7 +10,7 @@ export type MessageMeta = Partial<{
 }>
 
 export interface Receiver {
-  unsubscribe(id: Identifier): Promise<void>
+  unsubscribe(id: Identifier): Promise<boolean>
   perform(
     id: Identifier,
     action: string,
@@ -53,7 +53,7 @@ export class Channel<
   restored(): void
   disconnected(reason?: ReasonError): void
 
-  disconnect(): Promise<void>
+  disconnect(): Promise<boolean>
   close(reason?: ReasonError): void
   perform(action: string, payload?: object): Promise<Message | void>
   receive(msg: MessageType, meta?: MessageMeta): void

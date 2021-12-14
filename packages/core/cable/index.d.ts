@@ -50,7 +50,7 @@ export class Cable {
 
   connect(): Promise<void>
   subscribe(channel: Channel): Promise<Identifier>
-  unsubscribe(id: Identifier): Promise<void>
+  unsubscribe(id: Identifier): Promise<boolean>
   perform(
     id: Identifier,
     action: string,

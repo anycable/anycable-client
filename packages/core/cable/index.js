@@ -45,7 +45,6 @@ export class Cable {
     this.hub = new Hub()
 
     this[STATE] = 'idle'
-    this.pendingSubscriptions = {}
 
     this.handleClose = this.handleClose.bind(this)
     this.handleIncoming = this.handleIncoming.bind(this)
@@ -216,21 +215,22 @@ export class Cable {
         throw Error('Already connected to another cable')
       }
 
+      this.hub.entryFor(channel).mark()
+
       return channel.identifier
     }
 
-    let pendingSubscribe = this.pendingSubscriptions[channel]
+    let entry = this.hub.entryFor(channel)
+    entry.mark()
 
-    if (pendingSubscribe) return pendingSubscribe
+    if (entry.isPending()) {
+      return entry.pending()
+    }
 
-    return (this.pendingSubscriptions[channel] = this.doSubscribe(
-      channel
-    ).finally(() => {
-      delete this.pendingSubscriptions[channel]
-    }))
+    return entry.pending(this._subscribe(channel))
   }
 
-  async doSubscribe(channel) {
+  async _subscribe(channel) {
     channel.connecting(this)
 
     if (this.state === 'connecting') {
@@ -278,6 +278,25 @@ export class Cable {
 
     if (!channel) throw Error(`Channel not found: ${identifier}`)
 
+    let entry = this.hub.entryFor(channel)
+
+    // In case we try to unsubscribe already unsubscribed channel
+    // (that shouldn't really happen)
+    if (entry.isFree()) return true
+
+    entry.unmark()
+
+    // Someone is still using this channel
+    if (!entry.isFree()) return false
+
+    return this._unsubscribe(identifier, channel).catch(err => {
+      // Restore mark state in case of failed unsubscription
+      entry.mark()
+      throw err
+    })
+  }
+
+  async _unsubscribe(identifier, channel) {
     if (this.state === 'connecting') {
       await this.pendingConnect()
 
@@ -303,6 +322,7 @@ export class Cable {
         instance.close()
 
         this.logger.debug('unsubscribed', { id: identifier })
+        return true
       })
       .catch(err => {
         this.logger.error('unsubscribe failed', { id: identifier })

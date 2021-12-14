@@ -41,9 +41,9 @@ class TestReceiver implements Receiver {
     this.channel.close(new SubscriptionRejectedError('Rejected'))
   }
 
-  unsubscribe(_sid: Identifier): Promise<void> {
+  unsubscribe(_sid: Identifier): Promise<boolean> {
     this.channel.disconnected()
-    return Promise.resolve()
+    return Promise.resolve(true)
   }
 
   perform(
@@ -237,7 +237,7 @@ describe('receiver communicaton', () => {
     jest.spyOn(client, 'unsubscribe').mockImplementation((id: Identifier) => {
       expect(id).toEqual(channel.id)
       channel.disconnected()
-      return Promise.resolve()
+      return Promise.resolve(true)
     })
 
     await channel.disconnect()
