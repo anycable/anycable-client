@@ -126,9 +126,9 @@ import cable from 'cable'
 
 const subscription = await cable.subscribeTo('ChatChannel', { roomId: '42' })
 
-const _ = await channel.perform('speak', { msg: 'Hello' })
+const _ = await subscription.perform('speak', { msg: 'Hello' })
 
-channel.on('message', msg => {
+subscription.on('message', msg => {
   if (msg.type === 'typing') {
     console.log(`User ${msg.name} is typing`)
   } else {
