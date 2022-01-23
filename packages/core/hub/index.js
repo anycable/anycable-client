@@ -37,13 +37,12 @@ export class Hub {
   }
 
   entryFor(channel) {
-    let entry = this.entries[channel]
+    const key = JSON.stringify({ identifier: channel.identifier, params: channel.params })
 
-    if (!entry) {
-      this.entries[channel] = new Entry()
-    }
+    let entry = this.entries[key]
+    if (!entry) this.entries[key] = new Entry()
 
-    return this.entries[channel]
+    return this.entries[key]
   }
 
   add(id, channel) {
