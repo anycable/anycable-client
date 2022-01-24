@@ -37,7 +37,10 @@ export class Hub {
   }
 
   entryFor(channel) {
-    const key = JSON.stringify({ identifier: channel.identifier, params: channel.params })
+    let key = JSON.stringify({
+      identifier: channel.identifier,
+      params: channel.params
+    })
 
     let entry = this.entries[key]
     if (!entry) this.entries[key] = new Entry()
