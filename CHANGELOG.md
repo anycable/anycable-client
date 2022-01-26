@@ -2,6 +2,10 @@
 
 ## master
 
+## 0.3.1 (2022-01-26)
+
+- Fixed subscriptions cache by switching to a WeakMap. ([@palkan][], [@lokkirill][])
+
 ## 0.3.0 (2021-12-14)
 
 - Added optional memoization to `cable.subscribeTo`. ([@palkan][])
@@ -32,3 +36,4 @@ Each component takes care of subscribing and unsubsribing; the actual subscripti
 [@gydroperit]: https://github.com/gydroperit
 [@charlie-wasp]: https://github.com/charlie-wasp
 [@TheSeally]: https://github.com/TheSeally
+[@lokkirill]: https://github.com/lokkirill
