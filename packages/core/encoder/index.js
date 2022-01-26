@@ -8,6 +8,6 @@ export class JSONEncoder {
   decode(raw) {
     try {
       return JSON.parse(raw)
-    } catch {}
+    } catch (_e) {}
   }
 }

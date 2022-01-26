@@ -105,7 +105,8 @@
           "**/*.{ts,js}"
         ],
         "rules": {
-          "node/no-unsupported-features/es-syntax": "off"
+          "node/no-unsupported-features/es-syntax": "off",
+          "unicorn/prefer-optional-catch-binding": "off"
         }
       }
     ]

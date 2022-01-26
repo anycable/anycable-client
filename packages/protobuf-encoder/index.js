@@ -41,6 +41,6 @@ export class ProtobufEncoder {
       }
 
       return decodedMessage
-    } catch {}
+    } catch (_e) {}
   }
 }

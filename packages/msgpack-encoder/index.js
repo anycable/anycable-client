@@ -9,6 +9,6 @@ export class MsgpackEncoder {
   decode(data) {
     try {
       return msgpack.decode(data)
-    } catch {}
+    } catch (_e) {}
   }
 }
