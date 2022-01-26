@@ -70,6 +70,10 @@ class TestChannel extends Channel<{ id: string }> {
   static identifier = 'test'
 }
 
+class AnotherTestChannel extends Channel<{ id: string }> {
+  static identifier = 'test_me_too'
+}
+
 let client: TestReceiver
 
 beforeEach(() => {
@@ -78,6 +82,7 @@ beforeEach(() => {
 
 describe('receiver communicaton', () => {
   let channel: TestChannel
+  let anotherChannel: AnotherTestChannel
 
   beforeEach(() => {
     channel = new TestChannel({ id: '2021' })
@@ -140,6 +145,27 @@ describe('receiver communicaton', () => {
     channel.restored()
 
     return expect(res).resolves.toEqual({ action: 'restore' })
+  })
+
+  it('parallel connecting', async () => {
+    anotherChannel = new AnotherTestChannel({ id: '2022' })
+
+    expect(channel.state).toEqual('disconnected')
+    expect(anotherChannel.state).toEqual('disconnected')
+
+    client.subscribe(channel)
+    client.subscribe(anotherChannel)
+
+    expect(channel.state).toEqual('connecting')
+    expect(anotherChannel.state).toEqual('connecting')
+
+    client.subscribed(channel)
+    client.subscribed(anotherChannel)
+
+    expect(channel.state).toEqual('connected')
+    expect(anotherChannel.state).toEqual('connected')
+    expect(channel.id).toBeDefined()
+    expect(anotherChannel.id).toBeDefined()
   })
 
   it('restored when connected', () => {

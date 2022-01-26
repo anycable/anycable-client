@@ -32,18 +32,18 @@ export class Entry {
 export class Hub {
   constructor() {
     this.registry = {}
-    this.entries = {}
+    this.entries = new WeakMap()
     this.pendingMessages = []
   }
 
   entryFor(channel) {
-    let entry = this.entries[channel]
+    let entry = this.entries.get(channel)
 
     if (!entry) {
-      this.entries[channel] = new Entry()
+      this.entries.set(channel, new Entry())
     }
 
-    return this.entries[channel]
+    return this.entries.get(channel)
   }
 
   add(id, channel) {
@@ -57,7 +57,7 @@ export class Hub {
 
     if (channel) {
       delete this.registry[id]
-      delete this.entries[channel]
+      this.entries.delete(channel)
       return channel
     }
 
