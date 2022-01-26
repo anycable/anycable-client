@@ -25,18 +25,28 @@ const fetchMeta = (doc, key) => {
   }
 }
 
-/* eslint-disable consistent-return */
-const generateUrlFromDOM = () => {
-  if (typeof document !== 'undefined' && document.head) {
-    let url = fetchMeta(document, 'url')
-    if (url) return url
-  }
+const absoluteWSUrl = path => {
+  if (path.match(/wss?:\/\//)) return path
 
   if (typeof window !== 'undefined') {
     let proto = window.location.protocol.replace('http', 'ws')
 
-    return `${proto}//${window.location.host}${defaultUrl}`
+    return `${proto}//${window.location.host}${path}`
   }
+
+  return path
+}
+
+/* eslint-disable consistent-return */
+const generateUrlFromDOM = () => {
+  if (typeof document !== 'undefined' && document.head) {
+    let url = fetchMeta(document, 'url')
+    if (url) {
+      return absoluteWSUrl(url)
+    }
+  }
+
+  return absoluteWSUrl(defaultUrl)
 }
 
 export function createCable(url, opts) {

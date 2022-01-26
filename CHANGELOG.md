@@ -2,6 +2,8 @@
 
 ## master
 
+- `web`: Fixed generating URL from meta tags when value includes only the path (e.g., `/cable`). ([@palkan][])
+
 ## 0.3.1 (2022-01-26)
 
 - Fixed subscriptions cache by switching to a WeakMap. ([@palkan][], [@lokkirill][])

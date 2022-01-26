@@ -48,6 +48,15 @@ describe('createCable', () => {
     let ws = cable.transport
     expect(ws.url).toEqual(`ws://anycable.go:2313/cable`)
   })
+
+  it('adds current host if url does not contain one', () => {
+    document.head.innerHTML = `
+      <meta name="action-cable-url" content="/cablitto">
+    `
+    let cable = createCable()
+    let ws = cable.transport
+    expect(ws.url).toEqual(`ws://anycable.test/cablitto`)
+  })
 })
 
 describe('fetchTokenFromHTML', () => {
