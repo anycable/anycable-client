@@ -1,12 +1,12 @@
 {
-  "name": "@anycable/web",
-  "version": "0.3.2",
-  "description": "AnyCable JavaScript client for web",
+  "name": "@anycable/turbo-stream",
+  "version": "0.0.2",
+  "description": "AnyCable Client plugin to support Turbo Streams",
   "keywords": [
     "anycable",
     "actioncable",
-    "client",
-    "websocket"
+    "hotwire",
+    "turbo"
   ],
   "homepage": "https://anycable.io/",
   "repository": "https://github.com/anycable/anycable-client",
@@ -21,7 +21,6 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@anycable/core": "^0.3.0",
-    "@hotwired/turbo": "^7.1.0"
+    "@anycable/core": "^0.3.0"
   }
 }

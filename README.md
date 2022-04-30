@@ -275,6 +275,22 @@ export default createCable({
 
 **NODE:** the `fetchTokenFromHTML` performs an HTTP request with a specific header attached (`X-ANYCABLE-OPERATION=token-refresh`), which you could use to minimize the amount of HTML to return in response.
 
+### Hotwire (Turbo Streams) support
+
+To use AnyCable client with [Turbo Streams][turbo-streams], we provide a tiny plugin—`@anycable/turbo-stream`. It allows you to configure a Cable instance yourself to use with Turbo Stream source elements:
+
+```js
+import { start } from "@anycable/turbo-stream"
+import cable from "cable"
+// Explicitly activate stream source elements
+start(cable)
+
+// You can use a custom tag name
+start(cable, { tagName: 'my-source-stream' })
+```
+
+**NOTE:** Make sure you're not importing `@hotwired/turbo-rails` or use a custom tag name: Hotwire's package registers the custom element implicitly and it's not possible to override it.
+
 ### Testing
 
 For testing your channel you can use test cable implementation from `@anycable/core/testing`.
@@ -516,3 +532,4 @@ channel.on('message', msg => console.log("component two received message", `${ms
 [anycable]: https://anycable.io
 [protocol]: https://docs.anycable.io/misc/action_cable_protocol
 [pro]: https://anycable.io/#pro
+[turbo-streams]: https://turbo.hotwired.dev/reference/streams
