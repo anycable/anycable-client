@@ -6,11 +6,11 @@ export class TurboStreamSourceElement extends HTMLElement {
   async connectedCallback() {
     connectStreamSource(this)
 
-    const channel = this.getAttribute('channel')
-    const signed_stream_name = this.getAttribute('signed-stream-name')
+    let channel = this.getAttribute('channel')
+    let signedStreamName = this.getAttribute('signed-stream-name')
 
     this.subscription = await this.constructor.cable.subscribeTo(channel, {
-      signed_stream_name
+      signed_stream_name: signedStreamName
     })
 
     this.unbindOnMessage = this.subscription.on(
@@ -28,7 +28,7 @@ export class TurboStreamSourceElement extends HTMLElement {
   }
 
   dispatchMessageEvent(data) {
-    const event = new MessageEvent('message', { data })
+    let event = new MessageEvent('message', { data })
     return this.dispatchEvent(event)
   }
 }

@@ -1,4 +1,4 @@
-import { TurboStreamSourceElement } from './stream_source_element'
+import { TurboStreamSourceElement } from './stream_source_element.js'
 
 export function start(cable, opts = {}) {
   let tagName = opts.tagName || 'turbo-cable-stream-source'
