@@ -23,7 +23,7 @@ export class TurboStreamSourceElement extends HTMLElement {
     disconnectStreamSource(this)
     if (this.subscription) {
       this.unbindOnMessage()
-      this.subscription.unsubscribe()
+      this.subscription.disconnect()
     }
   }
 
