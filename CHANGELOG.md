@@ -2,6 +2,8 @@
 
 ## master
 
+## 0.3.3 (2022-05-24)
+
 - `core`: Fixed channels caching for anonymous channels. ([@palkan][])
 
 ## 0.3.2 (2022-01-26)
