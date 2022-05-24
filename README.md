@@ -153,6 +153,12 @@ All you need is to change the imports:
 
 Then you can use `consumer.subscriptions.create` as before (under the hood a headless channel would be create).
 
+### Lifecycle events
+
+Both cables and channels allow you to subscribe to various lifecycle events for better observability.
+
+Learn more from the dedicated [documentation](./docs/lifecycle.md).
+
 ### TypeScript support
 
 You can make your channels more strict by adding type constraints for parameters, incoming message types and custom events:
