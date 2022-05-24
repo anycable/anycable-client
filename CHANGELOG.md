@@ -2,6 +2,8 @@
 
 ## master
 
+- `core`: Fixed channels caching for anonymous channels. ([@palkan][])
+
 ## 0.3.2 (2022-01-26)
 
 - `web`: Fixed generating URL from meta tags when value includes only the path (e.g., `/cable`). ([@palkan][])

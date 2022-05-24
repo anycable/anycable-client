@@ -523,7 +523,7 @@ const channel = await cable.subscribeTo(NotificationChannel)
 channel.on('message', msg => console.log("component two received message", `${msg.name}: ${msg.text}`))
 ```
 
-**IMPORTANT:** Please, keep in mind, that cache is not cleared automatically. That's your responsibility (though, usually, the number of active channels per session is limited).
+**IMPORTANT:** Please, keep in mind, that cache is not cleared automatically. That's your responsibility (though, usually, the number of active channels per session is limited). You can delete a cache entry by calling the `delete` function: `cache.delete('NotificationChannel', { id: '42' })` or `cache.delete(NotificationChannel.identifier, { id: '42' })`.
 
 ## Further reading
 

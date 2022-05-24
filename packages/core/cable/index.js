@@ -426,13 +426,15 @@ export class Cable {
   subscribeTo(ChannelClass, params) {
     let channel
     let ghostName
+    let identifier
 
     if (typeof ChannelClass === 'string') {
       ghostName = ChannelClass
+      identifier = ChannelClass
       ChannelClass = GhostChannel
+    } else {
+      identifier = ChannelClass.identifier
     }
-
-    let identifier = ChannelClass.identifier
 
     if (this.cache) {
       channel = this.cache.read(identifier, params)

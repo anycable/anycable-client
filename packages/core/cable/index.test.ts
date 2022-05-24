@@ -845,6 +845,15 @@ describe('subscribeTo', () => {
 
     expect(cable.hub.size).toEqual(1)
     expect(another).toBe(channel)
+
+    // Make sure we distinguish ghost channels
+    await cable.subscribeTo('another_channel', { id: '2020' })
+    await cable.subscribeTo('some_channel', { id: '2022' })
+    expect(cable.hub.size).toEqual(3)
+
+    cable.cache.delete('some_channel', { id: '2020' })
+    let newChannel = await cable.subscribeTo('some_channel', { id: '2020' })
+    expect(newChannel).not.toBe(channel)
   })
 
   it('caches channels via classes', async () => {
