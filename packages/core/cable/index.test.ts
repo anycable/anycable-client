@@ -153,7 +153,12 @@ describe('connect/disconnect', () => {
   })
 
   it('connected', done => {
-    cable.on('connect', () => done())
+    cable.on('connect', event => {
+      expect(event.reconnect).toBe(false)
+      expect(event.restored).toBe(false)
+
+      done()
+    })
 
     cable.connected()
     expect(cable.state).toEqual('connected')

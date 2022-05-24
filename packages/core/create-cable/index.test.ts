@@ -251,7 +251,11 @@ describe('createConsumer', () => {
 
     expect(channel.callbacks).toContain('initialized')
 
-    await new Promise<void>(resolve => channel.once('connect', resolve))
+    await new Promise<void>(resolve =>
+      channel.once('connect', () => {
+        resolve()
+      })
+    )
 
     expect(cable.hub.size).toEqual(1)
     expect(channel.state).toEqual('connected')

@@ -54,6 +54,9 @@ export class Cable {
     this.transport.on('close', this.handleClose)
     this.transport.on('data', this.handleIncoming)
 
+    this.initialConnect = true
+    this.recovering = false
+
     if (lazy === false) {
       this.connect().catch(() => {})
     }
@@ -96,9 +99,13 @@ export class Cable {
     // Re-subscribe channels
     this.hub.channels.forEach(channel => this.subscribe(channel))
 
-    this.recovering = false
+    let reconnect = !this.initialConnect
+    let restored = false
 
-    this.emit('connect')
+    this.recovering = false
+    this.initialConnect = false
+
+    this.emit('connect', { reconnect, restored })
   }
 
   restored() {
@@ -114,9 +121,13 @@ export class Cable {
     // Transition channels to 'connected' state
     this.hub.channels.forEach(channel => channel.restored())
 
-    this.recovering = false
+    let reconnect = !this.initialConnect
+    let restored = true
 
-    this.emit('connect')
+    this.recovering = false
+    this.initialConnect = false
+
+    this.emit('connect', { reconnect, restored })
   }
 
   disconnected(reason) {
@@ -163,6 +174,8 @@ export class Cable {
     this.hub.close()
     this.protocol.reset()
     this.transport.close()
+
+    this.initialConnect = true
 
     this.emit('close', err)
   }

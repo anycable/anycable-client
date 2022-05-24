@@ -26,10 +26,14 @@ type DisconnectEvent = Partial<{
   reason: ReasonError
 }>
 
+type ConnectEvent = Partial<{
+  restored: boolean
+  reconnect: boolean
+}>
+
 export interface ChannelEvents<T> {
-  connect: () => void
+  connect: (event: ConnectEvent) => void
   disconnect: (event: DisconnectEvent) => void
-  restore: () => void
   close: (event: DisconnectEvent) => void
   message: (msg: T, meta?: MessageMeta) => void
 }

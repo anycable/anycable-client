@@ -17,8 +17,13 @@ type DisconnectEvent = Partial<{
   reason: string
 }>
 
+type ConnectEvent = Partial<{
+  restored: boolean
+  reconnect: boolean
+}>
+
 export interface CableEvents {
-  connect: () => void
+  connect: (event: ConnectEvent) => void
   disconnect: (event: DisconnectEvent) => void
   close: (event: DisconnectEvent) => void
   keepalive: (msg?: Message) => void

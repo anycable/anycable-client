@@ -356,7 +356,11 @@ describe('events', () => {
   })
 
   it('emits connect', () => {
-    channel.on('connect', () => calls.push('ok'))
+    channel.on('connect', event => {
+      expect(event.reconnect).toBe(false)
+      expect(event.restored).toBe(false)
+      calls.push('ok')
+    })
 
     client.subscribed(channel)
 
@@ -392,10 +396,15 @@ describe('events', () => {
     expect(calls).toEqual(['ko'])
   })
 
-  it('emits restore', () => {
-    channel.on('restore', () => calls.push('rrr'))
-
+  it('emits connect when restored', () => {
     client.subscribed(channel)
+
+    channel.on('connect', event => {
+      expect(event.reconnect).toBe(true)
+      expect(event.restored).toBe(true)
+      calls.push('rrr')
+    })
+
     channel.connecting(client)
     channel.restored()
 

@@ -32,7 +32,7 @@ new IdChannel()
 const ch = new Channel()
 
 // THROWS Argument of type
-ch.on('connect', (event: object) => {
+ch.on('connect', (event: { restore: boolean }) => {
   event
 })
 

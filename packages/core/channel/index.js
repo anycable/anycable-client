@@ -9,6 +9,9 @@ export class Channel {
   constructor(params = {}) {
     this.emitter = createNanoEvents()
     this.params = Object.freeze(params)
+
+    this.initialConnect = true
+
     this[STATE] = 'disconnected'
   }
 
@@ -36,7 +39,11 @@ export class Channel {
     this.id = id
     this[STATE] = 'connected'
 
-    this.emit('connect')
+    let restored = false
+    let reconnect = !this.initialConnect
+    this.initialConnect = false
+
+    this.emit('connect', { reconnect, restored })
   }
 
   restored() {
@@ -44,7 +51,12 @@ export class Channel {
     if (this.state !== 'connecting') throw Error('Must be connecting')
 
     this[STATE] = 'connected'
-    this.emit('restore')
+
+    let restored = true
+    let reconnect = !this.initialConnect
+    this.initialConnect = false
+
+    this.emit('connect', { reconnect, restored })
   }
 
   disconnected(err) {
@@ -60,6 +72,8 @@ export class Channel {
 
     this[STATE] = 'disconnected'
     delete this.receiver
+
+    this.initialConnect = true
 
     this.emit('close', err)
   }
@@ -112,12 +126,6 @@ export class Channel {
 
       unbind.push(
         this.on('connect', () => {
-          unbind.forEach(clbk => clbk())
-          resolve()
-        })
-      )
-      unbind.push(
-        this.on('restore', () => {
           unbind.forEach(clbk => clbk())
           resolve()
         })
