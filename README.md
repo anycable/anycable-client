@@ -159,6 +159,18 @@ Both cables and channels allow you to subscribe to various lifecycle events for 
 
 Learn more from the dedicated [documentation](./docs/lifecycle.md).
 
+### Handling connection failures, or automatic reconnects
+
+AnyCable client provides automatic reconnection on network failure out-of-the-box. Under the hood, it uses the exponential backoff with jitter algorithm to make reconnection attempts non-deterministic (and, thus, prevent thundering herd attacks on the server). You can read more about it in the [blog post](https://evilmartians.com/chronicles/introducing-anycable-javascript-and-typescript-client#connect-reconnect-and-a-bit-of-mathematica).
+
+The component responsible for reconnection is called _Monitor_, and it's created automatically, if you use the `createCable` (or `createConsumer`) function.
+
+Sometimes it might be useful to disable reconnection. In that case, you MUST pass the `monitor: false` to the `createCable` function:
+
+```js
+cable = createCable({monitor: false})
+```
+
 ### TypeScript support
 
 You can make your channels more strict by adding type constraints for parameters, incoming message types and custom events:
