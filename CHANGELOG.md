@@ -2,6 +2,8 @@
 
 ## master
 
+## 0.3.4 (2022-06-03)
+
 - `core`: Add WebSocket options (e.g., headers) support. ([@palkan][])
 
 ## 0.3.3 (2022-05-24)
