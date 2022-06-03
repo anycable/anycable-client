@@ -24,6 +24,41 @@ it('with transport', () => {
   expect(cable.transport).toBe(tt)
 })
 
+class FakeSocket {
+  url: string
+  format: string
+  foo: string
+  subprotocol: string
+
+  constructor(
+    url: string,
+    subprotocol: string,
+    options: Record<any, any> = {}
+  ) {
+    this.url = url
+    this.format = options.websocketFormat
+    this.subprotocol = subprotocol
+    this.foo = options.foo
+  }
+}
+
+it('with websocket options', () => {
+  let cable = createCable('ws://example', {
+    websocketImplementation: FakeSocket,
+    websocketOptions: { foo: 'bar' },
+    subprotocol: 'anycable-test'
+  })
+
+  cable.transport.open()
+
+  let wsTransport = cable.transport as WebSocketTransport
+  let socket = wsTransport.ws as unknown as FakeSocket
+
+  expect(socket.url).toBe('ws://example')
+  expect(socket.foo).toBe('bar')
+  expect(socket.subprotocol).toBe('anycable-test')
+})
+
 it('with cache', () => {
   let store = new ChannelsCache()
   let cable = createCable('ws://example', { channelsCache: store })

@@ -21,6 +21,7 @@ export interface CreateOptions {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   websocketImplementation: any
   websocketFormat: string
+  websocketOptions: object
 
   encoder: Encoder
 

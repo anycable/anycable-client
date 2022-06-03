@@ -20,11 +20,20 @@ export class WebSocketTransport {
     let { format, subprotocol } = opts
 
     this.format = format || 'text'
+    this.connectionOptions = opts.websocketOptions
     this.subprotocol = subprotocol
   }
 
   open() {
-    this.ws = new this.Impl(this.url, this.subprotocol)
+    if (this.connectionOptions) {
+      this.ws = new this.Impl(
+        this.url,
+        this.subprotocol,
+        this.connectionOptions
+      )
+    } else {
+      this.ws = new this.Impl(this.url, this.subprotocol)
+    }
     this.ws.binaryType = 'arraybuffer'
     this.initListeners()
 

@@ -214,3 +214,36 @@ it('with binary protocol', async () => {
 
   expect(response).toEqual(new Uint8Array([5, 22]))
 })
+
+it('with headers', async () => {
+  wss.on('connection', (ws, req) => {
+    let clientHeaders = req.headers
+
+    ws.send(clientHeaders['x-api-token'] || 'none')
+  })
+
+  let headers = {
+    'x-api-token': 'secret'
+  }
+
+  let client = new WebSocketTransport<WebSocket, string>(
+    `ws://0.0.0.0:${port}`,
+    { websocketImplementation: WebSocket, websocketOptions: { headers } }
+  )
+
+  let dataPromise = new Promise<string>((resolve, reject) => {
+    let tid = setTimeout(() => {
+      reject(Error('Failed to receive data'))
+    }, 500)
+    client.once('data', msg => {
+      clearTimeout(tid)
+      resolve(msg)
+    })
+  })
+
+  await client.open()
+
+  let response = await dataPromise
+
+  expect(response).toEqual('secret')
+})

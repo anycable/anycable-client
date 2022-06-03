@@ -8,6 +8,7 @@ type WebSocketPayload = string | Uint8Array
 export type WebSocketOpts = Partial<{
   /* eslint-disable @typescript-eslint/no-explicit-any */
   websocketImplementation: any
+  websocketOptions: object
   subprotocol: string
   format: 'text' | 'binary'
 }>

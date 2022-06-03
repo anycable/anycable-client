@@ -388,6 +388,13 @@ import { createCable } from '@anycable/core'
 let cable = createCable(url, {
   websocketImplementation: WebSocket
 })
+
+// You can also pass additional connections options,
+// supported by ws via the websocketOptions
+let cableWithHeader = createCable(url, {
+  websocketImplementation: WebSocket,
+  websocketOptions: { headers: { 'x-token': 'secret' }}
+})
 ```
 
 **IMPORTANT:** We use ES modules, hence setting `NODE_OPTIONS='--experimental-vm-modules'` is currently required.
@@ -403,6 +410,12 @@ import { createCable } from '@anycable/core'
 
 // NOTE: Passing url is required
 let cable = createCable(url)
+
+// You can also pass additional connections options,
+// such as headers, via the websocketOptions
+let cableWithHeader = createCable(url, {
+  websocketOptions: { headers: { 'x-token': 'secret' }}
+})
 ```
 
 ## Reusing channel instances

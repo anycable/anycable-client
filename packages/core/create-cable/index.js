@@ -31,6 +31,7 @@ export function createCable(url, opts) {
     protocol,
     websocketImplementation,
     websocketFormat,
+    websocketOptions,
     logLevel,
     logger,
     transport,
@@ -78,6 +79,7 @@ export function createCable(url, opts) {
     transport ||
     new WebSocketTransport(url, {
       websocketImplementation,
+      websocketOptions,
       subprotocol,
       format: websocketFormat
     })

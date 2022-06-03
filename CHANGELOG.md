@@ -2,6 +2,8 @@
 
 ## master
 
+- `core`: Add WebSocket options (e.g., headers) support. ([@palkan][])
+
 ## 0.3.3 (2022-05-24)
 
 - `core`: Fixed channels caching for anonymous channels. ([@palkan][])
