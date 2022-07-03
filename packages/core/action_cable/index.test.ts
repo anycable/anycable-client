@@ -126,6 +126,40 @@ describe('subscriptions', () => {
     return res
   })
 
+  it('subscribe command retried if no ack received', async () => {
+    identifier = JSON.stringify({
+      channel: 'TestChannel',
+      id: 2021,
+      foo: 'bar'
+    })
+
+    protocol.subscribeRetryInterval = 500
+
+    let res = expect(
+      protocol.subscribe('TestChannel', { id: 2021, foo: 'bar' })
+    ).resolves.toEqual(identifier)
+
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toMatchObject({ command: 'subscribe', identifier })
+
+    let timeoutPromise = new Promise<void>(resolve => {
+      setTimeout(() => {
+        protocol.receive({ type: 'confirm_subscription', identifier })
+        resolve()
+      }, 600)
+    })
+
+    await timeoutPromise
+
+    expect(cable.mailbox).toHaveLength(2)
+    expect(cable.mailbox[1]).toMatchObject({
+      command: 'subscribe',
+      identifier
+    })
+
+    return res
+  })
+
   it('unsubscribes successfully', async () => {
     await protocol.unsubscribe('test_id')
 
@@ -134,6 +168,34 @@ describe('subscriptions', () => {
       command: 'unsubscribe',
       identifier: 'test_id'
     })
+  })
+
+  it('unsubscribe followed by subscribe', async () => {
+    identifier = JSON.stringify({
+      channel: 'FastChannel'
+    })
+
+    await protocol.unsubscribe(identifier)
+    let subscribePromise = expect(
+      protocol.subscribe('FastChannel')
+    ).resolves.toEqual(identifier)
+
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toMatchObject({
+      command: 'unsubscribe',
+      identifier
+    })
+
+    await new Promise(resolve =>
+      setTimeout(resolve, protocol.subscribeCooldownInterval + 100)
+    )
+
+    expect(cable.mailbox).toHaveLength(2)
+    expect(cable.mailbox[1]).toMatchObject({ command: 'subscribe', identifier })
+
+    protocol.receive({ type: 'confirm_subscription', identifier })
+
+    await subscribePromise
   })
 
   it('performs action', async () => {

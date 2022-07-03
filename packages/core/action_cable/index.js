@@ -9,6 +9,13 @@ export class ActionCableProtocol {
     let { logger } = opts
     this.logger = logger || new NoopLogger()
     this.pendingSubscriptions = {}
+    this.pendingUnsubscriptions = {}
+    // For how long to wait before sending `subscribe` command
+    // in case `unsubscribe` was sent for the same identifier
+    this.subscribeCooldownInterval = opts.subscribeCooldownInterval || 500
+    // For how long to wait for subscription acknoledgement before trying again
+    // (just once).
+    this.subscribeRetryInterval = opts.subscribeRetryInterval || 5000
   }
 
   attached(cable) {
@@ -21,15 +28,35 @@ export class ActionCableProtocol {
       Object.assign(subscriptionPayload, params)
     }
 
-    return new Promise((resolve, reject) => {
-      let identifier = JSON.stringify(subscriptionPayload)
+    let identifier = JSON.stringify(subscriptionPayload)
 
+    if (this.pendingUnsubscriptions[identifier]) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve(this.subscribe(channel, params))
+        }, this.subscribeCooldownInterval)
+      })
+    }
+
+    let retryInterval = this.subscribeRetryInterval
+
+    return new Promise((resolve, reject) => {
       this.pendingSubscriptions[identifier] = { resolve, reject }
 
       this.cable.send({
         command: 'subscribe',
         identifier
       })
+
+      setTimeout(() => {
+        // Subscription is still pending
+        if (this.pendingSubscriptions[identifier]) {
+          this.cable.send({
+            command: 'subscribe',
+            identifier
+          })
+        }
+      }, retryInterval)
     })
   }
 
@@ -38,6 +65,12 @@ export class ActionCableProtocol {
       command: 'unsubscribe',
       identifier
     })
+
+    this.pendingUnsubscriptions[identifier] = true
+
+    setTimeout(() => {
+      delete this.pendingUnsubscriptions[identifier]
+    }, this.subscribeCooldownInterval)
 
     return Promise.resolve()
   }
@@ -91,6 +124,8 @@ export class ActionCableProtocol {
         return this.logger.error('subscription not found', { identifier })
       }
 
+      delete this.pendingSubscriptions[identifier]
+
       return subscription.resolve(identifier)
     }
 
@@ -99,6 +134,8 @@ export class ActionCableProtocol {
       if (!subscription) {
         return this.logger.error('subscription not found', { identifier })
       }
+
+      delete this.pendingSubscriptions[identifier]
 
       return subscription.reject(new SubscriptionRejectedError())
     }

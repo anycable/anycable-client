@@ -4,11 +4,16 @@ import { Logger } from '../logger/index.js'
 
 export type Options = Partial<{
   logger: Logger
+  subscribeRetryInterval: number
+  subscribeCooldownInterval: number
 }>
 
 export class ActionCableProtocol implements Protocol {
   readonly cable: Consumer
   readonly logger: Logger
+
+  subscribeCooldownInterval: number
+  subscribeRetryInterval: number
 
   constructor(opts?: Options)
 
