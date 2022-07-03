@@ -2,6 +2,12 @@
 
 ## master
 
+## 0.3.5 (2022-07-02)
+
+- `core`: Prevent unsubscribe/subscribe race conditions. ([@palkan][])
+
+Since Action Cable protocol doesn't support `unsubscribe` acks, we need to hack around to make sure subsequent `subscribe` commands arrived at the server after the previous `unsubscribe` has been processed.
+
 ## 0.3.4 (2022-06-03)
 
 - `core`: Add WebSocket options (e.g., headers) support. ([@palkan][])
