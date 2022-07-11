@@ -216,7 +216,7 @@ describe('connect/disconnect', () => {
     cable.connected()
     cable.close('test')
 
-    expect(cable.state).toEqual('disconnected')
+    expect(cable.state).toEqual('closed')
     expect(transport.opened).toBe(false)
 
     cable.close('test2')
@@ -232,7 +232,7 @@ describe('connect/disconnect', () => {
     cable.connected()
     cable.disconnect()
 
-    expect(cable.state).toEqual('disconnected')
+    expect(cable.state).toEqual('closed')
     expect(transport.opened).toBe(false)
   })
 
@@ -278,7 +278,7 @@ describe('connect/disconnect', () => {
 
     transport.receive(JSON.stringify('close'))
 
-    expect(cable.state).toEqual('disconnected')
+    expect(cable.state).toEqual('closed')
     expect(transport.opened).toBe(false)
   })
 
@@ -345,9 +345,35 @@ describe('channels', () => {
 
   it('subscribe when disconnected', () => {
     cable.disconnected()
+
+    let res = cable.subscribe(channel).then(() => {
+      expect(channel.state).toEqual('connected')
+      expect(cable.state).toEqual('connected')
+    })
+
+    cable.connect()
+    cable.connected()
+
+    return res
+  })
+
+  it('subscribe when closed', () => {
+    cable.close()
     return expect(cable.subscribe(channel)).rejects.toEqual(
       Error('No connection')
     )
+  })
+
+  it('subscribe canceled while cable was connecting', () => {
+    cable.disconnected()
+    cable.connect()
+
+    let subscribePromise = cable.subscribe(channel)
+
+    channel.disconnect()
+    cable.connected()
+
+    return expect(subscribePromise).rejects.toEqual(Error('Canceled'))
   })
 
   it('subscribe while connecting', done => {
@@ -374,6 +400,43 @@ describe('channels', () => {
     })
 
     cable.connected()
+  })
+
+  it('cable connecting + subscribe + cable disconnected + cable connected', async () => {
+    cable.disconnected(new DisconnectedError('before'))
+    let connectPromise = cable.connect()
+
+    let message = { foo: 'bar' }
+
+    let promise = cable.subscribe(channel).then(identifier => {
+      expect(cable.hub.size).toEqual(1)
+      expect(channel.state).toEqual('connected')
+
+      return new Promise<object>(resolve => {
+        channel.on('message', msg => {
+          resolve(message)
+        })
+
+        transport.receive(
+          JSON.stringify({
+            identifier,
+            payload: message
+          })
+        )
+      })
+    })
+
+    cable.disconnected(new DisconnectedError('middle'))
+
+    // disconnected result in rejection which we need to handle
+    try {
+      await connectPromise
+    } catch (err) {}
+
+    cable.connect()
+    cable.connected()
+
+    return expect(promise).resolves.toEqual(message)
   })
 
   it('subscribe rejected', () => {
@@ -483,13 +546,34 @@ describe('channels', () => {
     ])
   })
 
-  it('perform when disconnected', async () => {
+  it('perform when closed', async () => {
     cable.hub.add('42', channel)
-    cable.disconnected()
+    cable.close()
 
     return expect(cable.perform('42', 'do', { foo: 'bar' })).rejects.toEqual(
       Error('No connection')
     )
+  })
+
+  it('perform when disconnected', async () => {
+    cable.hub.add('42', channel)
+    cable.disconnected()
+
+    let performPromise = cable.perform('42', 'do', { foo: 'bar' })
+
+    cable.connected()
+
+    return expect(
+      performPromise.then(() => {
+        expect(transport.sent).toEqual([
+          JSON.stringify({
+            identifier: '42',
+            action: 'do',
+            payload: { foo: 'bar' }
+          })
+        ])
+      })
+    ).resolves.toBeUndefined()
   })
 
   it('perform while connecting', () => {

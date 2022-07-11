@@ -245,7 +245,7 @@ describe('receiver communicaton', () => {
     return res
   })
 
-  it('performs before connection failed', () => {
+  it('performs when disconnected', () => {
     client.subscribe(channel)
 
     let res = expect(channel.perform('do', { foo: 'bar' })).rejects.toEqual(
@@ -253,6 +253,18 @@ describe('receiver communicaton', () => {
     )
 
     channel.disconnected(new DisconnectedError('connection lost'))
+
+    return res
+  })
+
+  it('performs when connection is closed', () => {
+    client.subscribe(channel)
+
+    let res = expect(channel.perform('do', { foo: 'bar' })).rejects.toEqual(
+      new DisconnectedError('connection lost')
+    )
+
+    channel.close(new DisconnectedError('manual'))
 
     return res
   })
@@ -289,7 +301,7 @@ describe('receiver communicaton', () => {
 
   it('disconnect while connecting and rejected', () => {
     client.subscribe(channel)
-    let res = channel.disconnect().catch(() => {
+    let res = channel.disconnect().then(() => {
       expect(channel.state).toEqual('disconnected')
     })
 

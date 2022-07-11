@@ -2,6 +2,10 @@
 
 ## master
 
+- `core`: Make `cable.subscribe(channel)` pessimistic (i.e., wait for the cable to be connected, ignore "disconnected" state).
+
+This makes it possible to use `await cable.subscribe(channel)` and don't care about underlying cable state (unless it's closed manually or subscription is rejected).
+
 ## 0.3.5 (2022-07-02)
 
 - `core`: Prevent unsubscribe/subscribe race conditions. ([@palkan][])

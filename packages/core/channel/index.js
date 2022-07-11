@@ -27,6 +27,9 @@ export class Channel {
     if (this.state === 'connected' && this.receiver !== receiver) {
       throw Error('Already connected')
     }
+
+    this.requestDisconnect = false
+
     if (this.state === 'connecting') return
 
     this.receiver = receiver
@@ -79,8 +82,12 @@ export class Channel {
   }
 
   async disconnect() {
+    this.requestDisconnect = true
+
     if (this.state === 'connecting') {
-      await this.pendingConnect()
+      try {
+        await this.pendingConnect()
+      } catch (_e) {}
     }
 
     if (this.state === 'disconnected') return Promise.resolve()

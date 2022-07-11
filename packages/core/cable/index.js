@@ -68,10 +68,10 @@ export class Cable {
 
   async connect() {
     if (this.state === 'connected') return Promise.resolve()
-    if (this.state === 'connecting') return this.pendingConnect()
+    if (this.state === 'connecting') return this.pendingConnectDisconnect()
 
     this[STATE] = 'connecting'
-    let promise = this.pendingConnect()
+    let promise = this.pendingConnectDisconnect()
 
     this.logger.debug('connecting')
 
@@ -137,7 +137,13 @@ export class Cable {
   }
 
   handleClose(err) {
-    if (this.state === 'disconnected' || this.state === 'idle') return
+    if (
+      this.state === 'disconnected' ||
+      this.state === 'closed' ||
+      this.state === 'idle'
+    ) {
+      return
+    }
 
     this.logger.info('disconnected', { reason: err })
 
@@ -161,11 +167,11 @@ export class Cable {
   }
 
   close(reason) {
-    if (this.state === 'disconnected' || this.state === 'idle') return
+    if (this.state === 'closed' || this.state === 'idle') return
 
     this.logger.info('closed', { reason })
 
-    this[STATE] = 'disconnected'
+    this[STATE] = 'closed'
 
     let err =
       typeof reason === 'string' ? new DisconnectedError(reason) : reason
@@ -185,7 +191,13 @@ export class Cable {
   }
 
   handleIncoming(raw) {
-    if (this.state === 'disconnected' || this.state === 'idle') return
+    if (
+      this.state === 'disconnected' ||
+      this.state === 'closed' ||
+      this.state === 'idle'
+    ) {
+      return
+    }
 
     let data = this.encoder.decode(raw)
 
@@ -224,6 +236,36 @@ export class Cable {
     this.emit('keepalive', msg)
   }
 
+  subscribeTo(ChannelClass, params) {
+    let channel
+    let ghostName
+    let identifier
+
+    if (typeof ChannelClass === 'string') {
+      ghostName = ChannelClass
+      identifier = ChannelClass
+      ChannelClass = GhostChannel
+    } else {
+      identifier = ChannelClass.identifier
+    }
+
+    if (this.cache) {
+      channel = this.cache.read(identifier, params)
+    }
+
+    if (!channel) {
+      channel = ghostName
+        ? new ChannelClass(ghostName, params)
+        : new ChannelClass(params)
+
+      if (this.cache) {
+        this.cache.write(channel, identifier, params)
+      }
+    }
+
+    return this.subscribe(channel).then(() => channel)
+  }
+
   async subscribe(channel) {
     if (channel.state === 'connected') {
       if (channel.receiver !== this) {
@@ -248,13 +290,27 @@ export class Cable {
   async _subscribe(channel) {
     channel.connecting(this)
 
-    if (this.state === 'connecting') {
+    if (this.state === 'idle') {
+      try {
+        // Trigger connection initialization if it is lazy
+        await this.connect()
+      } catch (_e) {
+        if (this.state === 'closed') throw new NoConnectionError()
+
+        await this.pendingConnect()
+      }
+    }
+
+    if (this.state === 'connecting' || this.state === 'disconnected') {
       await this.pendingConnect()
     }
-    if (this.state === 'idle') {
-      await this.connect()
+
+    if (this.state === 'closed') throw new NoConnectionError()
+
+    // channel.disconnect() was called before the cable has succefully connected
+    if (channel.requestDisconnect) {
+      throw Error('Canceled')
     }
-    if (this.state === 'disconnected') throw new NoConnectionError()
 
     let channelMeta = {
       identifier: channel.identifier,
@@ -322,7 +378,7 @@ export class Cable {
 
     this.logger.debug('unsubscribing...', { id: identifier })
 
-    if (this.state === 'disconnected') {
+    if (this.state === 'disconnected' || this.state === 'closed') {
       let instance = this.hub.remove(identifier)
       instance.close()
 
@@ -351,7 +407,7 @@ export class Cable {
 
     if (!channel) throw Error(`Channel not found: ${identifier}`)
 
-    if (this.state === 'connecting') {
+    if (this.state === 'connecting' || this.state === 'disconnected') {
       await this.pendingConnect()
 
       if (channel.state === 'connecting') {
@@ -359,7 +415,7 @@ export class Cable {
       }
     }
 
-    if (this.state === 'disconnected') throw new NoConnectionError()
+    if (this.state === 'closed') throw new NoConnectionError()
 
     let performMeta = {
       id: identifier,
@@ -407,11 +463,11 @@ export class Cable {
     return this.emitter.emit(event, ...args)
   }
 
-  pendingConnect() {
-    if (this._pendingConnect) return this._pendingConnect
+  pendingConnectDisconnect() {
+    if (this._pendingConnectDisconnect) return this._pendingConnectDisconnect
 
-    this._pendingConnect = new Promise((resolve, reject) => {
-      let unbind = [() => delete this._pendingConnect]
+    this._pendingConnectDisconnect = new Promise((resolve, reject) => {
+      let unbind = [() => delete this._pendingConnectDisconnect]
 
       unbind.push(
         this.on('connect', () => {
@@ -433,36 +489,30 @@ export class Cable {
       )
     })
 
-    return this._pendingConnect
+    return this._pendingConnectDisconnect
   }
 
-  subscribeTo(ChannelClass, params) {
-    let channel
-    let ghostName
-    let identifier
+  // This promise differs from the one above: it doesn't resovles/rejects on disconnect
+  pendingConnect() {
+    if (this._pendingConnect) return this._pendingConnect
 
-    if (typeof ChannelClass === 'string') {
-      ghostName = ChannelClass
-      identifier = ChannelClass
-      ChannelClass = GhostChannel
-    } else {
-      identifier = ChannelClass.identifier
-    }
+    this._pendingConnect = new Promise((resolve, reject) => {
+      let unbind = [() => delete this._pendingConnect]
 
-    if (this.cache) {
-      channel = this.cache.read(identifier, params)
-    }
+      unbind.push(
+        this.on('connect', () => {
+          unbind.forEach(clbk => clbk())
+          resolve()
+        })
+      )
+      unbind.push(
+        this.on('close', err => {
+          unbind.forEach(clbk => clbk())
+          reject(err)
+        })
+      )
+    })
 
-    if (!channel) {
-      channel = ghostName
-        ? new ChannelClass(ghostName, params)
-        : new ChannelClass(params)
-
-      if (this.cache) {
-        this.cache.write(channel, identifier, params)
-      }
-    }
-
-    return this.subscribe(channel).then(() => channel)
+    return this._pendingConnect
   }
 }

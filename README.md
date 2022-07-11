@@ -115,6 +115,8 @@ channel.on('disconnect', () => console.log('No chat connection'))
 channel.disconnect()
 ```
 
+**IMPORTANT:** `cable.subscribe(channel)` is pessimistic: it doesn't require the cable to be connected, and waits for it to connect before performing a subscription request. Even if the cable got disconnected before subscription was confirmed or rejected, a new attempt is made as soon as the connectivity restored.
+
 #### Headless subscriptions
 
 _Headless_ subscriptions are very similar to Action Cable client-side subscriptions except from the fact that no mixins are allowed (you classes in case you need them).
