@@ -18,7 +18,8 @@
   "scripts": {
     "test:dev": "NODE_OPTIONS='--experimental-vm-modules' jest",
     "test": "yarn test:dev --coverage && check-dts",
-    "lint": "eslint . && prettier --check 'packages/**/*.{js,ts}'"
+    "lint": "eslint . && prettier --check 'packages/**/*.{js,ts}'",
+    "lint:fix": "eslint . --fix && prettier --check 'packages/**/*.{js,ts}' --write"
   },
   "homepage": "https://anycable.io/",
   "repository": "https://github.com/anycable/anycable-client",
