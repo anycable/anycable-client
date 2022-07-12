@@ -1,6 +1,13 @@
+/* eslint-disable unicorn/custom-error-definition */
 export class ReasonError extends Error {
   constructor(msg, reason) {
-    super(msg)
+    if (msg instanceof Error) {
+      super(msg.message)
+      this.cause = msg
+    } else {
+      super(msg)
+    }
+
     this.reason = reason
     this.name = 'ReasonError'
   }
@@ -14,8 +21,12 @@ export class SubscriptionRejectedError extends ReasonError {
 }
 
 export class DisconnectedError extends ReasonError {
-  constructor(reason) {
-    super('Disconnected', reason)
+  constructor(error, reason) {
+    if (reason) {
+      super(error, reason)
+    } else {
+      super('Disconnected', error)
+    }
     this.name = 'DisconnectedError'
   }
 }

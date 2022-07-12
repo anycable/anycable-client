@@ -12,6 +12,15 @@ describe('ReasonError', () => {
     expect(err.reason).toEqual('just because')
     expect(err.message).toEqual('failure')
   })
+
+  it('accepts error objects', () => {
+    let original = Error('original error')
+    let err = new ReasonError(original)
+
+    expect(err.reason).toBeUndefined()
+    expect(err.message).toEqual('original error')
+    expect(err.cause).toEqual(original)
+  })
 })
 
 describe('SubscriptionRejectedError', () => {
@@ -41,6 +50,15 @@ describe('DisconnectedError', () => {
     expect(err.reason).toEqual('forbidden')
     expect(err.name).toEqual('DisconnectedError')
     expect(err.message).toEqual('Disconnected')
+  })
+
+  it('with error and reason', () => {
+    let original = Error('Transport failed')
+    let err = new DisconnectedError(original, 'forbidden')
+    expect(err.reason).toEqual('forbidden')
+    expect(err.message).toEqual('Transport failed')
+    expect(err.cause).toEqual(original)
+    expect(err.name).toEqual('DisconnectedError')
   })
 })
 

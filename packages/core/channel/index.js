@@ -1,5 +1,7 @@
 import { createNanoEvents } from 'nanoevents'
 
+import { DisconnectedError } from '../protocol/index.js'
+
 const STATE = Symbol('state')
 
 export class Channel {
@@ -12,7 +14,7 @@ export class Channel {
 
     this.initialConnect = true
 
-    this[STATE] = 'disconnected'
+    this[STATE] = 'idle'
   }
 
   get identifier() {
@@ -28,8 +30,6 @@ export class Channel {
       throw Error('Already connected')
     }
 
-    this.requestDisconnect = false
-
     if (this.state === 'connecting') return
 
     this.receiver = receiver
@@ -38,6 +38,7 @@ export class Channel {
 
   connected(id) {
     if (this.state === 'connected') throw Error('Already connected')
+    if (this.state === 'closed') return
 
     this.id = id
     this[STATE] = 'connected'
@@ -50,7 +51,7 @@ export class Channel {
   }
 
   restored() {
-    if (this.state === 'connected') return
+    if (this.state === 'connected') throw Error('Already connected')
     if (this.state !== 'connecting') throw Error('Must be connecting')
 
     this[STATE] = 'connected'
@@ -63,7 +64,7 @@ export class Channel {
   }
 
   disconnected(err) {
-    if (this.state === 'disconnected') return
+    if (this.state === 'disconnected' || this.state === 'closed') return
 
     this[STATE] = 'disconnected'
 
@@ -71,9 +72,9 @@ export class Channel {
   }
 
   close(err) {
-    if (this.state === 'disconnected') return
+    if (this.state === 'closed') return
 
-    this[STATE] = 'disconnected'
+    this[STATE] = 'closed'
     delete this.receiver
 
     this.initialConnect = true
@@ -82,25 +83,25 @@ export class Channel {
   }
 
   async disconnect() {
-    this.requestDisconnect = true
-
-    if (this.state === 'connecting') {
-      try {
-        await this.pendingConnect()
-      } catch (_e) {}
+    if (this.state === 'idle' || this.state === 'closed') {
+      return Promise.resolve(true)
     }
-
-    if (this.state === 'disconnected') return Promise.resolve()
 
     return this.receiver.unsubscribe(this.id)
   }
 
   async perform(action, payload) {
     if (this.state === 'connecting') {
-      await this.pendingConnect()
+      await this.pendingSubscribe()
     }
 
-    if (this.state === 'disconnected') throw Error('No connection')
+    if (
+      this.state === 'closed' ||
+      this.state === 'idle' ||
+      this.state === 'disconnected'
+    ) {
+      throw Error('No connection')
+    }
 
     return this.receiver.perform(this.id, action, payload)
   }
@@ -125,32 +126,29 @@ export class Channel {
     return this.emitter.emit(event, ...args)
   }
 
-  pendingConnect() {
-    if (this._pendingConnect) return this._pendingConnect
+  // This promise resolves when subscription is confirmed
+  // and rejects when rejected or closed.
+  // It ignores disconnect events.
+  pendingSubscribe() {
+    if (this._pendingSubscribe) return this._pendingSubscribe
 
-    this._pendingConnect = new Promise((resolve, reject) => {
-      let unbind = [() => delete this._pendingConnect]
+    this._pendingSubscribe = new Promise((resolve, reject) => {
+      let unbind = [() => delete this._pendingSubscribe]
 
       unbind.push(
         this.on('connect', () => {
           unbind.forEach(clbk => clbk())
-          resolve()
+          resolve(this.id)
         })
       )
       unbind.push(
         this.on('close', err => {
           unbind.forEach(clbk => clbk())
-          reject(err)
-        })
-      )
-      unbind.push(
-        this.on('disconnect', err => {
-          unbind.forEach(clbk => clbk())
-          reject(err)
+          reject(err || new DisconnectedError('closed'))
         })
       )
     })
 
-    return this._pendingConnect
+    return this._pendingSubscribe
   }
 }

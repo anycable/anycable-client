@@ -13,10 +13,6 @@ import { Encoder } from '../encoder/index.js'
 import { Logger } from '../logger/index.js'
 import { Monitor } from '../monitor/index.js'
 
-type DisconnectEvent = Partial<{
-  reason: string
-}>
-
 type ConnectEvent = Partial<{
   restored: boolean
   reconnect: boolean
@@ -24,8 +20,8 @@ type ConnectEvent = Partial<{
 
 export interface CableEvents {
   connect: (event: ConnectEvent) => void
-  disconnect: (event: DisconnectEvent) => void
-  close: (event: DisconnectEvent) => void
+  disconnect: (event: ReasonError) => void
+  close: (event: ReasonError) => void
   keepalive: (msg?: Message) => void
 }
 

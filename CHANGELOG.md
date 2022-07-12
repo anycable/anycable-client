@@ -2,9 +2,17 @@
 
 ## master
 
-- `core`: Make `cable.subscribe(channel)` pessimistic (i.e., wait for the cable to be connected, ignore "disconnected" state).
+- `core`: Standardize `close` and `disconnect` events and the corresponding methods to always emit/return ReasonError instances (not just DisconnectEvents). Transport errors (e.g., connection failure) are now also wrapped into `DisconnectedError` with the reason `transport_close`. You can access the original error via `error.cause` property.
+
+- `core`: Added `closed` state to indicate that a cable or a channel was intentionally disconnected (by user or by server) without further reconnections.
+
+Now `disconnected` always implies reconnection (which might be done by a monitor).
+
+- `core`: Make `cable.subscribe(channel)` optimistic (i.e., wait for the cable to be connected, ignore "disconnected" state).
 
 This makes it possible to use `await cable.subscribe(channel)` and don't care about underlying cable state (unless it's closed manually or subscription is rejected).
+
+The `channel.disconnect()` works similarly in a sense that it considers lack of connection as success, and tries to send the `unsubscribe` command otherwise.
 
 ## 0.3.5 (2022-07-02)
 

@@ -49,6 +49,6 @@ describe('Test Channel', () => {
   it('disconnects when leave', async () => {
     await channel.disconnect()
 
-    expect(channel.state).toEqual('disconnected')
+    expect(channel.state).toEqual('closed')
   })
 })

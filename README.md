@@ -115,7 +115,7 @@ channel.on('disconnect', () => console.log('No chat connection'))
 channel.disconnect()
 ```
 
-**IMPORTANT:** `cable.subscribe(channel)` is pessimistic: it doesn't require the cable to be connected, and waits for it to connect before performing a subscription request. Even if the cable got disconnected before subscription was confirmed or rejected, a new attempt is made as soon as the connectivity restored.
+**IMPORTANT:** `cable.subscribe(channel)` is optimistic: it doesn't require the cable to be connected, and waits for it to connect before performing a subscription request. Even if the cable got disconnected before subscription was confirmed or rejected, a new attempt is made as soon as the connectivity restored. Similarly, `channel.disconnect()` assumes that if there is no connectivity, the server takes care of peforming unsubscribe tasks and we can safely mark this channel as closed.
 
 #### Headless subscriptions
 
@@ -366,7 +366,7 @@ describe('ChatChannel', () => {
   it('disconnects when leave', async () => {
     await channel.leave()
 
-    expect(channel.state).toEqual('disconnected')
+    expect(channel.state).toEqual('closed')
   })
 })
 ```
@@ -506,7 +506,7 @@ await channelOne.disconnect() // false
 channelOne.state // 'connected'
 
 await channelTwo.disconnect() // true
-channelTwo.state // 'disconnected'
+channelTwo.state // 'closed'
 
 // NOTE:
 channelOne === channelTwo // true

@@ -2,17 +2,27 @@ import { MessageMeta, Message, Identifier } from '../channel/index.js'
 
 export class ReasonError extends Error {
   readonly reason?: string
+  readonly cause?: Error
 
-  constructor(msg?: string, reason?: string)
+  constructor(msg?: string | Error, reason?: string)
 }
 
-export class SubscriptionRejectedError extends ReasonError {}
+export class SubscriptionRejectedError extends ReasonError {
+  constructor(msg?: string)
+}
 
-export class DisconnectedError extends ReasonError {}
+export class DisconnectedError extends ReasonError {
+  constructor(reason?: string)
+  constructor(cause: Error, reason?: string)
+}
 
-export class CommandError extends Error {}
+export class CommandError extends ReasonError {
+  constructor(msg?: string)
+}
 
-export class StaleConnectionError extends Error {}
+export class StaleConnectionError extends ReasonError {
+  constructor(msg?: string)
+}
 
 export interface Consumer {
   connected(): void
@@ -42,5 +52,5 @@ export interface Protocol {
   ): Promise<Message | void>
   receive(msg: Message): ProcessedMessage | void
   recoverableClosure(err?: Error): boolean
-  reset(err: Error): void
+  reset(err: ReasonError): void
 }

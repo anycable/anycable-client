@@ -20,11 +20,12 @@ export interface Receiver {
 
 export type ChannelParamsMap = { [token: string]: boolean | number | string }
 
-export type ChannelState = 'disconnected' | 'connecting' | 'connected'
-
-type DisconnectEvent = Partial<{
-  reason: ReasonError
-}>
+export type ChannelState =
+  | 'disconnected'
+  | 'connected'
+  | 'connecting'
+  | 'closed'
+  | 'idle'
 
 type ConnectEvent = Partial<{
   restored: boolean
@@ -33,8 +34,8 @@ type ConnectEvent = Partial<{
 
 export interface ChannelEvents<T> {
   connect: (event: ConnectEvent) => void
-  disconnect: (event: DisconnectEvent) => void
-  close: (event: DisconnectEvent) => void
+  disconnect: (event: ReasonError) => void
+  close: (event: ReasonError) => void
   message: (msg: T, meta?: MessageMeta) => void
 }
 

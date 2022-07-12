@@ -1,5 +1,8 @@
+let tempID = 2019
+
 export class Entry {
   constructor() {
+    this.id = `__temp__${++tempID}`
     this.refs = 0
     this.pendingSubscription = undefined
   }
@@ -47,6 +50,10 @@ export class Hub {
   }
 
   add(id, channel) {
+    if (channel.id) {
+      delete this.registry[channel.id]
+    }
+
     this.registry[id] = channel
 
     this.flush(id)
@@ -88,6 +95,18 @@ export class Hub {
 
   get channels() {
     return Object.values(this.registry)
+  }
+
+  get pendingChannels() {
+    return Object.values(this.registry).filter(channel => {
+      return this.entryFor(channel).isPending()
+    })
+  }
+
+  get activeChannels() {
+    return Object.values(this.registry).filter(channel => {
+      return !this.entryFor(channel).isPending()
+    })
   }
 
   flush(id) {
