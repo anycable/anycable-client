@@ -28,8 +28,8 @@ export interface Consumer {
   connected(): void
   restored(): void
   disconnected(reason?: ReasonError): void
+  closed(reason?: string | ReasonError): void
   keepalive(msg?: Message): void
-  close(reason?: string | ReasonError): void
   send(msg: object): void
 }
 
@@ -52,5 +52,5 @@ export interface Protocol {
   ): Promise<Message | void>
   receive(msg: Message): ProcessedMessage | void
   recoverableClosure(err?: Error): boolean
-  reset(err: ReasonError): void
+  reset(err?: ReasonError): void
 }

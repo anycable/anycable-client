@@ -2,6 +2,10 @@
 
 ## master
 
+- `core`: Do not emit 'close' for channels when cable is closed.
+
+The `close` event should indicate unsubscription (initiated by a user). When the cable is closed, subscriptions are disconnected, not closed (since they got restored if cable is connected back).
+
 ## 0.4.0 (2022-07-12)
 
 - `core`: Standardize `close` and `disconnect` events and the corresponding methods to always emit/return ReasonError instances (not just DisconnectEvents). Transport errors (e.g., connection failure) are now also wrapped into `DisconnectedError` with the reason `transport_close`. You can access the original error via `error.cause` property.

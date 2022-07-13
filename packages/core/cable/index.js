@@ -102,13 +102,15 @@ export class Cable {
     // Re-subscribe channels
     this.hub.channels.forEach(channel => this._subscribe(channel))
 
-    let reconnect = !this.initialConnect
     let restored = false
-
     this.recovering = false
-    this.initialConnect = false
 
-    this.emit('connect', { reconnect, restored })
+    if (this.initialConnect) {
+      this.initialConnect = false
+      this.emit('connect', { reconnect: false, restored })
+    } else {
+      this.emit('connect', { reconnect: true, restored })
+    }
   }
 
   // TODO: Restored should accept the list of
@@ -174,19 +176,27 @@ export class Cable {
     this.emit('disconnect', err)
   }
 
-  close(reason) {
+  closed(reason) {
     if (this.state === 'closed' || this.state === 'idle') return
 
-    this.logger.info('closed', { reason })
+    let err
+
+    if (reason) {
+      err =
+        reason instanceof DisconnectedError
+          ? reason
+          : new DisconnectedError(reason, undefined)
+    }
+
+    this.logger.info('closed', { reason: reason || 'user' })
 
     this[STATE] = 'closed'
 
-    let err =
-      reason instanceof DisconnectedError
-        ? reason
-        : new DisconnectedError(reason, undefined)
+    // Channels must transition to the disconnected phase,
+    // since they got reconnected as soon as cable reconnects
+    let channelErr = err || new DisconnectedError('cable_closed')
+    this.hub.channels.forEach(channel => channel.disconnected(channelErr))
 
-    this.hub.channels.forEach(channel => channel.close(err))
     this.hub.close()
     this.protocol.reset()
     this.transport.close()
@@ -197,7 +207,7 @@ export class Cable {
   }
 
   disconnect() {
-    this.close(new DisconnectedError('manual'))
+    this.closed()
   }
 
   handleIncoming(raw) {
@@ -317,11 +327,6 @@ export class Cable {
       this.connect().catch(() => {})
     }
 
-    if (this.state === 'closed') {
-      channel.close(new NoConnectionError())
-      return Promise.resolve()
-    }
-
     if (this.state !== 'connected') {
       return Promise.resolve()
     }
@@ -346,7 +351,7 @@ export class Cable {
           if (err instanceof SubscriptionRejectedError) {
             this.logger.warn('rejected', channelMeta)
             this.hub.remove(channel.id)
-            channel.close(err)
+            channel.closed(err)
           }
 
           if (err instanceof DisconnectedError) {
@@ -363,7 +368,7 @@ export class Cable {
           ...channelMeta
         })
         this.hub.remove(channel.id)
-        channel.close(err)
+        channel.closed(err)
       })
   }
 
@@ -395,7 +400,7 @@ export class Cable {
 
     if (this.state !== 'connected') {
       let instance = this.hub.remove(identifier)
-      instance.close()
+      instance.closed()
 
       this.logger.debug('unsubscribed locally (cable is not connected)', {
         id: identifier
@@ -407,7 +412,7 @@ export class Cable {
       .unsubscribe(identifier)
       .then(() => {
         let instance = this.hub.remove(identifier)
-        instance.close()
+        instance.closed()
 
         this.logger.debug('unsubscribed remotely', { id: identifier })
         return true
@@ -418,7 +423,7 @@ export class Cable {
           // So we can mark it as closed locally.
           if (err instanceof DisconnectedError) {
             let instance = this.hub.remove(identifier)
-            instance.close(err)
+            instance.closed(err)
 
             this.logger.debug(
               'unsubscribed locally or remotely (cable disconnected during the command execution)',

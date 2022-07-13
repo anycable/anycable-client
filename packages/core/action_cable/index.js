@@ -111,7 +111,7 @@ export class ActionCableProtocol {
       this.reset(err)
 
       if (reconnect === false) {
-        this.cable.close(err)
+        this.cable.closed(err)
       } else {
         this.cable.disconnected(err)
       }

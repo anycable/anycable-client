@@ -61,7 +61,7 @@ class TestProtocol implements Protocol {
     }
 
     if (msg === 'close') {
-      this.cable.close(new DisconnectedError('closed'))
+      this.cable.closed(new DisconnectedError('closed'))
       return
     }
 
@@ -203,7 +203,7 @@ describe('connect/disconnect', () => {
   it('connect closed before connected', () => {
     let res = cable.connect()
 
-    cable.close('Connection closed')
+    cable.closed('Connection closed')
 
     return expect(res).rejects.toEqual(
       new DisconnectedError('Connection closed')
@@ -212,22 +212,23 @@ describe('connect/disconnect', () => {
 
   it('close', done => {
     cable.once('close', event => {
-      expect(event.reason).toEqual('test')
+      expect(event).toBeDefined()
+      expect((event as ReasonError).reason).toEqual('test')
       done()
     })
 
     cable.connected()
-    cable.close('test')
+    cable.closed('test')
 
     expect(cable.state).toEqual('closed')
     expect(transport.opened).toBe(false)
 
-    cable.close('test2')
+    cable.closed('test2')
   })
 
   it('disconnect', done => {
     cable.once('close', event => {
-      expect(event.reason).toEqual('manual')
+      expect(event).toBeUndefined()
       done()
     })
 
@@ -300,9 +301,11 @@ describe('connect/disconnect', () => {
 
 describe('channels', () => {
   let channel: Channel
+  let expectedIdentifier: string
 
   beforeEach(() => {
     channel = new TestChannel({ id: '26' })
+    expectedIdentifier = '{"identifier":"TestChannel","id":"26"}'
     cable.connect()
     cable.connected()
   })
@@ -371,10 +374,19 @@ describe('channels', () => {
   })
 
   it('subscribe when closed', () => {
-    cable.close()
-    return expect(cable.subscribe(channel)).rejects.toEqual(
-      new NoConnectionError('No connection')
-    )
+    cable.closed()
+
+    let subscribePromise = cable.subscribe(channel).then(identifier => {
+      expect(cable.hub.size).toEqual(1)
+      expect(channel.state).toEqual('connected')
+
+      return identifier
+    })
+
+    cable.connect()
+    cable.connected()
+
+    return expect(subscribePromise).resolves.toEqual(expectedIdentifier)
   })
 
   it('subscribe canceled while cable was connecting', () => {
@@ -387,7 +399,7 @@ describe('channels', () => {
     cable.connected()
 
     return expect(subscribePromise).rejects.toEqual(
-      new DisconnectedError('closed')
+      new ReasonError('Channel was disconnected before subscribing', 'canceled')
     )
   })
 
@@ -452,6 +464,31 @@ describe('channels', () => {
     cable.connected()
 
     return expect(promise).resolves.toEqual(message)
+  })
+
+  it('cable idle + subscribe + cable close + cable connected', async () => {
+    // We need a fresh, IDLE, instance
+    cable = new Cable({
+      protocol,
+      encoder,
+      logger,
+      transport
+    })
+
+    let promise = cable.subscribe(channel).then(identifier => {
+      expect(cable.hub.size).toEqual(1)
+      expect(channel.state).toEqual('connected')
+
+      return identifier
+    })
+
+    expect(cable.state).toEqual('connecting')
+    cable.disconnect()
+
+    cable.connect()
+    cable.connected()
+
+    return expect(promise).resolves.toEqual(expectedIdentifier)
   })
 
   it('subscribing + cable disconnected + subscribed failed with disconnected error + cable connected', async () => {
@@ -635,7 +672,7 @@ describe('channels', () => {
 
   it('perform when closed', async () => {
     cable.hub.add('42', channel)
-    cable.close()
+    cable.closed()
 
     return expect(cable.perform('42', 'do', { foo: 'bar' })).rejects.toEqual(
       Error('No connection')
@@ -711,7 +748,7 @@ describe('channels', () => {
     ).rejects.toEqual(Error('failed'))
   })
 
-  describe('closure and recovery', () => {
+  describe('closure and recovery with channels', () => {
     let channel2: TestChannel
 
     beforeEach(() => {
@@ -752,6 +789,25 @@ describe('channels', () => {
       expect(channel2.state).toEqual('connecting')
     })
 
+    it('closed by user', async () => {
+      await cable.subscribe(channel)
+      expect(cable.hub.size).toEqual(1)
+
+      let eventPromise = new Promise<void>(resolve => {
+        channel.on('disconnect', ev => {
+          expect(ev.reason).toEqual('cable_closed')
+          resolve()
+        })
+      })
+
+      cable.disconnect()
+
+      expect(cable.hub.size).toEqual(1)
+      expect(channel.state).toEqual('disconnected')
+
+      return eventPromise
+    })
+
     it('handles recoverable closure', async () => {
       await cable.subscribe(channel)
       cable.subscribe(channel2)
@@ -769,7 +825,7 @@ describe('channels', () => {
       return cable.subscribe(channel).then(() => {
         expect(cable.hub.size).toEqual(1)
 
-        cable.close()
+        cable.closed()
 
         return new Promise<void>(resolve => {
           channel.on('connect', () => {
@@ -807,7 +863,7 @@ describe('channels', () => {
       return cable.subscribe(channel).then(() => {
         expect(cable.hub.size).toEqual(1)
 
-        cable.close()
+        cable.closed()
 
         return new Promise<void>(resolve => {
           channel.on('connect', () => {

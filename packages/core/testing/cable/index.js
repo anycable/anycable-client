@@ -28,7 +28,7 @@ export class TestCable {
 
     if (!channel) throw Error(`Channel not found: ${identifier}`)
 
-    this.channels[identifier].close()
+    this.channels[identifier].closed()
 
     delete this.channels[identifier]
 

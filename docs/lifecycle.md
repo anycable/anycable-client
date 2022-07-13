@@ -45,7 +45,22 @@ cable.on('disconnect', ev => {
 ### `close`
 
 The "close" event is similar to "disconnect" with the only difference: it implies that the cable
-should not try to reconnect (e.g., when the server sent a disconnect message with `reconnect: false`).
+should not try to reconnect automatically (e.g., when the server sent a disconnect message with `reconnect: false`).
+
+This even is also triggered when a user disonnects the cable intentionally using `cable.disconnect()`. In this case, the event is undefined (since no error happened):
+
+```js
+cable.on('close', ev => {
+  if (ev) {
+    console.log('Something went wrong with the cable', ev)
+  } else {
+    console.log('Disconnected by us')
+  }
+})
+
+// This emits event-less 'close'
+cable.disconnect()
+```
 
 ### `keepalive`
 
@@ -54,6 +69,8 @@ The "keepalive" event is trigger every time a server sends a ping message. You c
 ## Channel
 
 Channels provide the same events as cables except "keepalive" (which is cable-only event): `connect`, `disconnect` and `close`.
+
+The important difference is that the `close` event is only triggered when `channel.disconnect` is called (i.e., when a user intentionally unsubscribed from a channel) or when the `subscribe` commands was rejected by the server or failed unexpectedly. Even if the cable was closed by user (`cable.disconnect()`), the channel stays in the `disconnected` state, not `closed`. That's because whenever the user decides to re-connect (`cable.connect()`), we should restore all unsubscribed channels.
 
 Channels also trigger the "message" event every time a new message is arrived (see the main documentation).
 

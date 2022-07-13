@@ -1,6 +1,6 @@
 import { createNanoEvents } from 'nanoevents'
 
-import { DisconnectedError } from '../protocol/index.js'
+import { ReasonError } from '../protocol/index.js'
 
 const STATE = Symbol('state')
 
@@ -44,10 +44,13 @@ export class Channel {
     this[STATE] = 'connected'
 
     let restored = false
-    let reconnect = !this.initialConnect
-    this.initialConnect = false
 
-    this.emit('connect', { reconnect, restored })
+    if (this.initialConnect) {
+      this.initialConnect = false
+      this.emit('connect', { reconnect: false, restored })
+    } else {
+      this.emit('connect', { reconnect: true, restored })
+    }
   }
 
   restored() {
@@ -57,7 +60,8 @@ export class Channel {
     this[STATE] = 'connected'
 
     let restored = true
-    let reconnect = !this.initialConnect
+    let reconnect = true
+
     this.initialConnect = false
 
     this.emit('connect', { reconnect, restored })
@@ -71,7 +75,7 @@ export class Channel {
     this.emit('disconnect', err)
   }
 
-  close(err) {
+  closed(err) {
     if (this.state === 'closed') return
 
     this[STATE] = 'closed'
@@ -144,7 +148,13 @@ export class Channel {
       unbind.push(
         this.on('close', err => {
           unbind.forEach(clbk => clbk())
-          reject(err || new DisconnectedError('closed'))
+          reject(
+            err ||
+              new ReasonError(
+                'Channel was disconnected before subscribing',
+                'canceled'
+              )
+          )
         })
       )
     })

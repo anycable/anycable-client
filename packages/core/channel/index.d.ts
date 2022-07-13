@@ -35,7 +35,7 @@ type ConnectEvent = Partial<{
 export interface ChannelEvents<T> {
   connect: (event: ConnectEvent) => void
   disconnect: (event: ReasonError) => void
-  close: (event: ReasonError) => void
+  close: (event?: ReasonError) => void
   message: (msg: T, meta?: MessageMeta) => void
 }
 
@@ -57,9 +57,9 @@ export class Channel<
   connected(id: Identifier): void
   restored(): void
   disconnected(reason?: ReasonError): void
+  closed(reason?: ReasonError): void
 
   disconnect(): Promise<boolean>
-  close(reason?: ReasonError): void
   perform(action: string, payload?: object): Promise<Message | void>
   receive(msg: MessageType, meta?: MessageMeta): void
 

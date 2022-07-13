@@ -21,7 +21,7 @@ type ConnectEvent = Partial<{
 export interface CableEvents {
   connect: (event: ConnectEvent) => void
   disconnect: (event: ReasonError) => void
-  close: (event: ReasonError) => void
+  close: (event?: ReasonError) => void
   keepalive: (msg?: Message) => void
 }
 
@@ -66,7 +66,6 @@ export class Cable {
     payload?: object
   ): Promise<Message | void>
   disconnect(): void
-  close(reason?: string | ReasonError): void
 
   subscribeTo(channel: string, params?: ChannelParamsMap): Promise<GhostChannel>
   subscribeTo<P extends ChannelParamsMap, T extends Channel<P>>(
@@ -79,6 +78,7 @@ export class Cable {
   connected(): void
   restored(): void
   disconnected(reason?: ReasonError): void
+  closed(reason?: string | ReasonError): void
 
   keepalive(msg?: Message): void
 

@@ -38,11 +38,11 @@ class TestReceiver implements Receiver {
   }
 
   rejected() {
-    this.channel.close(new SubscriptionRejectedError('Rejected'))
+    this.channel.closed(new SubscriptionRejectedError('Rejected'))
   }
 
   unsubscribe(_sid: Identifier): Promise<boolean> {
-    this.channel.close(new DisconnectedError('Unsubscribed'))
+    this.channel.closed(new DisconnectedError('Unsubscribed'))
     return Promise.resolve(true)
   }
 
@@ -287,7 +287,7 @@ describe('receiver communicaton', () => {
       new DisconnectedError('connection lost')
     )
 
-    channel.close(new DisconnectedError('manual'))
+    channel.closed(new DisconnectedError('manual'))
 
     return res
   })
@@ -421,7 +421,7 @@ describe('events', () => {
     channel.on('close', () => calls.push('ko'))
 
     client.subscribed(channel)
-    channel.close(new ReasonError('forbidden'))
+    channel.closed(new ReasonError('forbidden'))
 
     expect(calls).toEqual(['ko'])
   })
@@ -447,20 +447,20 @@ describe('events', () => {
 
     let res = new Promise(resolve => channel.on('close', resolve))
 
-    channel.close()
+    channel.closed()
 
     return res
   })
 
   it('does not emit close when closed', () => {
     client.subscribed(channel)
-    channel.close()
+    channel.closed()
 
     channel.on('close', () => {
       throw 'Should not emit close'
     })
 
-    channel.close()
+    channel.closed()
   })
 
   it('emits message', () => {

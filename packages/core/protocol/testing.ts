@@ -31,7 +31,7 @@ export class TestConsumer implements Consumer {
     this.mailbox.push(msg)
   }
 
-  close(err?: string | ReasonError) {
+  closed(err?: string | ReasonError) {
     this.state = 'closed'
     if (!err) return
 

@@ -128,7 +128,7 @@ describe('with tokenRefresher', () => {
       transport
     })
     cable.connected()
-    cable.close('token_expired')
+    cable.closed('token_expired')
 
     let spy = jest.spyOn(cable, 'connect')
 
@@ -157,13 +157,13 @@ describe('with tokenRefresher', () => {
     cable.connected()
     let spy = jest.spyOn(cable, 'connect')
 
-    cable.close('token_expired')
+    cable.closed('token_expired')
     expect(spy).toHaveBeenCalledTimes(0)
     expect(called).toEqual(1)
 
     // Check that we're ignoring subsequent disconnects
     cable.connected()
-    cable.close('token_expired')
+    cable.closed('token_expired')
 
     expect(called).toEqual(1)
   })
@@ -181,7 +181,7 @@ describe('with tokenRefresher', () => {
       transport
     })
     cable.connected()
-    cable.close('token_expired')
+    cable.closed('token_expired')
 
     expect(called).toEqual(1)
     expect(transport.url).toEqual('ws://anycable-new.test')
@@ -191,7 +191,7 @@ describe('with tokenRefresher', () => {
     // A hack to make sure all async functions have been resolved
     await new Promise<void>(resolve => setTimeout(resolve, 100))
 
-    cable.close('token_expired')
+    cable.closed('token_expired')
     expect(called).toEqual(2)
   })
 
@@ -212,12 +212,12 @@ describe('with tokenRefresher', () => {
       .spyOn(cable, 'connect')
       .mockImplementation(() => Promise.reject(new DisconnectedError('failed')))
 
-    cable.close('token_expired')
+    cable.closed('token_expired')
     expect(called).toEqual(1)
 
     // Check that we're ignoring subsequent disconnects
     cable.connected()
-    cable.close('token_expired')
+    cable.closed('token_expired')
 
     expect(called).toEqual(1)
   })
