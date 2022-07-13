@@ -9,7 +9,9 @@ import {
   Transport,
   SubscriptionRejectedError,
   DisconnectedError,
-  ChannelsCache
+  ChannelsCache,
+  Cable,
+  TokenRefresher
 } from '../index.js'
 import { TestTransport } from '../transport/testing'
 
@@ -112,21 +114,26 @@ it('with monitor=false', () => {
 
 describe('with tokenRefresher', () => {
   let transport: TestTransport
+  let called: number
+  let refresher: TokenRefresher
+  let cable: Cable
 
   beforeEach(() => {
     transport = new TestTransport('ws://anycable.test')
-  })
-
-  it('success', () => {
-    let refresher = (t: Transport) => {
+    called = 0
+    refresher = (t: Transport) => {
+      called++
       t.setURL('ws://anycable-new.test')
       return Promise.resolve()
     }
 
-    let cable = createCable('ws://example', {
+    cable = createCable('ws://example', {
       tokenRefresher: refresher,
       transport
     })
+  })
+
+  it('success', () => {
     cable.connected()
     cable.closed('token_expired')
 
@@ -142,18 +149,17 @@ describe('with tokenRefresher', () => {
     })
   })
 
-  it('when not updated', () => {
-    let called = 0
-    let refresher = (t: Transport) => {
+  it('when failed to refresh', () => {
+    refresher = (t: Transport) => {
       called++
-      t.setURL('ws://anycable-new.test')
       return Promise.reject(Error('no token in the response'))
     }
 
-    let cable = createCable('ws://example', {
+    cable = createCable('ws://example', {
       tokenRefresher: refresher,
       transport
     })
+
     cable.connected()
     let spy = jest.spyOn(cable, 'connect')
 
@@ -161,25 +167,15 @@ describe('with tokenRefresher', () => {
     expect(spy).toHaveBeenCalledTimes(0)
     expect(called).toEqual(1)
 
-    // Check that we're ignoring subsequent disconnects
+    // Check that we're trying to refresh after cable connected successfully
     cable.connected()
     cable.closed('token_expired')
 
-    expect(called).toEqual(1)
+    expect(called).toEqual(2)
+    expect(spy).toHaveBeenCalledTimes(0)
   })
 
   it('multiple expirations', async () => {
-    let called = 0
-    let refresher = (t: Transport) => {
-      called++
-      t.setURL('ws://anycable-new.test')
-      return Promise.resolve()
-    }
-
-    let cable = createCable('ws://example', {
-      tokenRefresher: refresher,
-      transport
-    })
     cable.connected()
     cable.closed('token_expired')
 
@@ -195,31 +191,55 @@ describe('with tokenRefresher', () => {
     expect(called).toEqual(2)
   })
 
-  it('when connection failed', () => {
-    let called = 0
-    let refresher = (t: Transport) => {
-      called++
-      t.setURL('ws://anycable-new.test')
-      return Promise.resolve()
-    }
+  it('when connection failed', async () => {
+    cable.connected()
 
-    let cable = createCable('ws://example', {
-      tokenRefresher: refresher,
-      transport
+    let openSpy = jest.spyOn(cable.transport, 'open').mockImplementation(() => {
+      return Promise.reject(new DisconnectedError('failed'))
     })
-    cable.connected()
-    jest
-      .spyOn(cable, 'connect')
-      .mockImplementation(() => Promise.reject(new DisconnectedError('failed')))
+
+    let waitDisconnect = new Promise(resolve => {
+      cable.on('disconnect', resolve)
+    })
 
     cable.closed('token_expired')
     expect(called).toEqual(1)
 
-    // Check that we're ignoring subsequent disconnects
+    await waitDisconnect
+
+    openSpy.mockReset()
+
+    // Check that we continue to watching expired tokens in case of disconnect
+    cable.connected()
+    cable.closed('token_expired')
+
+    // A hack to make sure all async functions have been resolved
+    await new Promise<void>(resolve => setTimeout(resolve, 100))
+
+    expect(called).toEqual(2)
+    expect(cable.state).toEqual('connecting')
+  })
+
+  it('when still expired or closed by server', async () => {
     cable.connected()
     cable.closed('token_expired')
 
     expect(called).toEqual(1)
+    expect(transport.url).toEqual('ws://anycable-new.test')
+
+    // A hack to make sure all async functions have been resolved
+    await new Promise<void>(resolve => setTimeout(resolve, 100))
+
+    // Shouldn't call refresher again
+    cable.closed('unauthorized')
+    expect(called).toEqual(1)
+  })
+
+  it('doesn not call refresher if closed by user', async () => {
+    cable.connected()
+    cable.disconnect()
+
+    expect(called).toEqual(0)
   })
 })
 

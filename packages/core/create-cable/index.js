@@ -118,13 +118,17 @@ export function createCable(url, opts) {
     watchForExpiredToken(cable, async () => {
       try {
         await tokenRefresher(transport)
-        await cable.connect()
-        return true
       } catch (err) {
-        logger.info('Failed to refresh authentication token: ' + err)
+        logger.error('Failed to refresh authentication token: ' + err)
+        return false
       }
 
-      return false
+      // Initiate cable connection.
+      // No need to wait for it to complete, it could
+      // fail due to network errors (which is not our responsibility)
+      cable.connect().catch(() => {})
+
+      return true
     })
   }
 
@@ -132,12 +136,23 @@ export function createCable(url, opts) {
 }
 
 function watchForExpiredToken(cable, callback) {
-  let unbind = cable.on('close', async ev => {
-    if (ev.reason === 'token_expired') {
-      unbind()
-      let result = await callback()
+  let attempted = false
 
-      if (result) watchForExpiredToken(cable, callback)
+  cable.on('connect', () => (attempted = false))
+
+  cable.on('close', async ev => {
+    if (!ev) return
+
+    // If we closed by server two times in a row
+    if (attempted) {
+      cable.logger.warn('Token auto-refresh is disabled', ev)
+      return
+    }
+
+    if (ev.reason === 'token_expired') {
+      attempted = true
+
+      await callback()
     }
   })
 }

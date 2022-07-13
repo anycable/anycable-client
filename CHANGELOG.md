@@ -2,6 +2,10 @@
 
 ## master
 
+- `core`: Make token refresher is not affected by connection failures.
+
+Previosly, we stopped handling `token_expired` errors if the reconnection attempt made by the refresher failed.
+
 - `core`: Do not emit 'close' for channels when cable is closed.
 
 The `close` event should indicate unsubscription (initiated by a user). When the cable is closed, subscriptions are disconnected, not closed (since they got restored if cable is connected back).

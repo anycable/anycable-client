@@ -210,7 +210,17 @@ it('open - disconnect - reconnect failed - reconnect success', () => {
   expect(monitor.state).toEqual('connected')
 })
 
-it('open - disconnect - reconnecting - close', () => {
+it('disconnect - reconnect success', () => {
+  cable.emitter.emit('disconnect')
+  expect(monitor.state).toEqual('pending_reconnect')
+
+  // delay = 2**(attempts), attempts == 0
+  jest.advanceTimersByTime(1500)
+
+  expect(monitor.state).toEqual('pending_connect')
+})
+
+it('disconnect - reconnecting - close', () => {
   cable.emitter.emit('connect')
   expect(monitor.state).toEqual('connected')
 
