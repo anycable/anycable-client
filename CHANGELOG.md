@@ -2,6 +2,8 @@
 
 ## master
 
+## 0.4.1 (2022-07-13)
+
 - `core`: Make token refresher is not affected by connection failures.
 
 Previosly, we stopped handling `token_expired` errors if the reconnection attempt made by the refresher failed.
