@@ -304,12 +304,9 @@ import { start } from "@anycable/turbo-stream"
 import cable from "cable"
 // Explicitly activate stream source elements
 start(cable)
-
-// You can use a custom tag name
-start(cable, { tagName: 'my-source-stream' })
 ```
 
-**NOTE:** Make sure you're not importing `@hotwired/turbo-rails` or use a custom tag name: Hotwire's package registers the custom element implicitly and it's not possible to override it.
+Read more in the package's [Readme](./packages/turbo-stream/README.md).
 
 ### Testing
 
