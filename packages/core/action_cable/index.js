@@ -14,7 +14,7 @@ export class ActionCableProtocol {
     this.pendingUnsubscriptions = {}
     // For how long to wait before sending `subscribe` command
     // in case `unsubscribe` was sent for the same identifier
-    this.subscribeCooldownInterval = opts.subscribeCooldownInterval || 500
+    this.subscribeCooldownInterval = opts.subscribeCooldownInterval || 250
     // For how long to wait for subscription acknoledgement before trying again
     // (just once).
     this.subscribeRetryInterval = opts.subscribeRetryInterval || 5000
