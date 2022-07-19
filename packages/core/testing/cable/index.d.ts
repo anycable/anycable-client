@@ -7,6 +7,6 @@ export class TestCable {
 
   connect(): Promise<void>
   subscribe(channel: Channel): Promise<Identifier>
-  unsubscribe(id: Identifier): Promise<void>
-  perform(id: Identifier, action: string, payload?: object): Promise<void>
+  unsubscribe(channel: Channel): Promise<void>
+  perform(channel: Channel, action: string, payload?: object): Promise<void>
 }

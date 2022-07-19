@@ -11,6 +11,10 @@ export class SubscriptionRejectedError extends ReasonError {
   constructor(msg?: string)
 }
 
+export class SubscriptionTimeoutError extends ReasonError {
+  constructor(msg?: string)
+}
+
 export class DisconnectedError extends ReasonError {
   constructor(reason?: string)
   constructor(cause: Error, reason?: string)

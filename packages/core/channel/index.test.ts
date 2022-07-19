@@ -5,8 +5,6 @@ import {
   ChannelEvents as Events,
   Receiver,
   Message,
-  Identifier,
-  MessageMeta,
   ReasonError,
   DisconnectedError,
   SubscriptionRejectedError
@@ -24,30 +22,32 @@ class TestReceiver implements Receiver {
 
   subscribe(channel: Channel) {
     this.channel = channel
-    this.channel.connecting(this)
+    this.channel.attached(this)
+    this.channel.connecting()
   }
 
   subscribed(channel?: Channel) {
     if (channel) {
       this.channel = channel
-      this.channel.connecting(this)
+      this.channel.attached(this)
+      this.channel.connecting()
     }
 
     let id = (++this.subscriptionsCount).toString()
-    this.channel.connected(id)
+    this.channel.connected()
   }
 
   rejected() {
     this.channel.closed(new SubscriptionRejectedError('Rejected'))
   }
 
-  unsubscribe(_sid: Identifier): Promise<boolean> {
-    this.channel.closed(new DisconnectedError('Unsubscribed'))
-    return Promise.resolve(true)
+  unsubscribe(channel: Channel): Promise<void> {
+    channel.closed(new DisconnectedError('Unsubscribed'))
+    return Promise.resolve()
   }
 
   perform(
-    _sid: string,
+    _channel: Channel,
     action: string,
     payload?: object
   ): Promise<Message | void> {
@@ -94,8 +94,9 @@ describe('receiver communicaton', () => {
     )
   })
 
-  it('returns identifier', () => {
-    expect(channel.identifier).toEqual(TestChannel.identifier)
+  it('returns channel identifier', () => {
+    expect(channel.channelId).toEqual(TestChannel.identifier)
+    expect(channel.identifier).toEqual(`{"channel":"test","id":"2021"}`)
   })
 
   it('connects', async () => {
@@ -108,7 +109,6 @@ describe('receiver communicaton', () => {
     client.subscribed()
 
     expect(channel.state).toEqual('connected')
-    expect(channel.id).toBeDefined()
   })
 
   it('connect rejection', async () => {
@@ -117,18 +117,17 @@ describe('receiver communicaton', () => {
 
     client.rejected()
     expect(channel.state).toEqual('closed')
-    expect(channel.id).toBeUndefined()
   })
 
-  it('double connecting', async () => {
+  it('double attached', async () => {
     client.subscribe(channel)
     client.subscribe(channel)
 
     client.subscribed()
 
     expect(() => {
-      channel.connecting(new TestReceiver())
-    }).toThrow('Already connected')
+      channel.attached(new TestReceiver())
+    }).toThrow('Already connected to a different receiver')
 
     expect(() => {
       client.subscribed()
@@ -137,7 +136,7 @@ describe('receiver communicaton', () => {
 
   it('restored', () => {
     client.subscribed(channel)
-    channel.connecting(client)
+    channel.connecting()
 
     expect(channel.state).toEqual('connecting')
 
@@ -145,27 +144,6 @@ describe('receiver communicaton', () => {
     channel.restored()
 
     return expect(res).resolves.toEqual({ action: 'restore' })
-  })
-
-  it('parallel connecting', async () => {
-    anotherChannel = new AnotherTestChannel({ id: '2022' })
-
-    expect(channel.state).toEqual('idle')
-    expect(anotherChannel.state).toEqual('idle')
-
-    client.subscribe(channel)
-    client.subscribe(anotherChannel)
-
-    expect(channel.state).toEqual('connecting')
-    expect(anotherChannel.state).toEqual('connecting')
-
-    client.subscribed(channel)
-    client.subscribed(anotherChannel)
-
-    expect(channel.state).toEqual('connected')
-    expect(anotherChannel.state).toEqual('connected')
-    expect(channel.id).toBeDefined()
-    expect(anotherChannel.id).toBeDefined()
   })
 
   it('restored when connected', () => {
@@ -189,20 +167,25 @@ describe('receiver communicaton', () => {
     }).toThrow('Must be connecting')
   })
 
+  it('pending subscribed when closed', () => {
+    channel.closed()
+    return expect(channel.subscribed()).rejects.toEqual(
+      Error('Channel is unsubscribed')
+    )
+  })
+
   it('performs action with payload', async () => {
     client.subscribed(channel)
 
     jest
       .spyOn(client, 'perform')
-      .mockImplementation(
-        (id: Identifier, action: string, payload?: Message) => {
-          expect(id).toEqual(channel.id)
-          expect(action).toEqual('do')
-          expect(payload).toMatchObject({ foo: 'bar' })
+      .mockImplementation((ch: Channel, action: string, payload?: Message) => {
+        expect(ch).toEqual(channel)
+        expect(action).toEqual('do')
+        expect(payload).toMatchObject({ foo: 'bar' })
 
-          return Promise.resolve()
-        }
-      )
+        return Promise.resolve()
+      })
 
     let res = await channel.perform('do', { foo: 'bar' })
     expect(res).toBeUndefined()
@@ -213,15 +196,13 @@ describe('receiver communicaton', () => {
 
     jest
       .spyOn(client, 'perform')
-      .mockImplementation(
-        (id: Identifier, action: string, payload?: Message) => {
-          expect(id).toEqual(channel.id)
-          expect(action).toEqual('do')
-          expect(payload).toBeUndefined()
+      .mockImplementation((ch: Channel, action: string, payload?: Message) => {
+        expect(ch).toEqual(channel)
+        expect(action).toEqual('do')
+        expect(payload).toBeUndefined()
 
-          return Promise.resolve()
-        }
-      )
+        return Promise.resolve()
+      })
 
     let res = await channel.perform('do')
     expect(res).toBeUndefined()
@@ -280,14 +261,14 @@ describe('receiver communicaton', () => {
     return res
   })
 
-  it('performs when connection is closed', () => {
+  it('perform + close', () => {
     client.subscribe(channel)
 
     let res = expect(channel.perform('do', { foo: 'bar' })).rejects.toEqual(
-      new DisconnectedError('connection lost')
+      new ReasonError('Channel was disconnected before subscribing')
     )
 
-    channel.closed(new DisconnectedError('manual'))
+    channel.closed()
 
     return res
   })
@@ -295,15 +276,15 @@ describe('receiver communicaton', () => {
   it('disconnects', async () => {
     client.subscribed(channel)
 
-    jest.spyOn(client, 'unsubscribe').mockImplementation((id: Identifier) => {
-      expect(id).toEqual(channel.id)
-      channel.disconnected()
-      return Promise.resolve(true)
+    jest.spyOn(client, 'unsubscribe').mockImplementation((ch: Channel) => {
+      expect(ch).toEqual(channel)
+      channel.closed()
+      return Promise.resolve()
     })
 
     await channel.disconnect()
 
-    expect(channel.state).toEqual('disconnected')
+    expect(channel.state).toEqual('closed')
   })
 
   it('disconnect without connect', async () => {
@@ -317,9 +298,11 @@ describe('receiver communicaton', () => {
       expect(channel.state).toEqual('closed')
     })
 
+    let res2 = channel.disconnect()
+
     client.subscribed()
 
-    return res
+    return Promise.all([res, res2])
   })
 
   it('disconnect while connecting and rejected', () => {
@@ -345,17 +328,21 @@ describe('receiver communicaton', () => {
     return res
   })
 
-  it('connecting-perform-disconnect', async () => {
+  it('connecting-disconnect-disconnect-connected', async () => {
     client.subscribe(channel)
 
-    let p1 = channel.perform('do', { foo: 'bar' })
-
-    await channel.disconnect()
-    expect(channel.state).toEqual('closed')
+    let p1 = channel.disconnect()
+    let p2 = channel.disconnect()
 
     client.subscribed()
 
-    return expect(p1).rejects.toEqual(new DisconnectedError())
+    await p1
+    await p2
+
+    expect(channel.state).toEqual('closed')
+
+    channel.connected()
+    expect(channel.state).toEqual('closed')
   })
 })
 
@@ -435,7 +422,7 @@ describe('events', () => {
       calls.push('rrr')
     })
 
-    channel.connecting(client)
+    channel.connecting()
     channel.restored()
 
     expect(calls).toEqual(['rrr'])

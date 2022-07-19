@@ -20,6 +20,13 @@ export class SubscriptionRejectedError extends ReasonError {
   }
 }
 
+export class SubscriptionTimeoutError extends ReasonError {
+  constructor(msg) {
+    super(msg || 'Timed out to receive subscription ack')
+    this.name = 'SubscriptionTimeoutError'
+  }
+}
+
 export class DisconnectedError extends ReasonError {
   constructor(error, reason) {
     if (reason) {

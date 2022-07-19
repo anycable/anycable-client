@@ -1,122 +1,162 @@
-let tempID = 2019
-
-export class Entry {
+export class Unsubscribes {
   constructor() {
-    this.id = `__temp__${++tempID}`
-    this.refs = 0
-    this.pendingSubscription = undefined
+    this._store = {}
   }
 
-  mark() {
-    this.refs++
+  add(id, promise) {
+    this._store[id] = promise
+      .then(() => {
+        delete this._store[id]
+      })
+      .catch(err => {
+        if (this._store[id]) {
+          delete this._store[id]
+          throw err || Error('unknown unsubscribe error')
+        }
+      })
   }
 
-  unmark() {
-    this.refs--
+  get(id) {
+    return this._store[id]
   }
 
-  isFree() {
-    return this.refs === 0
-  }
-
-  isPending() {
-    return !!this.pendingSubscription
-  }
-
-  pending(promise) {
-    if (this.pendingSubscription) return this.pendingSubscription
-
-    return (this.pendingSubscription = promise.finally(() => {
-      delete this.pendingSubscription
-    }))
+  remove(id) {
+    delete this._store[id]
   }
 }
 
 export class Hub {
   constructor() {
-    this.registry = {}
-    this.entries = new WeakMap()
-    this.pendingMessages = []
-  }
-
-  entryFor(channel) {
-    let entry = this.entries.get(channel)
-
-    if (!entry) {
-      this.entries.set(channel, new Entry())
-    }
-
-    return this.entries.get(channel)
+    this._subscriptions = {}
+    this._channelsToSubs = new WeakMap()
+    this._remoteToLocal = {}
+    this._pendingMessages = []
+    this.unsubscribes = new Unsubscribes()
   }
 
   add(id, channel) {
-    if (channel.id) {
-      delete this.registry[channel.id]
+    this._channelsToSubs.set(channel, id)
+
+    if (this._subscriptions[id]) {
+      this._subscriptions[id].channels.push(channel)
+    } else {
+      this._subscriptions[id] = {
+        id,
+        channel: channel.channelId,
+        params: channel.params,
+        channels: [channel]
+      }
     }
+  }
 
-    this.registry[id] = channel
+  findSubscription(id) {
+    return this._subscriptions[id]
+  }
 
-    this.flush(id)
+  channelsFor(id) {
+    let sub = this._subscriptions[id]
+
+    if (!sub) return []
+
+    return this._subscriptions[id].channels
+  }
+
+  subscribe(id, remoteId) {
+    let sub = this._subscriptions[id]
+
+    if (!sub) return
+
+    sub.remoteId = remoteId
+
+    this._remoteToLocal[remoteId] = id
+
+    this.flush(remoteId)
   }
 
   remove(id) {
-    let channel = this.registry[id]
+    let sub = this._subscriptions[id]
+    if (!sub) return
 
-    if (channel) {
-      delete this.registry[id]
-      this.entries.delete(channel)
-      return channel
+    delete this._subscriptions[id]
+    delete this.unsubscribes.remove(id)
+
+    if (sub.remoteId) {
+      delete this._remoteToLocal[sub.remoteId]
     }
 
-    return undefined
+    sub.channels.forEach(channel => this._channelsToSubs.delete(channel))
   }
 
-  get(id) {
-    return this.registry[id]
+  removeChannel(channel) {
+    let id = this._channelsToSubs.get(channel)
+
+    if (!id) return
+
+    let sub = this._subscriptions[id]
+
+    // Remove channel from the subscription channels
+    sub.channels.splice(sub.channels.indexOf(channel), 1)
+    this._channelsToSubs.delete(channel)
+
+    if (sub.channels.length === 0) this.remove(id)
   }
 
   transmit(id, msg, meta) {
-    let channel = this.registry[id]
+    let localId = this._remoteToLocal[id]
 
-    if (channel) {
-      channel.receive(msg, meta)
-    } else {
-      this.pendingMessages.push([id, msg, meta])
+    if (!localId) {
+      this._pendingMessages.push([id, msg, meta])
+      return
     }
+
+    let sub = this._subscriptions[localId]
+
+    sub.channels.forEach(channel => {
+      channel.receive(msg, meta)
+    })
   }
 
   close() {
-    this.pendingMessages.length = 0
+    this._pendingMessages.length = 0
+    this._unsubscribeRequests = {}
   }
 
   get size() {
-    return Object.keys(this.registry).length
+    return this.channels.length
+  }
+
+  get subscriptions() {
+    return Object.values(this._subscriptions)
+  }
+
+  get activeSubscriptions() {
+    return this.subscriptions.filter(sub => !!sub.remoteId)
+  }
+
+  get pendingSubscriptions() {
+    return this.subscriptions.filter(sub => !sub.remoteId)
   }
 
   get channels() {
-    return Object.values(this.registry)
+    return this.subscriptions.flatMap(sub => sub.channels)
   }
 
   get pendingChannels() {
-    return Object.values(this.registry).filter(channel => {
-      return this.entryFor(channel).isPending()
-    })
+    return this.pendingSubscriptions.flatMap(sub => sub.channels)
   }
 
   get activeChannels() {
-    return Object.values(this.registry).filter(channel => {
-      return !this.entryFor(channel).isPending()
-    })
+    return this.activeSubscriptions.flatMap(sub => sub.channels)
   }
 
   flush(id) {
     let left = []
 
-    for (let item of this.pendingMessages) {
+    for (let item of this._pendingMessages) {
       if (item[0] === id) this.transmit(item[0], item[1], item[2])
       else left.push(item)
     }
 
-    this.pendingMessages = left
+    this._pendingMessages = left
   }
 }

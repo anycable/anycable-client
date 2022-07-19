@@ -2,6 +2,25 @@
 
 ## master
 
+- `core`: **BREAKING** `channelsCache` is deprecated/removed in favour of support for using multiple channel instances for the same identifier.
+
+Channels cache has been added as a workaround for automatically re-using the same channel instance to avoid double-subscrpition problems (since a single client may only have a single subscrpition for the specified identifier).
+
+Not it's possible (and recommended) to create multiple channel instances, AnyCable client takes care of creating a single subscription under the hood. Each channel instance is independent, which means that, for example, calling `channel.disconnect()` removes this channels from the subscribers list and no messages are sent to this particular instance (which could lead to an unexpected behaviour when channels cache was used).
+
+- `core`: **BREAKING** `cable.subscribe(channel)` now resolves as fast as the channel is **ready to subscribe**, but before the actual `subscribe` command is sent and confirmation/rejection received (as previously).
+
+If you still want to wait for channel to be connected, you can use the new `subscribed` function:
+
+```js
+# Before
+await cable.subscribe(channel)
+
+# After
+cable.subscribe(channel)
+await channel.subscribed()
+```
+
 ## 0.4.1 (2022-07-13)
 
 - `core`: Make token refresher is not affected by connection failures.

@@ -18,17 +18,17 @@ export class NoConnectionError extends ReasonError {
 
 export class GhostChannel extends Channel {
   static identifier = '__ghost__'
-  constructor(identifier, params) {
+  constructor(channelId, params) {
     super(params)
-    this.identifier = identifier
+    this.channelId = channelId
   }
 
-  set identifier(val) {
-    this._identifier = val
+  set channelId(val) {
+    this._channelId = val
   }
 
-  get identifier() {
-    return this._identifier
+  get channelId() {
+    return this._channelId
   }
 }
 
@@ -88,19 +88,23 @@ export class Cable {
   }
 
   connected() {
+    if (this.state === 'connected') return
+
     this.logger.info('connected')
 
     this[STATE] = 'connected'
 
     if (this.recovering) {
       // Make sure channels moved to disconnect state
-      this.hub.activeChannels.forEach(channel =>
+      this.hub.channels.forEach(channel =>
         channel.disconnected('Failed to recover')
       )
     }
 
     // Re-subscribe channels
-    this.hub.channels.forEach(channel => this._subscribe(channel))
+    this.hub.subscriptions.forEach(({ id, channel, params }) =>
+      this._subscribe(id, channel, params)
+    )
 
     let restored = false
     this.recovering = false
@@ -129,7 +133,9 @@ export class Cable {
     // Transition active channels to 'connected' state
     this.hub.activeChannels.forEach(channel => channel.restored())
     // Try to subscribe pending channels
-    this.hub.pendingChannels.forEach(channel => this._subscribe(channel))
+    this.hub.pendingSubscriptions.forEach(({ id, channel, params }) =>
+      this._subscribe(id, channel, params)
+    )
 
     let reconnect = !this.initialConnect
     let restored = true
@@ -147,11 +153,7 @@ export class Cable {
   }
 
   disconnected(err) {
-    if (
-      this.state === 'disconnected' ||
-      this.state === 'closed' ||
-      this.state === 'idle'
-    ) {
+    if (!(this.state === 'connected' || this.state === 'connecting')) {
       return
     }
 
@@ -162,11 +164,9 @@ export class Cable {
     this.recovering = this.protocol.recoverableClosure(err)
 
     if (this.recovering) {
-      // Transition channels to 'connecting' state (so actions are pending the connection)
-      this.hub.activeChannels.forEach(channel => channel.connecting(this))
+      this.hub.channels.forEach(channel => channel.connecting())
     } else {
-      // Notify all active (once connected) channels
-      this.hub.activeChannels.forEach(channel => channel.disconnected(err))
+      this.hub.channels.forEach(channel => channel.disconnected(err))
     }
 
     this.protocol.reset(err)
@@ -211,11 +211,7 @@ export class Cable {
   }
 
   handleIncoming(raw) {
-    if (
-      this.state === 'disconnected' ||
-      this.state === 'closed' ||
-      this.state === 'idle'
-    ) {
+    if (this.state === 'closed' || this.state === 'idle') {
       return
     }
 
@@ -240,6 +236,10 @@ export class Cable {
   }
 
   send(msg) {
+    if (this.state === 'closed') {
+      throw Error('Cable is closed')
+    }
+
     let data = this.encoder.encode(msg)
 
     if (data === undefined) {
@@ -259,99 +259,96 @@ export class Cable {
   subscribeTo(ChannelClass, params) {
     let channel
     let ghostName
-    let identifier
 
     if (typeof ChannelClass === 'string') {
       ghostName = ChannelClass
-      identifier = ChannelClass
       ChannelClass = GhostChannel
-    } else {
-      identifier = ChannelClass.identifier
     }
 
-    if (this.cache) {
-      channel = this.cache.read(identifier, params)
-    }
+    channel = ghostName
+      ? new ChannelClass(ghostName, params)
+      : new ChannelClass(params)
 
-    if (!channel) {
-      channel = ghostName
-        ? new ChannelClass(ghostName, params)
-        : new ChannelClass(params)
+    this.subscribe(channel).catch(() => {})
 
-      if (this.cache) {
-        this.cache.write(channel, identifier, params)
-      }
-    }
-
-    return this.subscribe(channel).then(() => channel)
+    return channel
   }
 
   async subscribe(channel) {
-    if (channel.state === 'connected') {
-      if (channel.receiver !== this) {
-        throw Error('Already connected to another cable')
+    // Return if channel has been already attached to the cable
+    if (!channel.attached(this)) return false
+
+    let identifier = channel.identifier
+
+    channel.connecting()
+
+    let subscription = this.hub.findSubscription(identifier)
+
+    this.hub.add(identifier, channel)
+
+    if (subscription) {
+      if (subscription.channels[0].state === 'connected') {
+        channel.connected()
       }
 
-      this.hub.entryFor(channel).mark()
+      return false
+    } else {
+      // if there is an unsubscribe request pending, let's wait for it to complete
+      let unsub = this.hub.unsubscribes.get(identifier)
 
-      return channel.id
+      if (unsub) await unsub
+
+      this._subscribe(identifier, channel.channelId, channel.params)
+
+      return true
     }
-
-    let entry = this.hub.entryFor(channel)
-    entry.mark()
-
-    if (entry.isPending()) {
-      return entry.pending()
-    }
-
-    // Set temporary ID which could be used to unsubscribe
-    // before subscribe command was sent
-    if (!channel.id) {
-      channel.id = entry.id
-      this.hub.add(channel.id, channel)
-    }
-
-    let subscribePromise = channel.pendingSubscribe()
-
-    // Subscribe is only called for side-effects here
-    this._subscribe(channel)
-
-    return entry.pending(subscribePromise)
   }
 
-  _subscribe(channel) {
-    channel.connecting(this)
-
+  _subscribe(identifier, channelId, params) {
     if (this.state === 'idle') {
       // Trigger connection initialization if it is lazy
       this.connect().catch(() => {})
     }
 
+    // We will call _subscribe again as soon as cable connected
     if (this.state !== 'connected') {
-      return Promise.resolve()
+      return
     }
 
     let channelMeta = {
-      identifier: channel.identifier,
-      params: channel.params
+      identifier: channelId,
+      params
     }
 
     this.logger.debug('subscribing', channelMeta)
 
-    return this.protocol
-      .subscribe(channel.identifier, channel.params)
-      .then(identifier => {
-        this.hub.add(identifier, channel)
-        channel.connected(identifier)
+    this.protocol
+      .subscribe(channelId, params)
+      .then(remoteId => {
+        this.hub.channelsFor(identifier).forEach(channel => channel.connected())
 
-        this.logger.debug('subscribed', { id: identifier, ...channelMeta })
+        let subscription = this.hub.findSubscription(identifier)
+
+        if (subscription) {
+          this.hub.subscribe(identifier, remoteId)
+          this.logger.debug('subscribed', { ...channelMeta, remoteId })
+        } else {
+          // That means we unsubscribed before receiving a confirmation
+          this.logger.warn('subscription confirmed after unsubscribe', {
+            ...channelMeta,
+            remoteId
+          })
+        }
       })
       .catch(err => {
         if (err) {
           if (err instanceof SubscriptionRejectedError) {
             this.logger.warn('rejected', channelMeta)
-            this.hub.remove(channel.id)
-            channel.closed(err)
+
+            this.hub
+              .channelsFor(identifier)
+              .forEach(channel => channel.closed(err))
+            this.hub.remove(identifier)
           }
 
           if (err instanceof DisconnectedError) {
@@ -367,53 +364,49 @@ export class Cable {
           error: err,
           ...channelMeta
         })
-        this.hub.remove(channel.id)
-        channel.closed(err)
+        this.hub.channelsFor(identifier).forEach(channel => channel.closed(err))
+        this.hub.remove(identifier)
       })
   }
 
-  async unsubscribe(identifier) {
-    let channel = this.hub.get(identifier)
+  async unsubscribe(channel) {
+    let identifier = channel.identifier
+    let subscription = this.hub.findSubscription(identifier)
 
-    if (!channel) throw Error(`Channel not found: ${identifier}`)
+    if (!subscription) {
+      throw Error(`Subscription not found: ${identifier}`)
+    }
 
-    let entry = this.hub.entryFor(channel)
+    this.hub.removeChannel(channel)
+    channel.closed()
 
-    // In case we try to unsubscribe already unsubscribed channel
-    // (that shouldn't really happen)
-    if (entry.isFree()) return true
+    let remoteId = subscription.remoteId
+    let channels = this.hub.channelsFor(identifier)
 
-    entry.unmark()
+    if (channels.length > 0 || !remoteId) {
+      return false
+    }
 
-    // Someone is still using this channel
-    if (!entry.isFree()) return false
+    let unsubscribeRequest = this._unsubscribe(remoteId)
 
-    return this._unsubscribe(identifier).catch(err => {
-      // Restore mark state in case of failed unsubscription
-      entry.mark()
-      throw err
-    })
+    this.hub.unsubscribes.add(identifier, unsubscribeRequest)
+
+    return true
   }
 
   async _unsubscribe(identifier) {
     this.logger.debug('unsubscribing...', { id: identifier })
 
     if (this.state !== 'connected') {
-      let instance = this.hub.remove(identifier)
-      instance.closed()
-
-      this.logger.debug('unsubscribed locally (cable is not connected)', {
+      this.logger.debug('unsubscribe skipped (cable is not connected)', {
         id: identifier
       })
-      return Promise.resolve(true)
+      return true
     }
 
     return this.protocol
       .unsubscribe(identifier)
       .then(() => {
-        let instance = this.hub.remove(identifier)
-        instance.closed()
-
         this.logger.debug('unsubscribed remotely', { id: identifier })
         return true
       })
@@ -422,13 +415,11 @@ export class Cable {
           // We assume that server unsubscribes subscriptions on disconnect,
           // So we can mark it as closed locally.
           if (err instanceof DisconnectedError) {
-            let instance = this.hub.remove(identifier)
-            instance.closed(err)
-
             this.logger.debug(
-              'unsubscribed locally or remotely (cable disconnected during the command execution)',
+              'cable disconnected during the unsubscribe command execution',
               { id: identifier, error: err }
             )
+
             return true
           }
         }
@@ -438,29 +429,32 @@ export class Cable {
           error: err
         })
 
-        throw err || Error('Unsubscribe failed')
+        return false
       })
   }
 
-  async perform(identifier, action, payload) {
-    let channel = this.hub.get(identifier)
+  async perform(channel, action, payload) {
+    let identifier = channel.identifier
+    let subscription = this.hub.findSubscription(identifier)
 
-    if (!channel) throw Error(`Channel not found: ${identifier}`)
+    if (!subscription) {
+      throw Error(`Subscription not found: ${identifier}`)
+    }
 
     if (this.state === 'connecting') {
       await this.pendingConnect()
-
-      if (channel.state === 'connecting') {
-        await channel.pendingSubscribe()
-      }
     }
 
     if (this.state === 'closed' || this.state === 'disconnected') {
       throw new NoConnectionError()
     }
 
+    await channel.subscribed()
+
+    let remoteId = subscription.remoteId
+
     let performMeta = {
-      id: identifier,
+      id: remoteId,
       action,
       payload
     }
@@ -468,7 +462,7 @@ export class Cable {
     this.logger.debug('perform', performMeta)
 
     return this.protocol
-      .perform(identifier, action, payload)
+      .perform(remoteId, action, payload)
       .then(res => {
         if (res) {
           this.logger.debug('perform result', {

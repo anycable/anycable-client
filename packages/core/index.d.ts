@@ -6,7 +6,6 @@ export {
   MessageMeta,
   Identifier
 } from './channel/index.js'
-export { ChannelsCache } from './channels-cache/index.js'
 export { Transport } from './transport/index.js'
 export { Encoder, JSONEncoder } from './encoder/index.js'
 export {
@@ -14,6 +13,7 @@ export {
   Consumer,
   ReasonError,
   SubscriptionRejectedError,
+  SubscriptionTimeoutError,
   DisconnectedError,
   CommandError,
   ProcessedMessage,
@@ -28,8 +28,7 @@ export {
   CableOptions,
   Cable,
   NoConnectionError,
-  CableEvents,
-  Cache
+  CableEvents
 } from './cable/index.js'
 export {
   Monitor,

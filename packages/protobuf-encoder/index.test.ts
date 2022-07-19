@@ -118,9 +118,9 @@ describe('protobuf message e2e sending', () => {
     cable.connect()
     cable.connected()
 
-    subscribeAndSendPromise = cable.subscribe(channel).then(() => {
-      return channel.perform(action, payload)
-    })
+    cable.subscribe(channel)
+
+    subscribeAndSendPromise = channel.perform(action, payload)
 
     cable.protocol.receive({ type: 'confirm_subscription', identifier })
   })

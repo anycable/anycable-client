@@ -5,30 +5,35 @@ export class TestCable {
   }
 
   async subscribe(channel) {
-    channel.connecting(this)
+    channel.attached(this)
+    channel.connecting()
 
     this.channels[channel.identifier] = channel
-    channel.connected(channel.identifier)
+    channel.connected()
 
     return Promise.resolve(channel.identifier)
   }
 
-  async perform(identifier, action, payload = {}) {
-    let channel = this.channels[identifier]
+  async perform(channel, action, payload = {}) {
+    let identifier = channel.identifier
 
-    if (!channel) throw Error(`Channel not found: ${identifier}`)
+    if (!this.channels[identifier]) {
+      throw Error(`Channel not found: ${identifier}`)
+    }
 
     this.outgoing.push({ action, payload })
 
     return Promise.resolve()
   }
 
-  async unsubscribe(identifier) {
-    let channel = this.channels[identifier]
+  async unsubscribe(channel) {
+    let identifier = channel.identifier
 
-    if (!channel) throw Error(`Channel not found: ${identifier}`)
+    if (!this.channels[identifier]) {
+      throw Error(`Channel not found: ${identifier}`)
+    }
 
-    this.channels[identifier].closed()
+    channel.closed()
 
     delete this.channels[identifier]
 

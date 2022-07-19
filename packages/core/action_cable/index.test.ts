@@ -1,6 +1,10 @@
 import { jest } from '@jest/globals'
 
-import { ActionCableProtocol, NoopLogger } from '../index.js'
+import {
+  ActionCableProtocol,
+  NoopLogger,
+  SubscriptionTimeoutError
+} from '../index.js'
 import { TestConsumer } from '../protocol/testing'
 import { TestLogger } from '../logger/testing'
 
@@ -96,8 +100,8 @@ describe('subscriptions', () => {
   it('subscribes successfully with params', () => {
     identifier = JSON.stringify({
       channel: 'TestChannel',
-      id: 2021,
-      foo: 'bar'
+      foo: 'bar',
+      id: 2021
     })
 
     let res = expect(
@@ -126,38 +130,44 @@ describe('subscriptions', () => {
     return res
   })
 
-  it('subscribe command retried if no ack received', async () => {
+  it('subscribe rejected if no ack received', async () => {
     identifier = JSON.stringify({
       channel: 'TestChannel',
-      id: 2021,
-      foo: 'bar'
+      foo: 'bar',
+      id: 2021
     })
 
     protocol.subscribeRetryInterval = 500
 
     let res = expect(
       protocol.subscribe('TestChannel', { id: 2021, foo: 'bar' })
-    ).resolves.toEqual(identifier)
+    ).rejects.toEqual(
+      new SubscriptionTimeoutError(
+        `Haven't received subscription ack in 500ms for ${identifier}`
+      )
+    )
 
     expect(cable.mailbox).toHaveLength(1)
     expect(cable.mailbox[0]).toMatchObject({ command: 'subscribe', identifier })
 
-    let timeoutPromise = new Promise<void>(resolve => {
-      setTimeout(() => {
-        protocol.receive({ type: 'confirm_subscription', identifier })
-        resolve()
-      }, 600)
-    })
-
-    await timeoutPromise
-
-    expect(cable.mailbox).toHaveLength(2)
-    expect(cable.mailbox[1]).toMatchObject({
-      command: 'subscribe',
-      identifier
-    })
-
     return res
+  })
+
+  it('double subscribing warns', async () => {
+    let res = expect(protocol.subscribe('TestChannel')).resolves.toEqual(
+      identifier
+    )
+
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toMatchObject({ command: 'subscribe', identifier })
+
+    expect(logger.warnings).toHaveLength(0)
+    let second = protocol.subscribe('TestChannel').catch(() => {})
+    expect(logger.warnings).toHaveLength(1)
+
+    protocol.receive({ type: 'confirm_subscription', identifier })
+
+    await Promise.all([res, second])
   })
 
   it('unsubscribes successfully', async () => {
@@ -187,7 +197,7 @@ describe('subscriptions', () => {
     })
 
     await new Promise(resolve =>
-      setTimeout(resolve, protocol.subscribeCooldownInterval + 100)
+      setTimeout(resolve, protocol.subscribeCooldownInterval * 2)
     )
 
     expect(cable.mailbox).toHaveLength(2)

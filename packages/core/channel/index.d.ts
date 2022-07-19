@@ -10,9 +10,9 @@ export type MessageMeta = Partial<{
 }>
 
 export interface Receiver {
-  unsubscribe(id: Identifier): Promise<boolean>
+  unsubscribe(channel: Channel): Promise<void>
   perform(
-    id: Identifier,
+    channel: Channel,
     action: string,
     payload?: object
   ): Promise<Message | void>
@@ -21,11 +21,11 @@ export interface Receiver {
 export type ChannelParamsMap = { [token: string]: boolean | number | string }
 
 export type ChannelState =
-  | 'disconnected'
-  | 'connected'
-  | 'connecting'
-  | 'closed'
   | 'idle'
+  | 'connecting'
+  | 'connected'
+  | 'disconnected'
+  | 'closed'
 
 type ConnectEvent = Partial<{
   restored: boolean
@@ -47,19 +47,22 @@ export class Channel<
   static readonly identifier: string
 
   readonly params: ParamsType
-  readonly identifier: string
+  readonly channelId: string
   readonly state: ChannelState
-  readonly id: Identifier
+  readonly identifier: Identifier
 
   constructor(...args: {} extends ParamsType ? [undefined?] : [ParamsType])
 
-  connecting(receiver: Receiver): void
-  connected(id: Identifier): void
+  attached(receiver: Receiver): boolean
+
+  connecting(): void
+  connected(): void
   restored(): void
   disconnected(reason?: ReasonError): void
   closed(reason?: ReasonError): void
 
-  disconnect(): Promise<boolean>
+  subscribed(): Promise<void>
+  disconnect(): Promise<void>
   perform(action: string, payload?: object): Promise<Message | void>
   receive(msg: MessageType, meta?: MessageMeta): void
 

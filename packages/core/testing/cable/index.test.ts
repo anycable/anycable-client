@@ -1,29 +1,27 @@
 import { Channel } from '../../channel/index.js'
 import { TestCable } from './index.js'
 
+class TestChannel extends Channel<{ id: string }> {
+  static identifier = 'test'
+}
+
 describe('Test Channel', () => {
   let channel: Channel
   let cable: TestCable
 
   beforeEach(() => {
     cable = new TestCable()
-    channel = new Channel()
+    channel = new TestChannel({ id: '1' })
     cable.subscribe(channel)
   })
 
-  it('should throw error when unsubscribe from unexisting channel', async () => {
-    let unexistingId = '1'
-
-    return cable.unsubscribe(unexistingId).catch(err => {
-      expect(err.message).toEqual(`Channel not found: ${unexistingId}`)
-    })
-  })
-
   it('should throw error when perform from unexisting channel', async () => {
-    let unexistingId = '1'
+    let newChannel = new TestChannel({ id: '2' })
+    newChannel.attached(cable)
+    newChannel.connected()
 
-    return cable.perform(unexistingId, 'speak').catch(err => {
-      expect(err.message).toEqual(`Channel not found: ${unexistingId}`)
+    await cable.perform(newChannel, 'speak').catch(err => {
+      expect(err.message).toContain('Channel not found')
     })
   })
 
@@ -50,5 +48,15 @@ describe('Test Channel', () => {
     await channel.disconnect()
 
     expect(channel.state).toEqual('closed')
+  })
+
+  it('disconnects when not subscribed', async () => {
+    let newChannel = new TestChannel({ id: '2' })
+    newChannel.attached(cable)
+    newChannel.connected()
+
+    await newChannel.disconnect().catch(err => {
+      expect(err.message).toContain('Channel not found')
+    })
   })
 })

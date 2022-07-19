@@ -9,7 +9,6 @@ import {
   Transport,
   SubscriptionRejectedError,
   DisconnectedError,
-  ChannelsCache,
   Cable,
   TokenRefresher
 } from '../index.js'
@@ -59,13 +58,6 @@ it('with websocket options', () => {
   expect(socket.url).toBe('ws://example')
   expect(socket.foo).toBe('bar')
   expect(socket.subprotocol).toBe('anycable-test')
-})
-
-it('with cache', () => {
-  let store = new ChannelsCache()
-  let cable = createCable('ws://example', { channelsCache: store })
-
-  expect(cable.cache).toBe(store)
 })
 
 it('defaults', () => {
@@ -306,11 +298,15 @@ describe('createConsumer', () => {
 
     expect(channel.callbacks).toContain('initialized')
 
-    await new Promise<void>(resolve =>
+    await new Promise<void>((resolve, reject) => {
+      let tid = setTimeout(() => {
+        reject(Error('Timed out to receive connect'))
+      }, 400)
       channel.once('connect', () => {
+        clearTimeout(tid)
         resolve()
       })
-    )
+    })
 
     expect(cable.hub.size).toEqual(1)
     expect(channel.state).toEqual('connected')
@@ -326,13 +322,20 @@ describe('createConsumer', () => {
       return Promise.resolve()
     })
 
-    channel.unsubscribe()
+    let closePromise = new Promise<void>((resolve, reject) => {
+      let tid = setTimeout(() => {
+        reject(Error('Timed out to receive close'))
+      }, 400)
 
-    await new Promise<void>(resolve =>
       channel.once('close', () => {
+        clearTimeout(tid)
         resolve()
       })
-    )
+    })
+
+    channel.unsubscribe()
+
+    await closePromise
 
     expect(channel.callbacks).toContain('disconnected')
   })

@@ -1,23 +1,44 @@
-import { Channel, Message, MessageMeta } from '../channel/index.js'
+import {
+  Channel,
+  Message,
+  MessageMeta,
+  ChannelParamsMap
+} from '../channel/index.js'
 
-export class Entry<T = string> {
-  pending(promise?: Promise<T>): Promise<T>
-  isPending(): boolean
+export class Subscription {
+  readonly id: string
+  readonly channel: string
+  readonly params: ChannelParamsMap
+  readonly remoteId: string
+}
 
-  mark(): void
-  unmark(): void
+type unsubscribeRequest = Promise<void>
 
-  isFree(): boolean
+export class Unsubscribes {
+  add(id: string, promise: unsubscribeRequest): void
+  remove(id: string): void
+  get(id: string): unsubscribeRequest | void
 }
 
 export class Hub {
-  entryFor(channel: Channel): Entry
   add(id: string, channel: Channel): void
-  remove(id: string): Channel | void
-  get(id: string): Channel | void
+  remove(id: string): void
+  findSubscription(id: string): Subscription | void
+  subscribe(id: string, remoteId: string): void
   transmit(id: string, msg: Message, meta: MessageMeta): void
   close(): void
 
+  channelsFor(id: string): Channel[]
+  removeChannel(channel: Channel): string
+
+  get unsubscribes(): Unsubscribes
   get channels(): Channel[]
+  get activeChannels(): Channel[]
+  get pendingChannels(): Channel[]
+
+  get subscriptions(): Subscription[]
+  get activeSubscriptions(): Subscription[]
+  get pendingSubscriptions(): Subscription[]
+
   get size(): number
 }

@@ -1,11 +1,6 @@
 import { Unsubscribe } from 'nanoevents'
 
-import {
-  Channel,
-  Message,
-  Identifier,
-  ChannelParamsMap
-} from '../channel/index.js'
+import { Channel, Message, ChannelParamsMap } from '../channel/index.js'
 import { Transport } from '../transport/index.js'
 import { Protocol, ReasonError } from '../protocol/index.js'
 import { Hub } from '../hub/index.js'
@@ -25,19 +20,12 @@ export interface CableEvents {
   keepalive: (msg?: Message) => void
 }
 
-export interface Cache<T> {
-  read(identifier: string, params?: ChannelParamsMap): T | undefined
-  write(channel: T, identifier: string, params?: ChannelParamsMap): void
-  delete(identifier: string, params?: ChannelParamsMap): boolean
-}
-
 export type CableOptions = {
   transport: Transport
   protocol: Protocol
   encoder: Encoder
   logger?: Logger
   lazy?: boolean
-  channelsCache?: Cache<Channel>
 }
 
 export type CableState = 'idle' | 'disconnected' | 'connecting' | 'connected'
@@ -51,29 +39,28 @@ export class Cable {
   encoder: Encoder
   logger: Logger
   monitor?: Monitor
-  cache?: Cache<Channel>
 
   readonly state: CableState
 
   constructor(opts: CableOptions)
 
   connect(): Promise<void>
-  subscribe(channel: Channel): Promise<Identifier>
-  unsubscribe(id: Identifier): Promise<boolean>
+  subscribe(channel: Channel): Promise<boolean>
+  unsubscribe(channel: Channel): Promise<boolean>
   perform(
-    id: Identifier,
+    channel: Channel,
     action: string,
     payload?: object
   ): Promise<Message | void>
   disconnect(): void
 
-  subscribeTo(channel: string, params?: ChannelParamsMap): Promise<GhostChannel>
+  subscribeTo(channel: string, params?: ChannelParamsMap): GhostChannel
   subscribeTo<P extends ChannelParamsMap, T extends Channel<P>>(
     channel: {
       new (...args: {} extends P ? [undefined?] : [P]): T
     },
     ...args: {} extends P ? [undefined?] : [P]
-  ): Promise<T>
+  ): T
 
   connected(): void
   restored(): void

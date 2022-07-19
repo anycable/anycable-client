@@ -2,7 +2,7 @@ import { Transport } from '../transport/index.js'
 import { Logger, LogLevel } from '../logger/index.js'
 import { Encoder } from '../encoder/index.js'
 import { Monitor, ReconnectStrategy } from '../monitor/index.js'
-import { Cable, Cache } from '../cable/index.js'
+import { Cable } from '../cable/index.js'
 import { Protocol } from '../protocol/index.js'
 import { Channel, Message, ChannelParamsMap } from '../channel/index.js'
 
@@ -34,8 +34,6 @@ export interface CreateOptions {
   lazy: boolean
 
   tokenRefresher: TokenRefresher
-
-  channelsCache: Cache<Channel>
 
   reconnectStrategy: ReconnectStrategy
   maxMissingPings: number

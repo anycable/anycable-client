@@ -92,7 +92,10 @@ import { ChatChannel } from 'channels/chat'
 const channel = new ChatChannel({ roomId: '42' })
 
 // Subscribe to the server channel via the client.
-await cable.subscribe(channel)
+cable.subscribe(channel)
+
+// Wait for subscription confirmation or rejection
+await channel.subscribed()
 
 // Perform an action
 // NOTE: Action Cable doesn't implement a full-featured RPC with ACK messages,
@@ -115,7 +118,9 @@ channel.on('disconnect', () => console.log('No chat connection'))
 channel.disconnect()
 ```
 
-**IMPORTANT:** `cable.subscribe(channel)` is optimistic: it doesn't require the cable to be connected, and waits for it to connect before performing a subscription request. Even if the cable got disconnected before subscription was confirmed or rejected, a new attempt is made as soon as the connectivity restored. Similarly, `channel.disconnect()` assumes that if there is no connectivity, the server takes care of peforming unsubscribe tasks and we can safely mark this channel as closed.
+**IMPORTANT:** `cable.subscribe(channel)` is optimistic: it doesn't require the cable to be connected, and waits for it to connect before performing a subscription request. Even if the cable got disconnected before subscription was confirmed or rejected, a new attempt is made as soon as the connectivity restored.
+
+Calling `channel.disconnect()` removes the _subscription_ for this channel right away and send `unsubscribe` request asynchrounously; if there is no connectivity, we asume that the server takes care of peforming unsubscribe tasks, so we don't need to retry them.
 
 #### Headless subscriptions
 
@@ -417,9 +422,9 @@ let cableWithHeader = createCable(url, {
 })
 ```
 
-## Reusing channel instances
+## Duplicating or reusing channel instances?
 
-It is safe to call `cable.subscribe(channel)` multiple times—only a single subscription (from the protocol point of view) is made, i.e., this action is idempotent. The reasoning behind this is to make it possible to use the same channel from multiple indepependent places in your code without worrying about whether the channels has been already subscribed or not.
+It is safe to call `cable.subscribe(channel)` multiple times—only a single subscription (from the protocol point of view) is made, i.e., this action is idempotent. At the same time, it's safe to have multuple channel instances with the same identifiers client-side—only a single _real_ subscription would be made.
 
 Let's consider an example. Suppose you have two _components_ relying on the same channel:
 
@@ -432,7 +437,7 @@ import { NotificationsChannel } from 'channels/notifications_channel'
 const channel = new NotificationChannel()
 
 // Subscribe to the server channel via the client.
-await cable.subscribe(channel)
+cable.subscribe(channel)
 
 channel.on('message', msg => console.log("component one received message", `${msg.name}: ${msg.text}`))
 
@@ -444,18 +449,19 @@ import { NotificationsChannel } from 'channels/notifications_channel'
 const channel = new NotificationChannel()
 
 // Subscribe to the server channel via the client.
-await cable.subscribe(channel)
+cable.subscribe(channel)
 
 channel.on('message', msg => console.log("component two received message", `${msg.name}: ${msg.text}`))
 ```
 
-The code above would try to create two subscriptions with the same identifiers—an invalid operation from the protocol (Action Cable) point of view. A client MAY only subscribe to the same channel (with the same parameters) once.
+The code above would work as expected: both channel instances would receive updates from the server. Calling `channel.disconnect()` would detach this particular channel from the cable, but wouldn't perform the actual `unsubscribe` command (from the server perspective) unless that's the last channel with this identifier.
 
-To resolve this issue we may extract the channel instance into its own _module_ and reuse it:
+Alternatively, you may consider extracting a channel instance to a separate module and reuse it:
 
 ```js
 // channels/notifications_channel.js
-import { Channel } from "@anycable/core"
+import { Channel } from '@anycable/core'
+import 'cable' from 'cable'
 
 export class NotificationsChannel extends Channel {
   // ...
@@ -466,6 +472,7 @@ let instance
 export function createChannel() {
   if (!instance) {
     instance = new NotificationChannel()
+    cable.subscribe(channel)
   }
 
   return instance
@@ -476,7 +483,6 @@ import cable from 'cable'
 import { createChannel } from 'channels/notifications_channel'
 
 const channel = createChannel()
-await cable.subscribe(channel)
 
 channel.on('message', msg => console.log("component one received message", `${msg.name}: ${msg.text}`))
 
@@ -485,75 +491,11 @@ import cable from 'cable'
 import { createChannel } from 'channels/notifications_channel'
 
 const channel = createChannel()
-await cable.subscribe(channel)
 
 channel.on('message', msg => console.log("component two received message", `${msg.name}: ${msg.text}`))
 ```
 
-**IMPORTANT:** When calling `subscribe` multiple times, to actually unsubscribe from a channel you MUST call `channel.disconnect()` at least the same number of times. That is, it is safe to call `channel.disconnect()` within the isolated components when sharing a channel instance. Just keep in mind, that the channel might stay subscribed (because some other component is subscribed to it). You can use the return value of the `channel.disconnect()` to know whether it triggered unsubscription (`true`) or not (`false`):
-
-```js
-const channelOne = createChannel()
-await cable.subscribe(channelOne)
-
-const channelTwo = createChannel()
-await cable.subscribe(channelTwo)
-
-await channelOne.disconnect() // false
-channelOne.state // 'connected'
-
-await channelTwo.disconnect() // true
-channelTwo.state // 'closed'
-
-// NOTE:
-channelOne === channelTwo // true
-```
-
-### Channels memoization
-
-We also provide a way to automatically memoize channel instances. This feature is built into a `cable.subscribeTo` function, and could be activated by providing a cache store instance during the cable creation. For example:
-
-```js
-import { ChannelsCache } from '@anycable/core'
-import { createCable } from '@anycable/web'
-
-let channelsCache = new ChannelsCache()
-
-export default createCable({ channelsCache })
-```
-
-After that, calling `subscribeTo` with the same channel names (or classes) and params would return the same channel instance:
-
-```js
-const channelOne = await cable.subscribeTo('SomeChannel', { id: '42' })
-const channelTwo = await cable.subscribeTo('SomeChannel', { id: '42' })
-
-channelOne === channelTwo // => true
-
-const channelNew = await cable.subscribeTo('SomeChannel', { id: '2021' })
-channelNew === channelOne // => false
-```
-
-Since `subscribeTo` works with channel classes, too, we can rewrite our original example as:
-
-```js
-import cable from 'cable'
-import { NotificationsChannel } from 'channels/notifications_channel'
-
-const channel = await cable.subscribeTo(NotificationChannel)
-
-channel.on('message', msg => console.log("component one received message", `${msg.name}: ${msg.text}`))
-
-// component-two.js
-import cable from 'cable'
-import { NotificationsChannel } from 'channels/notifications_channel'
-
-const channel = await cable.subscribeTo(NotificationChannel)
-
-channel.on('message', msg => console.log("component two received message", `${msg.name}: ${msg.text}`))
-```
-
-**IMPORTANT:** Please, keep in mind, that cache is not cleared automatically. That's your responsibility (though, usually, the number of active channels per session is limited). You can delete a cache entry by calling the `delete` function: `cache.delete('NotificationChannel', { id: '42' })` or `cache.delete(NotificationChannel.identifier, { id: '42' })`.
+Which way to choose is up to the developer. From the library point of view, both are viable and supported.
 
 ## Further reading
 

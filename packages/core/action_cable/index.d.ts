@@ -18,7 +18,7 @@ export class ActionCableProtocol implements Protocol {
   constructor(opts?: Options)
 
   attached(cable: Consumer): void
-  subscribe(identifier: string, params?: object): Promise<string>
+  subscribe(channel: string, params?: object): Promise<string>
   unsubscribe(identifier: string): Promise<void>
   perform(identifier: string, action: string, payload?: object): Promise<void>
   receive(msg: Message): ProcessedMessage | void
