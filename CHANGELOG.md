@@ -2,6 +2,8 @@
 
 ## master
 
+## 0.5.0.rc1 (2022-07-18)
+
 - `core`: **BREAKING** `channelsCache` is deprecated/removed in favour of support for using multiple channel instances for the same identifier.
 
 Channels cache has been added as a workaround for automatically re-using the same channel instance to avoid double-subscrpition problems (since a single client may only have a single subscrpition for the specified identifier).

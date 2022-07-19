@@ -1,6 +1,6 @@
 {
   "name": "@anycable/web",
-  "version": "0.4.0",
+  "version": "0.5.0-rc.1",
   "description": "AnyCable JavaScript client for web",
   "keywords": [
     "anycable",
@@ -21,7 +21,6 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@anycable/core": "^0.4.0",
-    "@hotwired/turbo": "^7.1.0"
+    "@anycable/core": "0.5.0-rc.1"
   }
 }
