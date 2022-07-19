@@ -45,8 +45,8 @@ export class Cable {
   constructor(opts: CableOptions)
 
   connect(): Promise<void>
-  subscribe(channel: Channel): Promise<boolean>
-  unsubscribe(channel: Channel): Promise<boolean>
+  subscribe<T extends Channel>(channel: T): T
+  unsubscribe(channel: Channel): void
   perform(
     channel: Channel,
     action: string,
@@ -62,11 +62,6 @@ export class Cable {
     ...args: {} extends P ? [undefined?] : [P]
   ): T
 
-  connected(): void
-  restored(): void
-  disconnected(reason?: ReasonError): void
-  closed(reason?: string | ReasonError): void
-
   keepalive(msg?: Message): void
 
   send(msg: object): void
@@ -79,6 +74,11 @@ export class Cable {
     event: E,
     callback: CableEvents[E]
   ): Unsubscribe
+
+  connected(): void
+  restored(): void
+  disconnected(reason?: ReasonError): void
+  closed(reason?: string | ReasonError): void
 }
 
 export class NoConnectionError extends Error {}

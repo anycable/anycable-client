@@ -35,13 +35,12 @@ export class GhostChannel extends Channel {
 const STATE = Symbol('state')
 
 export class Cable {
-  constructor({ transport, protocol, encoder, logger, lazy, channelsCache }) {
+  constructor({ transport, protocol, encoder, logger, lazy }) {
     this.emitter = createNanoEvents()
     this.transport = transport
     this.encoder = encoder
     this.logger = logger || new NoopLogger()
     this.protocol = protocol
-    this.cache = channelsCache
 
     this.protocol.attached(this)
 
@@ -269,14 +268,12 @@ export class Cable {
       ? new ChannelClass(ghostName, params)
       : new ChannelClass(params)
 
-    this.subscribe(channel).catch(() => {})
-
-    return channel
+    return this.subscribe(channel)
   }
 
-  async subscribe(channel) {
+  subscribe(channel) {
     // Return if channel has been already attached to the cable
-    if (!channel.attached(this)) return false
+    if (!channel.attached(this)) return channel
 
     let identifier = channel.identifier
 
@@ -290,21 +287,20 @@ export class Cable {
       if (subscription.channels[0].state === 'connected') {
         channel.connected()
       }
-
-      return false
     } else {
-      // if there is an unsubscribe request pending, let's wait for it to complete
-      let unsub = this.hub.unsubscribes.get(identifier)
+      let subscribeRequest = this._subscribe(
+        identifier,
+        channel.channelId,
+        channel.params
+      )
 
-      if (unsub) await unsub
-
-      this._subscribe(identifier, channel.channelId, channel.params)
-
-      return true
+      this.hub.subscribes.add(identifier, subscribeRequest)
     }
+
+    return channel
   }
 
-  _subscribe(identifier, channelId, params) {
+  async _subscribe(identifier, channelId, params) {
     if (this.state === 'idle') {
       // Trigger connection initialization if it is lazy
       this.connect().catch(() => {})
@@ -315,6 +311,11 @@ export class Cable {
       return
     }
 
+    // if there is an unsubscribe request pending, let's wait for it to complete
+    let unsub = this.hub.unsubscribes.get(identifier)
+
+    if (unsub) await unsub
+
     let channelMeta = {
       identifier: channelId,
       params
@@ -322,54 +323,56 @@ export class Cable {
 
     this.logger.debug('subscribing', channelMeta)
 
-    this.protocol
-      .subscribe(channelId, params)
-      .then(remoteId => {
-        this.hub.channelsFor(identifier).forEach(channel => channel.connected())
+    try {
+      let remoteId = await this.protocol.subscribe(channelId, params)
 
-        let subscription = this.hub.findSubscription(identifier)
+      // Remove pending subscribe right here to prevent race conditions with potential
+      // _unsubscribe calls (sine cleanup in the PendingRequest is executed after subscribe resolves)
+      this.hub.subscribes.remove(identifier)
+      this.hub.channelsFor(identifier).forEach(channel => channel.connected())
 
-        if (subscription) {
-          this.hub.subscribe(identifier, remoteId)
-          this.logger.debug('subscribed', { ...channelMeta, remoteId })
-        } else {
-          // That means we unsubscribed before receiving a confirmation
-          this.logger.warn('subscription confirmed after unsubscribe', {
-            ...channelMeta,
-            remoteId
-          })
-        }
-      })
-      .catch(err => {
-        if (err) {
-          if (err instanceof SubscriptionRejectedError) {
-            this.logger.warn('rejected', channelMeta)
+      let subscription = this.hub.findSubscription(identifier)
 
-            this.hub
-              .channelsFor(identifier)
-              .forEach(channel => channel.closed(err))
-            this.hub.remove(identifier)
-          }
-
-          if (err instanceof DisconnectedError) {
-            this.logger.debug(
-              'disconnected during subscription; will retry on connect',
-              channelMeta
-            )
-            return
-          }
-        }
-
-        this.logger.error('failed to subscribe', {
-          error: err,
-          ...channelMeta
+      if (subscription) {
+        this.hub.subscribe(identifier, remoteId)
+        this.logger.debug('subscribed', { ...channelMeta, remoteId })
+      } else {
+        // That means we unsubscribed before receiving a confirmation
+        this.logger.warn('subscription confirmed after unsubscribe', {
+          ...channelMeta,
+          remoteId
         })
-        this.hub.channelsFor(identifier).forEach(channel => channel.closed(err))
-        this.hub.remove(identifier)
+      }
+    } catch (err) {
+      if (err) {
+        if (err instanceof SubscriptionRejectedError) {
+          this.logger.warn('rejected', channelMeta)
+
+          this.hub
+            .channelsFor(identifier)
+            .forEach(channel => channel.closed(err))
+          this.hub.remove(identifier)
+        }
+
+        if (err instanceof DisconnectedError) {
+          this.logger.debug(
+            'disconnected during subscription; will retry on connect',
+            channelMeta
+          )
+          return
+        }
+      }
+
+      this.logger.error('failed to subscribe', {
+        error: err,
+        ...channelMeta
       })
+      this.hub.channelsFor(identifier).forEach(channel => channel.closed(err))
+      this.hub.remove(identifier)
+    }
   }
 
-  async unsubscribe(channel) {
+  unsubscribe(channel) {
     let identifier = channel.identifier
     let subscription = this.hub.findSubscription(identifier)
 
@@ -380,57 +383,65 @@ export class Cable {
     this.hub.removeChannel(channel)
     channel.closed()
 
-    let remoteId = subscription.remoteId
     let channels = this.hub.channelsFor(identifier)
 
-    if (channels.length > 0 || !remoteId) {
-      return false
+    if (channels.length > 0) {
+      return
     }
 
-    let unsubscribeRequest = this._unsubscribe(remoteId)
+    let unsubscribeRequest = this._unsubscribe(
+      identifier,
+      subscription.remoteId
+    )
 
     this.hub.unsubscribes.add(identifier, unsubscribeRequest)
-
-    return true
   }
 
-  async _unsubscribe(identifier) {
+  async _unsubscribe(identifier, remoteId) {
+    // If there is a subscribe request pending, let's wait for it to complete
+    let sub = this.hub.subscribes.get(identifier)
+    if (sub) {
+      await sub
+
+      // Subscription could fail, so we no need to proceed with unsubscribe
+      let subscription = this.hub.findSubscription(identifier)
+      if (!subscription) return
+
+      // It could not be set
+      remoteId = remoteId || subscription.remoteId
+    }
+
     this.logger.debug('unsubscribing...', { id: identifier })
 
     if (this.state !== 'connected') {
       this.logger.debug('unsubscribe skipped (cable is not connected)', {
         id: identifier
       })
-      return true
+      return
     }
 
-    return this.protocol
-      .unsubscribe(identifier)
-      .then(() => {
-        this.logger.debug('unsubscribed remotely', { id: identifier })
-        return true
-      })
-      .catch(err => {
-        if (err) {
-          // We assume that server unsubscribes subscriptions on disconnect,
-          // So we can mark it as closed locally.
-          if (err instanceof DisconnectedError) {
-            this.logger.debug(
-              'cable disconnected during the unsubscribe command execution',
-              { id: identifier, error: err }
-            )
+    try {
+      await this.protocol.unsubscribe(remoteId)
+      this.logger.debug('unsubscribed remotely', { id: identifier })
+    } catch (err) {
+      if (err) {
+        // We assume that server unsubscribes subscriptions on disconnect,
+        // So we can mark it as closed locally.
+        if (err instanceof DisconnectedError) {
+          this.logger.debug(
+            'cable disconnected during the unsubscribe command execution',
+            { id: identifier, error: err }
+          )
 
-            return true
-          }
+          return
         }
+      }
 
-        this.logger.error('unsubscribe failed', {
-          id: identifier,
-          error: err
-        })
-
-        return false
+      this.logger.error('unsubscribe failed', {
+        id: identifier,
+        error: err
       })
+    }
   }
 
   async perform(channel, action, payload) {
@@ -449,7 +460,7 @@ export class Cable {
       throw new NoConnectionError()
     }
 
-    await channel.subscribed()
+    await channel.ensureSubscribed()
 
     let remoteId = subscription.remoteId
 

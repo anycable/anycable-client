@@ -211,7 +211,7 @@ export class ActionCableSubscriptions {
     let cableChannel = new ActionCableChannel(channelName, params, mixin)
     cableChannel.notify('_ac_initialized')
 
-    this.cable.subscribe(cableChannel).catch(() => {})
+    this.cable.subscribe(cableChannel)
 
     return cableChannel
   }

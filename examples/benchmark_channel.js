@@ -32,7 +32,7 @@ export class BenchmarkChannel extends Channel {
 
 let channel = new BenchmarkChannel()
 
-await cable.subscribe(channel)
+await cable.subscribe(channel).ensureSubscribed()
 
 let echoPromise = new Promise((resolve, reject) => {
   setTimeout(() => reject(Error('Timed out to receive message')), 1000)

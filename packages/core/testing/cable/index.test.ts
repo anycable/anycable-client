@@ -45,7 +45,7 @@ describe('Test Channel', () => {
   })
 
   it('disconnects when leave', async () => {
-    await channel.disconnect()
+    channel.disconnect()
 
     expect(channel.state).toEqual('closed')
   })
@@ -55,8 +55,8 @@ describe('Test Channel', () => {
     newChannel.attached(cable)
     newChannel.connected()
 
-    await newChannel.disconnect().catch(err => {
-      expect(err.message).toContain('Channel not found')
-    })
+    expect(() => {
+      newChannel.disconnect()
+    }).toThrow(Error)
   })
 })

@@ -104,17 +104,12 @@ export class Channel {
     this.emit('close', err)
   }
 
-  async disconnect() {
-    if (this.state === 'connecting') {
-      // we can ignore failures here, since we're checking the state later
-      await this.pendingSubscribe().catch(() => {})
-    }
-
+  disconnect() {
     if (this.state === 'idle' || this.state === 'closed') {
-      return Promise.resolve()
+      return
     }
 
-    return this.receiver.unsubscribe(this)
+    this.receiver.unsubscribe(this)
   }
 
   async perform(action, payload) {
@@ -149,7 +144,7 @@ export class Channel {
     return this.emitter.emit(event, ...args)
   }
 
-  subscribed() {
+  ensureSubscribed() {
     if (this.state === 'connected') return Promise.resolve()
 
     if (this.state === 'closed') {

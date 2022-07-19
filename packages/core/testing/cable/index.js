@@ -4,14 +4,14 @@ export class TestCable {
     this.channels = {}
   }
 
-  async subscribe(channel) {
+  subscribe(channel) {
     channel.attached(this)
     channel.connecting()
 
     this.channels[channel.identifier] = channel
     channel.connected()
 
-    return Promise.resolve(channel.identifier)
+    return channel
   }
 
   async perform(channel, action, payload = {}) {
@@ -26,7 +26,7 @@ export class TestCable {
     return Promise.resolve()
   }
 
-  async unsubscribe(channel) {
+  unsubscribe(channel) {
     let identifier = channel.identifier
 
     if (!this.channels[identifier]) {
@@ -36,7 +36,5 @@ export class TestCable {
     channel.closed()
 
     delete this.channels[identifier]
-
-    return Promise.resolve()
   }
 }

@@ -14,7 +14,7 @@ export class Subscription {
 
 type unsubscribeRequest = Promise<void>
 
-export class Unsubscribes {
+export class PendingRequests {
   add(id: string, promise: unsubscribeRequest): void
   remove(id: string): void
   get(id: string): unsubscribeRequest | void
@@ -31,7 +31,9 @@ export class Hub {
   channelsFor(id: string): Channel[]
   removeChannel(channel: Channel): string
 
-  get unsubscribes(): Unsubscribes
+  get subscribes(): PendingRequests
+  get unsubscribes(): PendingRequests
+
   get channels(): Channel[]
   get activeChannels(): Channel[]
   get pendingChannels(): Channel[]

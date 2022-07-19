@@ -41,9 +41,8 @@ class TestReceiver implements Receiver {
     this.channel.closed(new SubscriptionRejectedError('Rejected'))
   }
 
-  unsubscribe(channel: Channel): Promise<void> {
+  unsubscribe(channel: Channel): void {
     channel.closed(new DisconnectedError('Unsubscribed'))
-    return Promise.resolve()
   }
 
   perform(
@@ -169,7 +168,7 @@ describe('receiver communicaton', () => {
 
   it('pending subscribed when closed', () => {
     channel.closed()
-    return expect(channel.subscribed()).rejects.toEqual(
+    return expect(channel.ensureSubscribed()).rejects.toEqual(
       Error('Channel is unsubscribed')
     )
   })
@@ -273,75 +272,42 @@ describe('receiver communicaton', () => {
     return res
   })
 
-  it('disconnects', async () => {
+  it('disconnects', () => {
     client.subscribed(channel)
 
     jest.spyOn(client, 'unsubscribe').mockImplementation((ch: Channel) => {
       expect(ch).toEqual(channel)
       channel.closed()
-      return Promise.resolve()
     })
 
-    await channel.disconnect()
+    channel.disconnect()
 
     expect(channel.state).toEqual('closed')
   })
 
-  it('disconnect without connect', async () => {
-    await channel.disconnect()
+  it('disconnect without connect', () => {
+    channel.disconnect()
     expect(channel.state).toEqual('idle')
   })
 
   it('disconnect while connecting successfully', () => {
     client.subscribe(channel)
-    let res = channel.disconnect().then(() => {
-      expect(channel.state).toEqual('closed')
-    })
+    channel.disconnect()
 
-    let res2 = channel.disconnect()
+    expect(channel.state).toEqual('closed')
+
+    channel.disconnect()
 
     client.subscribed()
 
-    return Promise.all([res, res2])
+    expect(channel.state).toEqual('closed')
   })
 
   it('disconnect while connecting and rejected', () => {
     client.subscribe(channel)
-    let res = channel.disconnect().then(() => {
-      expect(channel.state).toEqual('closed')
-    })
-
+    channel.disconnect()
     client.rejected()
 
-    return res
-  })
-
-  it('disconnect right after connect', () => {
-    client.subscribe(channel)
-
-    let res = channel.disconnect().then(() => {
-      expect(channel.state).toEqual('closed')
-    })
-
-    client.subscribed()
-
-    return res
-  })
-
-  it('connecting-disconnect-disconnect-connected', async () => {
-    client.subscribe(channel)
-
-    let p1 = channel.disconnect()
-    let p2 = channel.disconnect()
-
-    client.subscribed()
-
-    await p1
-    await p2
-
-    expect(channel.state).toEqual('closed')
-
-    channel.connected()
     expect(channel.state).toEqual('closed')
   })
 })

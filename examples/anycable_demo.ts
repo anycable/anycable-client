@@ -12,7 +12,7 @@ export class ListChannel extends Channel<params, message> {
 
 let channel = new ListChannel({ id: '42', workspace: 'demo' })
 
-await cable.subscribe(channel)
+await cable.subscribe(channel).ensureSubscribed()
 
 channel.on('message', msg => {
   if (msg.type === 'created') {

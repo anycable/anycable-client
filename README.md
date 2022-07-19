@@ -92,10 +92,12 @@ import { ChatChannel } from 'channels/chat'
 const channel = new ChatChannel({ roomId: '42' })
 
 // Subscribe to the server channel via the client.
-cable.subscribe(channel)
+cable.subscribe(channel) // return channel itself for chaining
 
 // Wait for subscription confirmation or rejection
-await channel.subscribed()
+// NOTE: it's not necessary to do that, you can perform actions right away,
+// the channel would wait for connection automatically
+await channel.ensureSubscribed()
 
 // Perform an action
 // NOTE: Action Cable doesn't implement a full-featured RPC with ACK messages,
@@ -131,7 +133,7 @@ Let's rewrite the same example using headless subscriptions:
 ```js
 import cable from 'cable'
 
-const subscription = await cable.subscribeTo('ChatChannel', { roomId: '42' })
+const subscription = cable.subscribeTo('ChatChannel', { roomId: '42' })
 
 const _ = await subscription.perform('speak', { msg: 'Hello' })
 
@@ -332,7 +334,7 @@ class ChatChannel extends Channel {
     return this.perform("speak", { message });
   }
 
-  async leave() {
+  leave() {
     // some custom logic
     return this.disconnect();
   }
@@ -366,7 +368,7 @@ describe('ChatChannel', () => {
   })
 
   it('disconnects when leave', async () => {
-    await channel.leave()
+    channel.leave()
 
     expect(channel.state).toEqual('closed')
   })

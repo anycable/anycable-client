@@ -31,7 +31,7 @@ export class TurboStreamSourceElement extends HTMLElement {
 
     try {
       cable.subscribe(this.channel)
-      await this.channel.subscribed()
+      await this.channel.ensureSubscribed()
     } catch (err) {
       cable.logger.warn(err)
     }

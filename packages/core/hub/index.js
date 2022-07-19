@@ -1,4 +1,4 @@
-export class Unsubscribes {
+export class PendingRequests {
   constructor() {
     this._store = {}
   }
@@ -31,7 +31,8 @@ export class Hub {
     this._channelsToSubs = new WeakMap()
     this._remoteToLocal = {}
     this._pendingMessages = []
-    this.unsubscribes = new Unsubscribes()
+    this.unsubscribes = new PendingRequests()
+    this.subscribes = new PendingRequests()
   }
 
   add(id, channel) {
