@@ -7,7 +7,8 @@ import {
   Message,
   ReasonError,
   DisconnectedError,
-  SubscriptionRejectedError
+  SubscriptionRejectedError,
+  Identifier
 } from '../index.js'
 
 class TestReceiver implements Receiver {
@@ -46,7 +47,7 @@ class TestReceiver implements Receiver {
   }
 
   perform(
-    _channel: Channel,
+    _identifier: Identifier,
     action: string,
     payload?: object
   ): Promise<Message | void> {
@@ -178,13 +179,14 @@ describe('receiver communicaton', () => {
 
     jest
       .spyOn(client, 'perform')
-      .mockImplementation((ch: Channel, action: string, payload?: Message) => {
-        expect(ch).toEqual(channel)
-        expect(action).toEqual('do')
-        expect(payload).toMatchObject({ foo: 'bar' })
+      .mockImplementation(
+        (_id: Identifier, action: string, payload?: Message) => {
+          expect(action).toEqual('do')
+          expect(payload).toMatchObject({ foo: 'bar' })
 
-        return Promise.resolve()
-      })
+          return Promise.resolve()
+        }
+      )
 
     let res = await channel.perform('do', { foo: 'bar' })
     expect(res).toBeUndefined()
@@ -195,13 +197,15 @@ describe('receiver communicaton', () => {
 
     jest
       .spyOn(client, 'perform')
-      .mockImplementation((ch: Channel, action: string, payload?: Message) => {
-        expect(ch).toEqual(channel)
-        expect(action).toEqual('do')
-        expect(payload).toBeUndefined()
+      .mockImplementation(
+        (identifier: Identifier, action: string, payload?: Message) => {
+          expect(identifier).toEqual(channel.identifier)
+          expect(action).toEqual('do')
+          expect(payload).toBeUndefined()
 
-        return Promise.resolve()
-      })
+          return Promise.resolve()
+        }
+      )
 
     let res = await channel.perform('do')
     expect(res).toBeUndefined()
@@ -209,7 +213,7 @@ describe('receiver communicaton', () => {
 
   it('performs without connect', async () => {
     await expect(channel.perform('do', { foo: 'bar' })).rejects.toThrow(
-      /no connection/i
+      Error('Channel is not subscribed')
     )
   })
 
@@ -256,18 +260,6 @@ describe('receiver communicaton', () => {
 
     client.subscribe(channel)
     client.subscribed()
-
-    return res
-  })
-
-  it('perform + close', () => {
-    client.subscribe(channel)
-
-    let res = expect(channel.perform('do', { foo: 'bar' })).rejects.toEqual(
-      new ReasonError('Channel was disconnected before subscribing')
-    )
-
-    channel.closed()
 
     return res
   })

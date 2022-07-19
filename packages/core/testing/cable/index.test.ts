@@ -16,11 +16,7 @@ describe('Test Channel', () => {
   })
 
   it('should throw error when perform from unexisting channel', async () => {
-    let newChannel = new TestChannel({ id: '2' })
-    newChannel.attached(cable)
-    newChannel.connected()
-
-    await cable.perform(newChannel, 'speak').catch(err => {
+    await cable.perform('x', 'speak').catch(err => {
       expect(err.message).toContain('Channel not found')
     })
   })

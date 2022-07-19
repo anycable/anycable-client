@@ -444,14 +444,7 @@ export class Cable {
     }
   }
 
-  async perform(channel, action, payload) {
-    let identifier = channel.identifier
-    let subscription = this.hub.findSubscription(identifier)
-
-    if (!subscription) {
-      throw Error(`Subscription not found: ${identifier}`)
-    }
-
+  async perform(identifier, action, payload) {
     if (this.state === 'connecting') {
       await this.pendingConnect()
     }
@@ -460,7 +453,14 @@ export class Cable {
       throw new NoConnectionError()
     }
 
-    await channel.ensureSubscribed()
+    let sub = this.hub.subscribes.get(identifier)
+    if (sub) await sub
+
+    let subscription = this.hub.findSubscription(identifier)
+
+    if (!subscription) {
+      throw Error(`Subscription not found: ${identifier}`)
+    }
 
     let remoteId = subscription.remoteId
 
@@ -472,26 +472,25 @@ export class Cable {
 
     this.logger.debug('perform', performMeta)
 
-    return this.protocol
-      .perform(remoteId, action, payload)
-      .then(res => {
-        if (res) {
-          this.logger.debug('perform result', {
-            message: res,
-            request: performMeta
-          })
-        }
+    try {
+      let res = await this.protocol.perform(remoteId, action, payload)
 
-        return res
-      })
-      .catch(err => {
-        this.logger.error('perform failed', {
-          error: err,
+      if (res) {
+        this.logger.debug('perform result', {
+          message: res,
           request: performMeta
         })
+      }
 
-        throw err
+      return res
+    } catch (err) {
+      this.logger.error('perform failed', {
+        error: err,
+        request: performMeta
       })
+
+      throw err
+    }
   }
 
   on(event, callback) {

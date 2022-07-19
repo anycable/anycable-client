@@ -12,7 +12,7 @@ export type MessageMeta = Partial<{
 export interface Receiver {
   unsubscribe(channel: Channel): void
   perform(
-    channel: Channel,
+    identifier: Identifier,
     action: string,
     payload?: object
   ): Promise<Message | void>

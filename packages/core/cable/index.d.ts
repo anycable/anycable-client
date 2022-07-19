@@ -1,6 +1,11 @@
 import { Unsubscribe } from 'nanoevents'
 
-import { Channel, Message, ChannelParamsMap } from '../channel/index.js'
+import {
+  Channel,
+  Message,
+  ChannelParamsMap,
+  Identifier
+} from '../channel/index.js'
 import { Transport } from '../transport/index.js'
 import { Protocol, ReasonError } from '../protocol/index.js'
 import { Hub } from '../hub/index.js'
@@ -48,7 +53,7 @@ export class Cable {
   subscribe<T extends Channel>(channel: T): T
   unsubscribe(channel: Channel): void
   perform(
-    channel: Channel,
+    identifier: Identifier,
     action: string,
     payload?: object
   ): Promise<Message | void>

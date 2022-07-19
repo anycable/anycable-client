@@ -799,7 +799,7 @@ describe('channels', () => {
   it('perform when connected', async () => {
     cable.subscribe(channel).ensureSubscribed()
 
-    await cable.perform(channel, 'do', { foo: 'bar' })
+    await cable.perform(channel.identifier, 'do', { foo: 'bar' })
 
     expect(transport.sent).toEqual([
       JSON.stringify({
@@ -815,9 +815,9 @@ describe('channels', () => {
 
     cable.closed()
 
-    return expect(cable.perform(channel, 'do', { foo: 'bar' })).rejects.toEqual(
-      Error('No connection')
-    )
+    return expect(
+      cable.perform(channel.identifier, 'do', { foo: 'bar' })
+    ).rejects.toEqual(Error('No connection'))
   })
 
   it('send when closed', () => {
@@ -832,7 +832,7 @@ describe('channels', () => {
     await channel.ensureSubscribed()
     cable.disconnected()
 
-    return expect(cable.perform(channel, 'do', { foo: 'bar' })).rejects.toEqual(
+    return expect(channel.perform('do', { foo: 'bar' })).rejects.toEqual(
       Error('No connection')
     )
   })
@@ -844,15 +844,17 @@ describe('channels', () => {
     cable.disconnected()
     cable.connect()
 
-    let res = cable.perform(channel, 'do', { foo: 'bar' }).then(() => {
-      expect(transport.sent).toEqual([
-        JSON.stringify({
-          identifier: 'test_26',
-          action: 'do',
-          payload: { foo: 'bar' }
-        })
-      ])
-    })
+    let res = cable
+      .perform(channel.identifier, 'do', { foo: 'bar' })
+      .then(() => {
+        expect(transport.sent).toEqual([
+          JSON.stringify({
+            identifier: 'test_26',
+            action: 'do',
+            payload: { foo: 'bar' }
+          })
+        ])
+      })
 
     cable.connected()
 
@@ -860,7 +862,9 @@ describe('channels', () => {
   })
 
   it('perform with unknown identifier', async () => {
-    return expect(cable.perform(channel, 'do', { foo: 'bar' })).rejects.toEqual(
+    return expect(
+      cable.perform(channel.identifier, 'do', { foo: 'bar' })
+    ).rejects.toEqual(
       Error('Subscription not found: {"channel":"TestChannel","id":"26"}')
     )
   })
@@ -881,7 +885,7 @@ describe('channels', () => {
         return Promise.resolve('pong')
       })
 
-    let response = await cable.perform(channel, 'ping')
+    let response = await cable.perform(channel.identifier, 'ping')
     expect(response).toEqual('pong')
   })
 
@@ -896,7 +900,7 @@ describe('channels', () => {
     })
 
     return expect(
-      cable.perform(channel, 'bla').finally(() => {
+      cable.perform(channel.identifier, 'bla').finally(() => {
         expect(logger.errors).toHaveLength(1)
       })
     ).rejects.toEqual(Error('failed'))

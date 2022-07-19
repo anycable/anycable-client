@@ -14,9 +14,7 @@ export class TestCable {
     return channel
   }
 
-  async perform(channel, action, payload = {}) {
-    let identifier = channel.identifier
-
+  async perform(identifier, action, payload = {}) {
     if (!this.channels[identifier]) {
       throw Error(`Channel not found: ${identifier}`)
     }

@@ -113,15 +113,11 @@ export class Channel {
   }
 
   async perform(action, payload) {
-    if (this.state === 'connecting') {
-      await this.pendingSubscribe()
+    if (this.state === 'idle' || this.state === 'closed') {
+      throw Error('Channel is not subscribed')
     }
 
-    if (this.state !== 'connected') {
-      throw Error('No connection')
-    }
-
-    return this.receiver.perform(this, action, payload)
+    return this.receiver.perform(this.identifier, action, payload)
   }
 
   receive(msg, meta) {

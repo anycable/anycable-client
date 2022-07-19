@@ -1,4 +1,4 @@
-import { Channel } from '../../channel/index.js'
+import { Channel, Identifier } from '../../channel/index.js'
 
 type PerformedAction = { action: string; payload: object }
 
@@ -8,5 +8,9 @@ export class TestCable {
   connect(): Promise<void>
   subscribe<T extends Channel>(channel: T): T
   unsubscribe(channel: Channel): void
-  perform(channel: Channel, action: string, payload?: object): Promise<void>
+  perform(
+    identifier: Identifier,
+    action: string,
+    payload?: object
+  ): Promise<void>
 }
