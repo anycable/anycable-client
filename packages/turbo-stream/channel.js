@@ -3,17 +3,17 @@ import { Channel } from '@anycable/core'
 export class TurboChannel extends Channel {
   static identifier = '__turbo__'
 
-  constructor(element, identifier, params) {
+  constructor(element, channelId, params) {
     super(params)
     this.element = element
-    this.identifier = identifier
+    this.channelId = channelId
   }
 
-  set identifier(val) {
-    this._identifier = val
+  set channelId(val) {
+    this._channelId = val
   }
 
-  get identifier() {
-    return this._identifier
+  get channelId() {
+    return this._channelId
   }
 }
