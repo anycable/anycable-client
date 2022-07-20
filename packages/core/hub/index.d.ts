@@ -1,46 +1,47 @@
 import {
   Channel,
+  Identifier,
   Message,
   MessageMeta,
-  ChannelParamsMap
+  ChannelState
 } from '../channel/index.js'
+import { ReasonError } from '../protocol/index.js'
 
-export class Subscription {
-  readonly id: string
-  readonly channel: string
-  readonly params: ChannelParamsMap
-  readonly remoteId: string
+type subscriptionState = 'subscribed' | 'unsubscribed'
+
+export class Subscriptions {
+  all(): Subscription[]
+  fetch(id: string): Subscription
+  get(id: string): Subscription | undefined
+  remove(id: string): void
 }
 
-type unsubscribeRequest = Promise<void>
+export class Subscription {
+  get intent(): subscriptionState
+  get state(): ChannelState
+  get id(): string
+  get remoteId(): Identifier
 
-export class PendingRequests {
-  add(id: string, promise: unsubscribeRequest): void
-  remove(id: string): void
-  get(id: string): unsubscribeRequest | void
+  get channels(): Channel[]
+
+  add(channel: Channel): void
+  remove(channel: Channel): void
+
+  notify(event: 'connecting' | 'connected' | 'restored'): void
+  notify(event: 'closed' | 'disconnected', err: ReasonError): void
+
+  pending(state: subscriptionState, promise: Promise<void>): void
+  pending(state: subscriptionState): Promise<void>
+
+  hasPending(state: subscriptionState): boolean
 }
 
 export class Hub {
-  add(id: string, channel: Channel): void
-  remove(id: string): void
-  findSubscription(id: string): Subscription | void
-  subscribe(id: string, remoteId: string): void
-  transmit(id: string, msg: Message, meta: MessageMeta): void
-  close(): void
-
-  channelsFor(id: string): Channel[]
-  removeChannel(channel: Channel): string
-
-  get subscribes(): PendingRequests
-  get unsubscribes(): PendingRequests
-
+  get subscriptions(): Subscriptions
   get channels(): Channel[]
-  get activeChannels(): Channel[]
-  get pendingChannels(): Channel[]
-
-  get subscriptions(): Subscription[]
-  get activeSubscriptions(): Subscription[]
-  get pendingSubscriptions(): Subscription[]
-
   get size(): number
+
+  subscribe(id: string, remoteId: string): void
+  transmit(remoteId: string, msg: Message, meta: MessageMeta): void
+  close(): void
 }

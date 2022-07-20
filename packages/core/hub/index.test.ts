@@ -1,4 +1,11 @@
-import { Hub, Channel, MessageMeta, Message } from '../index'
+import {
+  Hub,
+  Channel,
+  MessageMeta,
+  Message,
+  Subscription,
+  DisconnectedError
+} from '../index'
 
 class TestChannel extends Channel {
   static identifier = 'HubChannel'
@@ -32,6 +39,13 @@ class AnotherChannel extends Channel<{ x: string }> {
 
 let hub: Hub
 let channel: TestChannel
+let subscription: Subscription
+
+let waitSec = () => {
+  return new Promise<void>(resolve => {
+    setTimeout(resolve, 100)
+  })
+}
 
 beforeEach(() => {
   hub = new Hub()
@@ -39,10 +53,12 @@ beforeEach(() => {
 })
 
 it('add-subscribe-transmit-remove-transmit', () => {
-  hub.subscribe('a', 'z')
-
-  hub.add('a', channel)
   hub.subscribe('a', 'A')
+
+  subscription = hub.subscriptions.fetch('a')
+  expect(subscription.remoteId).toBe('A')
+
+  subscription.add(channel)
 
   expect(hub.size).toEqual(1)
   expect(hub.channels).toEqual([channel])
@@ -50,7 +66,7 @@ it('add-subscribe-transmit-remove-transmit', () => {
   hub.transmit('A', 'hello', {})
   expect(channel.mailbox).toEqual([['hello', {}]])
 
-  hub.remove('a')
+  hub.subscriptions.remove('a')
 
   expect(hub.size).toEqual(0)
   expect(hub.channels).toEqual([])
@@ -59,24 +75,35 @@ it('add-subscribe-transmit-remove-transmit', () => {
   expect(channel.mailbox).toHaveLength(1)
 })
 
-it('removeChannel', () => {
-  hub.add('a', channel)
+it('remove channel + dispose', () => {
+  subscription = hub.subscriptions.fetch('a')
+  subscription.add(channel)
+
   expect(hub.size).toEqual(1)
-  expect(hub.subscriptions).toHaveLength(1)
+  expect(hub.subscriptions.all()).toHaveLength(1)
+  expect(hub.subscriptions.all()[0].channels).toHaveLength(1)
 
-  hub.removeChannel(channel)
+  subscription.remove(channel)
   expect(hub.size).toEqual(0)
-  expect(hub.subscriptions).toHaveLength(0)
+  expect(hub.subscriptions.all()).toHaveLength(1)
+  expect(hub.subscriptions.all()[0].channels).toHaveLength(0)
 
-  hub.removeChannel(channel)
+  subscription.remove(channel)
   expect(hub.size).toEqual(0)
+  expect(hub.subscriptions.all()).toHaveLength(1)
+
+  hub.subscriptions.remove('a')
+  expect(hub.size).toEqual(0)
+  expect(hub.subscriptions.all()).toHaveLength(0)
 })
 
 it('transmit before add', () => {
   hub.transmit('A', 'hello', { id: '1' })
   hub.transmit('A', 'goodbye', { id: '2' })
 
-  hub.add('a', channel)
+  subscription = hub.subscriptions.fetch('a')
+  subscription.add(channel)
+
   hub.subscribe('a', 'A')
 
   expect(hub.size).toEqual(1)
@@ -86,19 +113,22 @@ it('transmit before add', () => {
     ['goodbye', { id: '2' }]
   ])
 
-  hub.remove('a')
+  hub.subscriptions.remove('a')
 
   let newChannel = new TestChannel()
-  hub.add('a', newChannel)
+  subscription.add(newChannel)
   expect(newChannel.mailbox).toHaveLength(0)
 })
 
 it('close', () => {
-  hub.transmit('a', 'hello', { id: '1' })
-  hub.transmit('b', 'goodbye', { id: '2' })
+  hub.transmit('A', 'hello', { id: '1' })
+  hub.transmit('B', 'goodbye', { id: '2' })
 
-  hub.add('a', channel)
-  hub.subscribe('a', 'a')
+  subscription = hub.subscriptions.fetch('a')
+  subscription.add(channel)
+  subscription.add(channel)
+
+  hub.subscribe('a', 'A')
 
   expect(hub.size).toEqual(1)
   expect(hub.channels).toEqual([channel])
@@ -108,116 +138,100 @@ it('close', () => {
 
   expect(hub.size).toEqual(1)
   expect(hub.channels).toEqual([channel])
-  expect(hub.activeSubscriptions).toHaveLength(1)
-  expect(hub.pendingSubscriptions).toHaveLength(0)
 
   let b = new TestChannel()
-  hub.add('b', b)
+  hub.subscriptions.fetch('b').add(b)
+  hub.subscribe('b', 'B')
 
   expect(b.mailbox).toHaveLength(0)
-  expect(hub.activeSubscriptions).toHaveLength(1)
-  expect(hub.pendingSubscriptions).toHaveLength(1)
 })
 
 describe('subscriptions', () => {
-  it('subscriptionFor', () => {
-    hub.add('a', channel)
+  it('fetch / get', () => {
+    expect(hub.subscriptions.get('a')).toBeUndefined()
+    expect(hub.subscriptions.fetch('a')).toBeDefined()
 
-    let sub = hub.findSubscription('a')
+    subscription = hub.subscriptions.get('a')!
+    expect(subscription.channels).toHaveLength(0)
+    expect(subscription.id).toEqual('a')
+    expect(subscription.state).toEqual('idle')
+    expect(subscription.intent).toEqual('unsubscribed')
 
-    expect(sub).toBeDefined()
-
-    if (sub) {
-      expect(sub.id).toEqual('a')
-      expect(sub.remoteId).toBeUndefined()
-      expect(sub.channel).toEqual('HubChannel')
-      expect(sub.params).toBeUndefined
-    }
+    subscription.add(channel)
+    expect(subscription.channels).toEqual([channel])
   })
 
-  it('subscriptions / activeSubscriptions / pendingSubscriptions', () => {
-    hub.add('a', channel)
-    let anotherChannel = new AnotherChannel({ x: 'y' })
+  it('notify keeps track of the channel states', () => {
+    subscription = hub.subscriptions.fetch('a')
 
-    hub.add('b', anotherChannel)
-    hub.subscribe('a', 'A')
+    expect(subscription.state).toEqual('idle')
 
-    let subs = hub.subscriptions
+    subscription.notify('connecting')
+    expect(subscription.state).toEqual('connecting')
 
-    expect(subs).toHaveLength(2)
-    expect(hub.activeSubscriptions).toStrictEqual([hub.findSubscription('a')])
-    expect(hub.pendingSubscriptions).toStrictEqual([hub.findSubscription('b')])
+    subscription.add(channel)
+    // Do not change state when adding
+    expect(channel.state).toEqual('idle')
 
-    expect(hub.channels).toHaveLength(2)
-    expect(hub.activeChannels).toStrictEqual([channel])
-    expect(hub.pendingChannels).toStrictEqual([anotherChannel])
-  })
+    subscription.notify('connected')
+    expect(channel.state).toEqual('connected')
 
-  it('add + add + removeChannel + add + remove', () => {
-    hub.add('a', channel)
-    hub.subscribe('a', 'A')
+    let event!: DisconnectedError
+    channel.on('disconnect', ev => {
+      event = ev
+    })
 
-    let anotherChannel = new AnotherChannel({ x: 'y' })
-    hub.add('b', anotherChannel)
-
-    let bSub = hub.findSubscription('b')
-    expect(bSub).toBeDefined()
-
-    if (bSub) {
-      expect(bSub.params).toEqual({ x: 'y' })
-    }
-
-    let newChannel = new TestChannel()
-    hub.add('a', newChannel)
-
-    expect(hub.channels).toHaveLength(3)
-    expect(hub.activeChannels).toHaveLength(2)
-    expect(hub.subscriptions).toHaveLength(2)
-
-    hub.removeChannel(channel)
-
-    expect(hub.channels).toHaveLength(2)
-    expect(hub.activeChannels).toHaveLength(1)
-    expect(hub.subscriptions).toHaveLength(2)
-
-    hub.remove('b')
-
-    expect(hub.channels).toHaveLength(1)
-    expect(hub.activeChannels).toHaveLength(1)
-    expect(hub.subscriptions).toHaveLength(1)
+    subscription.notify('disconnected', new DisconnectedError('test'))
+    expect(event).toEqual(new DisconnectedError('test'))
   })
 })
 
-describe('unsubscribes', () => {
-  it('add / get / remove', async () => {
-    expect(hub.unsubscribes.get('a')).toBeUndefined()
+describe('pending requests', () => {
+  it('pending write + hasPending + pending read', async () => {
+    subscription = hub.subscriptions.fetch('a')
 
-    let promise = new Promise<void>(resolve => {
-      setTimeout(resolve, 200)
-    })
+    subscription.pending('subscribed', waitSec())
 
-    hub.unsubscribes.add('a', promise)
+    expect(subscription.hasPending('subscribed')).toBe(true)
 
-    let req = hub.unsubscribes.get('a')
+    await subscription.pending('subscribed')
 
-    expect(req).toBeDefined()
+    expect(subscription.hasPending('subscribed')).toBe(false)
+  })
 
-    await req
+  it('pending read when empty', async () => {
+    subscription = hub.subscriptions.fetch('a')
+    expect(subscription.hasPending('subscribed')).toBe(false)
+    await subscription.pending('subscribed')
+    expect(subscription.hasPending('subscribed')).toBe(false)
+  })
 
-    expect(hub.unsubscribes.get('a')).toBeUndefined()
+  it('pending double write', async () => {
+    subscription = hub.subscriptions.fetch('a')
+    subscription.pending('subscribed', waitSec())
+    expect(() => {
+      subscription.pending('subscribed', waitSec())
+    }).toThrow(Error('Already pending subscribed'))
+  })
 
-    let noPromise = new Promise<void>((resolve, reject) => {
-      setTimeout(reject, 200)
-    })
+  it('pending different intents', async () => {
+    subscription = hub.subscriptions.fetch('a')
+    subscription.pending('subscribed', waitSec())
+    subscription.pending('unsubscribed', waitSec())
 
-    hub.unsubscribes.add('b', noPromise)
+    await subscription.pending('subscribed')
+    await subscription.pending('unsubscribed')
 
-    req = hub.unsubscribes.get('b')
+    expect(subscription.hasPending('subscribed')).toBe(false)
+    expect(subscription.hasPending('unsubscribed')).toBe(false)
+  })
 
-    expect(req).toBeDefined()
+  it('pending rejected', async () => {
+    subscription = hub.subscriptions.fetch('a')
+    subscription.pending('subscribed', Promise.reject(Error('test')))
 
-    await expect(req).rejects.toEqual(Error('unknown unsubscribe error'))
+    await subscription.pending('subscribed')
 
-    expect(hub.unsubscribes.get('b')).toBeUndefined()
+    expect(subscription.hasPending('subscribed')).toBe(false)
   })
 })

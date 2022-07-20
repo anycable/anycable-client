@@ -1,17 +1,16 @@
 import { Hub } from '../index'
-import { Channel } from '../index'
 
-const channel = new Channel()
 const hub = new Hub()
+const subscription = hub.subscriptions.fetch('a')
 
 // THROWS Argument of type 'number' is not assignable
-hub.add(12, channel)
+hub.subscriptions.fetch(1)
 
 // THROWS Argument of type '{}' is not assignable
-hub.add('12', {})
+subscription.add('x')
 
 // THROWS Argument of type 'number' is not assignable
-hub.remove(0)
+hub.subscriptions.remove(0)
 
 // THROWS Argument of type 'number' is not assignable
 hub.transmit(12, {}, {})

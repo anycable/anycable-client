@@ -1,105 +1,104 @@
-export class PendingRequests {
-  constructor() {
-    this._store = {}
+export class Subscription {
+  constructor(id) {
+    this.id = id
+    this.intent = 'unsubscribed'
+    this.state = 'idle'
+    this.channels = []
+    this._pendings = {}
   }
 
-  add(id, promise) {
-    this._store[id] = promise
+  add(channel) {
+    if (this.channels.includes(channel)) return
+
+    this.channels.push(channel)
+  }
+
+  remove(channel) {
+    let ind = this.channels.indexOf(channel)
+
+    if (ind > -1) this.channels.splice(ind, 1)
+  }
+
+  notify(state, ...args) {
+    this.state = state
+
+    if (args.length === 1) {
+      this.channels.forEach(channel => channel[state](args[0]))
+    } else {
+      this.channels.forEach(channel => channel[state]())
+    }
+  }
+
+  /* eslint-disable consistent-return */
+  pending(event, promise) {
+    if (!promise) return this._pendings[event] || Promise.resolve()
+
+    if (this._pendings[event]) throw Error(`Already pending ${event}`)
+
+    this._pendings[event] = promise
       .then(() => {
-        delete this._store[id]
+        delete this._pendings[event]
       })
-      .catch(err => {
-        if (this._store[id]) {
-          delete this._store[id]
-          throw err || Error('unknown unsubscribe error')
-        }
+      .catch(() => {
+        delete this._pendings[event]
       })
+  }
+
+  hasPending(event) {
+    return !!this._pendings[event]
+  }
+}
+
+export class Subscriptions {
+  constructor() {
+    this._subscriptions = {}
+    this._localToRemote = {}
+  }
+
+  all() {
+    return Object.values(this._subscriptions)
   }
 
   get(id) {
-    return this._store[id]
+    return this._subscriptions[id]
+  }
+
+  fetch(id) {
+    let sub = this._subscriptions[id]
+
+    if (sub) return sub
+
+    sub = this._subscriptions[id] = new Subscription(id)
+    sub.remoteId = this._localToRemote[id]
+
+    return sub
   }
 
   remove(id) {
-    delete this._store[id]
+    delete this._subscriptions[id]
+  }
+
+  storeRemoteId(localId, remoteId) {
+    this._localToRemote[localId] = remoteId
+
+    let sub = this.get(localId)
+    if (sub) sub.remoteId = remoteId
   }
 }
 
 export class Hub {
   constructor() {
-    this._subscriptions = {}
-    this._channelsToSubs = new WeakMap()
-    this._remoteToLocal = {}
+    this.subscriptions = new Subscriptions()
     this._pendingMessages = []
-    this.unsubscribes = new PendingRequests()
-    this.subscribes = new PendingRequests()
+    this._remoteToLocal = {}
   }
 
-  add(id, channel) {
-    this._channelsToSubs.set(channel, id)
+  subscribe(localId, remoteId) {
+    this._remoteToLocal[remoteId] = localId
 
-    if (this._subscriptions[id]) {
-      this._subscriptions[id].channels.push(channel)
-    } else {
-      this._subscriptions[id] = {
-        id,
-        channel: channel.channelId,
-        params: channel.params,
-        channels: [channel]
-      }
-    }
-  }
-
-  findSubscription(id) {
-    return this._subscriptions[id]
-  }
-
-  channelsFor(id) {
-    let sub = this._subscriptions[id]
-
-    if (!sub) return []
-
-    return this._subscriptions[id].channels
-  }
-
-  subscribe(id, remoteId) {
-    let sub = this._subscriptions[id]
-
-    if (!sub) return
-
-    sub.remoteId = remoteId
-
-    this._remoteToLocal[remoteId] = id
+    this.subscriptions.storeRemoteId(localId, remoteId)
 
     this.flush(remoteId)
-  }
-
-  remove(id) {
-    let sub = this._subscriptions[id]
-    if (!sub) return
-
-    delete this._subscriptions[id]
-    delete this.unsubscribes.remove(id)
-
-    if (sub.remoteId) {
-      delete this._remoteToLocal[sub.remoteId]
-    }
-
-    sub.channels.forEach(channel => this._channelsToSubs.delete(channel))
-  }
-
-  removeChannel(channel) {
-    let id = this._channelsToSubs.get(channel)
-
-    if (!id) return
-
-    let sub = this._subscriptions[id]
-
-    // Remove channel from the subscription channels
-    sub.channels.splice(sub.channels.indexOf(channel), 1)
-    this._channelsToSubs.delete(channel)
-
-    if (sub.channels.length === 0) this.remove(id)
   }
 
   transmit(id, msg, meta) {
@@ -110,7 +109,9 @@ export class Hub {
       return
     }
 
-    let sub = this._subscriptions[localId]
+    let sub = this.subscriptions.get(localId)
+
+    if (!sub) return
 
     sub.channels.forEach(channel => {
       channel.receive(msg, meta)
@@ -119,35 +120,14 @@ export class Hub {
 
   close() {
     this._pendingMessages.length = 0
-    this._unsubscribeRequests = {}
   }
 
   get size() {
     return this.channels.length
   }
 
-  get subscriptions() {
-    return Object.values(this._subscriptions)
-  }
-
-  get activeSubscriptions() {
-    return this.subscriptions.filter(sub => !!sub.remoteId)
-  }
-
-  get pendingSubscriptions() {
-    return this.subscriptions.filter(sub => !sub.remoteId)
-  }
-
   get channels() {
-    return this.subscriptions.flatMap(sub => sub.channels)
-  }
-
-  get pendingChannels() {
-    return this.pendingSubscriptions.flatMap(sub => sub.channels)
-  }
-
-  get activeChannels() {
-    return this.activeSubscriptions.flatMap(sub => sub.channels)
+    return this.subscriptions.all().flatMap(sub => sub.channels)
   }
 
   flush(id) {

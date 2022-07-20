@@ -46,14 +46,16 @@ export function createCable(url, opts) {
     tokenRefresher
   } = opts
 
+  logger = logger || new NoopLogger(logLevel)
+
   if (typeof protocol === 'string') subprotocol = subprotocol || protocol
 
   if (protocol === 'actioncable-v1-json') {
-    protocol = new ActionCableProtocol()
+    protocol = new ActionCableProtocol({ logger })
     encoder = encoder || new JSONEncoder()
     websocketFormat = websocketFormat || 'text'
   } else if (protocol === 'actioncable-v1-msgpack') {
-    protocol = new ActionCableProtocol()
+    protocol = new ActionCableProtocol({ logger })
     websocketFormat = 'binary'
     if (!encoder) {
       throw Error(
@@ -61,7 +63,7 @@ export function createCable(url, opts) {
       )
     }
   } else if (protocol === 'actioncable-v1-protobuf') {
-    protocol = new ActionCableProtocol()
+    protocol = new ActionCableProtocol({ logger })
     websocketFormat = websocketFormat || 'binary'
     if (!encoder) {
       throw Error(
@@ -82,8 +84,6 @@ export function createCable(url, opts) {
       subprotocol,
       format: websocketFormat
     })
-
-  logger = logger || new NoopLogger(logLevel)
 
   reconnectStrategy = reconnectStrategy || backoffWithJitter(pingInterval)
 
