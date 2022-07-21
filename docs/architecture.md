@@ -32,11 +32,10 @@ _Channel_ is a business-logic abstraction (similar to Action Cable Channel). It 
 
 ## Hub
 
-_Hub_ is a part of Cable, which keeps track of Channels. Incoming data go to Hub, which transmits it further to a designated Channel. One interesting feature of Hub is that it helps to deal with race conditions during channels subscriptions by keeping pending messages while confirmation is in progress (see [code][hub-pending]).
+_Hub_ is a part of Cable, which keeps track of _Subscriptions_. Subscription represents a server-side channel instance and MAY have multiple client-side Channel instances attached.Incoming data go to Hub, which transmits it further to a designated Subscription, which in its turn notify channels. One interesting feature of Hub is that it helps to deal with race conditions when subscribing to and unsubscribing from channels.
 
 ## Monitor
 
 _Monitor_ is responsible for keeping Cable connected. First, it tracks Ping messages and triggers reconnection if they're missing. Secondly, it tries to reconnect when an unexpected disconnect occurs (using a configurable backoff strategy).
 
-[hub-pending]: https://github.com/anycable/anycable-client/blob/ecc5f73e299d361d331628255746cabc1841f50e/packages/core/hub/index.js#L50-L59
 [create-cable]: https://github.com/anycable/anycable-client/blob/master/packages/core/create-cable/index.js
