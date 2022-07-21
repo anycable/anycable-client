@@ -52,98 +52,133 @@ beforeEach(() => {
   channel = new TestChannel()
 })
 
-it('add-subscribe-transmit-remove-transmit', () => {
-  hub.subscribe('a', 'A')
+describe('hub', () => {
+  it('add-subscribe-transmit-remove-transmit', () => {
+    hub.subscribe('a', 'A')
 
-  subscription = hub.subscriptions.fetch('a')
-  expect(subscription.remoteId).toBe('A')
+    subscription = hub.subscriptions.fetch('a')
+    expect(subscription.remoteId).toBe('A')
 
-  subscription.add(channel)
+    subscription.add(channel)
 
-  expect(hub.size).toEqual(1)
-  expect(hub.channels).toEqual([channel])
+    expect(hub.size).toEqual(1)
+    expect(hub.channels).toEqual([channel])
 
-  hub.transmit('A', 'hello', {})
-  expect(channel.mailbox).toEqual([['hello', {}]])
+    hub.transmit('A', 'hello', {})
+    expect(channel.mailbox).toEqual([['hello', {}]])
 
-  hub.subscriptions.remove('a')
+    hub.subscriptions.remove('a')
 
-  expect(hub.size).toEqual(0)
-  expect(hub.channels).toEqual([])
+    expect(hub.size).toEqual(0)
+    expect(hub.channels).toEqual([])
 
-  hub.transmit('A', 'hello', {})
-  expect(channel.mailbox).toHaveLength(1)
-})
+    hub.transmit('A', 'hello', {})
+    expect(channel.mailbox).toHaveLength(1)
+  })
 
-it('remove channel + dispose', () => {
-  subscription = hub.subscriptions.fetch('a')
-  subscription.add(channel)
+  it('remove channel + dispose', () => {
+    subscription = hub.subscriptions.fetch('a')
+    subscription.add(channel)
 
-  expect(hub.size).toEqual(1)
-  expect(hub.subscriptions.all()).toHaveLength(1)
-  expect(hub.subscriptions.all()[0].channels).toHaveLength(1)
+    expect(hub.size).toEqual(1)
+    expect(hub.subscriptions.all()).toHaveLength(1)
+    expect(hub.subscriptions.all()[0].channels).toHaveLength(1)
 
-  subscription.remove(channel)
-  expect(hub.size).toEqual(0)
-  expect(hub.subscriptions.all()).toHaveLength(1)
-  expect(hub.subscriptions.all()[0].channels).toHaveLength(0)
+    subscription.remove(channel)
+    expect(hub.size).toEqual(0)
+    expect(hub.subscriptions.all()).toHaveLength(1)
+    expect(hub.subscriptions.all()[0].channels).toHaveLength(0)
 
-  subscription.remove(channel)
-  expect(hub.size).toEqual(0)
-  expect(hub.subscriptions.all()).toHaveLength(1)
+    subscription.remove(channel)
+    expect(hub.size).toEqual(0)
+    expect(hub.subscriptions.all()).toHaveLength(1)
 
-  hub.subscriptions.remove('a')
-  expect(hub.size).toEqual(0)
-  expect(hub.subscriptions.all()).toHaveLength(0)
-})
+    hub.subscriptions.remove('a')
+    expect(hub.size).toEqual(0)
+    expect(hub.subscriptions.all()).toHaveLength(0)
+  })
 
-it('transmit before add', () => {
-  hub.transmit('A', 'hello', { id: '1' })
-  hub.transmit('A', 'goodbye', { id: '2' })
+  it('transmit before add', () => {
+    hub.transmit('A', 'hello', { id: '1' })
+    hub.transmit('A', 'goodbye', { id: '2' })
 
-  subscription = hub.subscriptions.fetch('a')
-  subscription.add(channel)
+    subscription = hub.subscriptions.fetch('a')
+    subscription.add(channel)
 
-  hub.subscribe('a', 'A')
+    hub.subscribe('a', 'A')
 
-  expect(hub.size).toEqual(1)
-  expect(hub.channels).toEqual([channel])
-  expect(channel.mailbox).toEqual([
-    ['hello', { id: '1' }],
-    ['goodbye', { id: '2' }]
-  ])
+    expect(hub.size).toEqual(1)
+    expect(hub.channels).toEqual([channel])
+    expect(channel.mailbox).toEqual([
+      ['hello', { id: '1' }],
+      ['goodbye', { id: '2' }]
+    ])
 
-  hub.subscriptions.remove('a')
+    hub.subscriptions.remove('a')
 
-  let newChannel = new TestChannel()
-  subscription.add(newChannel)
-  expect(newChannel.mailbox).toHaveLength(0)
-})
+    let newChannel = new TestChannel()
+    subscription.add(newChannel)
+    expect(newChannel.mailbox).toHaveLength(0)
+  })
 
-it('close', () => {
-  hub.transmit('A', 'hello', { id: '1' })
-  hub.transmit('B', 'goodbye', { id: '2' })
+  it('close', () => {
+    hub.transmit('A', 'hello', { id: '1' })
+    hub.transmit('B', 'goodbye', { id: '2' })
 
-  subscription = hub.subscriptions.fetch('a')
-  subscription.add(channel)
-  subscription.add(channel)
+    subscription = hub.subscriptions.fetch('a')
+    subscription.add(channel)
+    subscription.add(channel)
 
-  hub.subscribe('a', 'A')
+    hub.subscribe('a', 'A')
 
-  expect(hub.size).toEqual(1)
-  expect(hub.channels).toEqual([channel])
-  expect(channel.mailbox).toEqual([['hello', { id: '1' }]])
+    expect(hub.size).toEqual(1)
+    expect(hub.channels).toEqual([channel])
+    expect(channel.mailbox).toEqual([['hello', { id: '1' }]])
 
-  hub.close()
+    hub.close()
 
-  expect(hub.size).toEqual(1)
-  expect(hub.channels).toEqual([channel])
+    expect(hub.size).toEqual(1)
+    expect(hub.channels).toEqual([channel])
 
-  let b = new TestChannel()
-  hub.subscriptions.fetch('b').add(b)
-  hub.subscribe('b', 'B')
+    let b = new TestChannel()
+    hub.subscriptions.fetch('b').add(b)
+    hub.subscribe('b', 'B')
 
-  expect(b.mailbox).toHaveLength(0)
+    expect(b.mailbox).toHaveLength(0)
+  })
+
+  it('subscribe / unsubscribe', () => {
+    hub.subscribe('a', 'A')
+
+    subscription = hub.subscriptions.fetch('a')
+    expect(subscription.remoteId).toBe('A')
+
+    subscription.add(channel)
+
+    hub.transmit('A', 'hello', { id: '1' })
+    expect(channel.mailbox).toEqual([['hello', { id: '1' }]])
+
+    // Reset mailbox
+    channel.mailbox.length = 0
+
+    hub.unsubscribe('a')
+    // make sure double-unsubscribe does not throw
+    hub.unsubscribe('a')
+
+    expect(hub.size).toBe(0)
+
+    let newSubscription = hub.subscriptions.fetch('a')
+    expect(newSubscription).not.toStrictEqual(subscription)
+    expect(newSubscription.remoteId).toBeUndefined()
+
+    newSubscription.add(channel)
+
+    hub.transmit('A', 'goodbye', {})
+    expect(channel.mailbox).toEqual([])
+
+    hub.subscribe('a', 'A')
+    expect(channel.mailbox).toEqual([['goodbye', {}]])
+  })
 })
 
 describe('subscriptions', () => {

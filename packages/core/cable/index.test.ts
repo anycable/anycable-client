@@ -673,16 +673,19 @@ describe('channels', () => {
       throw new SubscriptionRejectedError()
     })
 
-    await expect(
-      cable
-        .subscribe(channel)
-        .ensureSubscribed()
-        .finally(() => {
-          expect(channel.state).toEqual('closed')
-          expect(cable.hub.size).toEqual(0)
-          expect(logger.warnings).toHaveLength(1)
-        })
-    ).rejects.toBeInstanceOf(SubscriptionRejectedError)
+    let expectedErr: any
+
+    await cable
+      .subscribe(channel)
+      .ensureSubscribed()
+      .catch(err => {
+        expectedErr = err
+      })
+
+    expect(channel.state).toEqual('closed')
+    expect(cable.hub.size).toEqual(0)
+    expect(logger.warnings).toHaveLength(1)
+    expect(expectedErr).toBeInstanceOf(SubscriptionRejectedError)
   })
 
   it('subscribe + unsubscribe + rejected', async () => {

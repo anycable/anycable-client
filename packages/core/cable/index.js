@@ -408,7 +408,7 @@ export class Cable {
             )
           }
 
-          if (disposable) this.hub.subscriptions.remove(identifier)
+          if (disposable) this.hub.unsubscribe(identifier)
         }
 
         if (err instanceof DisconnectedError) {
@@ -427,7 +427,7 @@ export class Cable {
 
       subscription.notify('closed', err)
 
-      if (disposable) this.hub.subscriptions.remove(identifier)
+      if (disposable) this.hub.unsubscribe(identifier)
     }
   }
 
@@ -487,7 +487,7 @@ export class Cable {
       this.logger.debug('unsubscribe skipped (cable is not connected)', {
         id: identifier
       })
-      this.hub.subscriptions.remove(identifier)
+      this.hub.unsubscribe(identifier)
       return
     }
 
@@ -515,7 +515,7 @@ export class Cable {
     }
 
     let disposable = !subscription.hasPending('subscribed')
-    if (disposable) this.hub.subscriptions.remove(identifier)
+    if (disposable) this.hub.unsubscribe(identifier)
   }
 
   async perform(identifier, action, payload) {

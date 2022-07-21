@@ -42,6 +42,7 @@ export class Hub {
   get size(): number
 
   subscribe(id: string, remoteId: string): void
+  unsubscribe(id: string): void
   transmit(remoteId: string, msg: Message, meta: MessageMeta): void
   close(): void
 }

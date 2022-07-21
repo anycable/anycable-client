@@ -76,6 +76,7 @@ export class Subscriptions {
 
   remove(id) {
     delete this._subscriptions[id]
+    delete this._localToRemote[id]
   }
 
   storeRemoteId(localId, remoteId) {
@@ -99,6 +100,16 @@ export class Hub {
     this.subscriptions.storeRemoteId(localId, remoteId)
 
     this.flush(remoteId)
+  }
+
+  unsubscribe(localId) {
+    let sub = this.subscriptions.get(localId)
+    if (!sub) return
+
+    let remoteId = sub.remoteId
+    if (remoteId) delete this._remoteToLocal[remoteId]
+
+    this.subscriptions.remove(localId)
   }
 
   transmit(id, msg, meta) {
