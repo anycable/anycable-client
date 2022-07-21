@@ -8,9 +8,9 @@ export class TurboStreamSourceElement extends HTMLElement {
   static channelClass
 
   async connectedCallback() {
-    if (isPreview()) return
-
     connectStreamSource(this)
+
+    if (isPreview()) return
 
     let cable = this.constructor.cable
     let ChannelClass = this.constructor.channelClass
@@ -38,8 +38,6 @@ export class TurboStreamSourceElement extends HTMLElement {
   }
 
   disconnectedCallback() {
-    if (isPreview()) return
-
     disconnectStreamSource(this)
     if (this.channel) {
       this.unbindOnMessage()
