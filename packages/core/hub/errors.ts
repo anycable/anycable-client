@@ -6,7 +6,7 @@ const subscription = hub.subscriptions.fetch('a')
 // THROWS Argument of type 'number' is not assignable
 hub.subscriptions.fetch(1)
 
-// THROWS Argument of type '{}' is not assignable
+// THROWS Argument of type 'string' is not assignable
 subscription.add('x')
 
 // THROWS Argument of type 'number' is not assignable

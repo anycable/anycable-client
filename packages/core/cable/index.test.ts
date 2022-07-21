@@ -685,6 +685,39 @@ describe('channels', () => {
     ).rejects.toBeInstanceOf(SubscriptionRejectedError)
   })
 
+  it('subscribe + unsubscribe + rejected', async () => {
+    jest.spyOn(protocol, 'subscribe').mockImplementation(async () => {
+      await Promise.resolve()
+      throw new SubscriptionRejectedError()
+    })
+
+    let subscribePromise = cable
+      .subscribe(channel)
+      .ensureSubscribed()
+      .catch(err => {
+        return err
+      })
+
+    cable.unsubscribe(channel)
+
+    expect(channel.state).toEqual('closed')
+    expect(cable.hub.size).toEqual(0)
+    expect(cable.hub.subscriptions.all()).toHaveLength(1)
+
+    let err = await subscribePromise
+    expect(err).toEqual(
+      new ReasonError('Channel was disconnected before subscribing', 'canceled')
+    )
+
+    await cable.hub.subscriptions
+      .fetch(channel.identifier)
+      .pending('unsubscribed')
+
+    expect(logger.warnings).toHaveLength(1)
+    expect(cable.hub.size).toEqual(0)
+    expect(cable.hub.subscriptions.all()).toHaveLength(0)
+  })
+
   it('subscribe unknown failure', () => {
     jest.spyOn(protocol, 'subscribe').mockImplementation(async () => {
       throw Error('failed')
@@ -1036,7 +1069,7 @@ describe('channels', () => {
       await connectPromise
     })
 
-    it.skip('restored after recoverable disconnect should mark channels as connected', async () => {
+    it('restored after recoverable disconnect should mark channels as connected', async () => {
       await cable.subscribe(channel).ensureSubscribed()
 
       let subscribePromise = cable
@@ -1050,15 +1083,75 @@ describe('channels', () => {
 
       transport.closed('recover_me')
 
+      await Promise.resolve()
+
       expect(channel.state).toEqual('connecting')
       expect(channel2.state).toEqual('connecting')
 
       // Make sure restored is called asynchrounously
       await Promise.resolve()
-      cable.restored()
+      cable.restored(['test_26'])
 
       expect(channel.state).toEqual('connected')
       expect(channel2.state).toEqual('connecting')
+
+      await subscribePromise
+    })
+
+    it('resubscribe with empty subscription', async () => {
+      await cable.subscribe(channel).ensureSubscribed()
+      expect(cable.hub.size).toEqual(1)
+
+      transport.closed('recover_me')
+
+      await Promise.resolve()
+
+      expect(channel.state).toEqual('connecting')
+
+      cable.hub.subscriptions.fetch(channel.identifier).remove(channel)
+
+      // Make sure restored is called asynchrounously
+      await Promise.resolve()
+      cable.connected()
+
+      expect(channel.state).toEqual('connecting')
+    })
+
+    it('restored only markes matching channels as connected', async () => {
+      await cable.subscribe(channel).ensureSubscribed()
+
+      let event: DisconnectedError | undefined
+
+      channel.on('disconnect', ev => {
+        event = ev
+      })
+
+      let subscribePromise = cable
+        .subscribe(channel2)
+        .ensureSubscribed()
+        .then(() => {
+          expect(channel2.state).toEqual('connected')
+        })
+
+      expect(cable.hub.size).toEqual(2)
+
+      transport.closed('recover_me')
+
+      await Promise.resolve()
+
+      expect(channel.state).toEqual('connecting')
+      expect(channel2.state).toEqual('connecting')
+
+      expect(event).toBeUndefined()
+
+      // Make sure restored is called asynchrounously
+      await Promise.resolve()
+
+      cable.restored([])
+
+      expect(channel.state).toEqual('connecting')
+      expect(channel2.state).toEqual('connecting')
+      expect(event).toBeDefined()
 
       await subscribePromise
     })
@@ -1084,7 +1177,7 @@ describe('channels', () => {
 
       // Make sure restored is called asynchrounously
       await Promise.resolve()
-      cable.restored()
+      cable.restored(['test_26'])
 
       await connectPromise
     })

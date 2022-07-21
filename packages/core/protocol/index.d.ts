@@ -30,7 +30,7 @@ export class StaleConnectionError extends ReasonError {
 
 export interface Consumer {
   connected(): void
-  restored(): void
+  restored(remoteIds: string[]): void
   disconnected(reason?: ReasonError): void
   closed(reason?: string | ReasonError): void
   keepalive(msg?: Message): void

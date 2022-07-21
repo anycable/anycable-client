@@ -121,22 +121,31 @@ export class Cable {
     }
   }
 
-  // TODO: Restored should accept the list of
-  // remote identifiers of the channels which were successfully restored,
-  // others must re-subscribe
-  restored() {
+  restored(remoteIds) {
     if (!this.recovering) {
       this.connected()
       return
     }
 
-    this.logger.info('connection recovered')
+    this.logger.info('connection recovered', { remoteIds })
 
     this[STATE] = 'connected'
 
-    this.hub.subscriptions
-      .all()
-      .forEach(subscription => subscription.notify('restored'))
+    this.hub.subscriptions.all().forEach(subscription => {
+      if (
+        remoteIds &&
+        subscription.remoteId &&
+        remoteIds.includes(subscription.remoteId)
+      ) {
+        subscription.notify('restored')
+      } else {
+        subscription.notify(
+          'disconnected',
+          new DisconnectedError('recovery_failed')
+        )
+        this._resubscribe(subscription)
+      }
+    })
 
     let reconnect = !this.initialConnect
     let restored = true
@@ -320,6 +329,8 @@ export class Cable {
     let channel = subscription.channels[0]
 
     if (!channel) return
+
+    subscription.notify('connecting')
 
     let subscribeRequest = this._subscribe(
       subscription.id,

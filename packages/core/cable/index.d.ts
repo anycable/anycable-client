@@ -81,7 +81,7 @@ export class Cable {
   ): Unsubscribe
 
   connected(): void
-  restored(): void
+  restored(remoteIds: string[]): void
   disconnected(reason?: ReasonError): void
   closed(reason?: string | ReasonError): void
 }
