@@ -2,7 +2,7 @@
 
 ## master
 
-## 0.5.0-rc.3 (2022-07-20)
+## 0.5.0 (2022-07-21)
 
 - `core`: **BREAKING** `channelsCache` is deprecated/removed in favour of support for using multiple channel instances for the same identifier.
 
