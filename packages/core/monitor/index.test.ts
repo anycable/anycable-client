@@ -314,11 +314,11 @@ describe('backoffWithJitter', () => {
 
     backoff = backoffWithJitter(2, { backoffRate: 3 })
 
-    // x \in [3 * 3 * 0.5 = 4.5, 3 * 3 * 3 * 1.5 = 40.5]
+    // x \in [2 * 3 * 0.5 = 3, 2 * 3 * 3 * 1.5 = 27]
     delay = backoff(1)
 
-    expect(delay).toBeGreaterThanOrEqual(4.5)
-    expect(delay).toBeLessThanOrEqual(40.5)
+    expect(delay).toBeGreaterThanOrEqual(3.0)
+    expect(delay).toBeLessThanOrEqual(27.0)
   })
 
   it('recognizes maxInterval', () => {
