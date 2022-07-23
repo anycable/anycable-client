@@ -2,6 +2,8 @@
 
 ## master
 
+## 0.5.1 (2022-07-22)
+
 - `web`: Print logs using the corresponding `console` methods, not just `log`.
 
 ## 0.5.0 (2022-07-21)
