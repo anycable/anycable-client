@@ -127,7 +127,7 @@
     "@types/ws": "^7.4.7",
     "@typescript-eslint/eslint-plugin": "^4.28.1",
     "@typescript-eslint/parser": "^4.28.1",
-    "check-dts": "^0.5.4",
+    "check-dts": "^0.6.4",
     "eslint": "^7.29.0",
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.23.4",
