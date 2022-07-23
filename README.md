@@ -381,6 +381,17 @@ This library uses ECMAScript 6 features (such as native classes), and thus, is n
 
 You should either configure Babel to transform the lib's source code or do not compile into ES5 (that could be done by specifying the following Browserlist query: `["defaults", "not IE 11"]`).
 
+If you're using `babel-loader`, `esbuild-loader` or similar, you can use the `include` option to add `@anycable/*` libraries to the processed files. For example:
+
+```js
+{
+  include: [
+    path.resolve("src"),
+    path.resolve('node_modules/@anycable'),
+  ]
+}
+```
+
 ## Usage: Node.js
 
 Currently, we do not provide a dedicated Node.js package. You can use `@anycable/core` with Node.js:
