@@ -1,8 +1,7 @@
 type LogLevel = 'info' | 'warn' | 'error' | 'debug'
 
 export interface Logger {
-  set level(level: LogLevel)
-  get level(): LogLevel
+  level: LogLevel
 
   log(level: LogLevel, message: string, details?: object): void
 
