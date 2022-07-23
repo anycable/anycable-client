@@ -4,9 +4,9 @@ import { BaseLogger } from '@anycable/core'
 export class Logger extends BaseLogger {
   writeLogEntry(level, msg, details) {
     if (details) {
-      console.log(`[${level}] ${msg}`, details)
+      console[level](msg, details)
     } else {
-      console.log(`[${level}] ${msg}`)
+      console[level](msg)
     }
   }
 }

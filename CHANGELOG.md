@@ -2,6 +2,8 @@
 
 ## master
 
+- `web`: Print logs using the corresponding `console` methods, not just `log`.
+
 ## 0.5.0 (2022-07-21)
 
 - `core`: **BREAKING** `channelsCache` is deprecated/removed in favour of support for using multiple channel instances for the same identifier.
