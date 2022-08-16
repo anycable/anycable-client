@@ -2,6 +2,12 @@
 
 ## master
 
+## 0.5.3 (2022-08-16)
+
+- `core`: Use custom object as Action Cable subscription instead of a channel instance.
+
+That prevents from potential incompatible extensions (e.g., `graphql-ruby` sets the `closed` property thus overriding the `closed()` function).
+
 ## 0.5.2 (2022-08-16)
 
 - `core`: Fix monitor triggering reconnect when cable was closed by user.

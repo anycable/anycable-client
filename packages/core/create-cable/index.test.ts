@@ -288,15 +288,17 @@ describe('createConsumer', () => {
       return Promise.resolve('2020')
     })
 
-    let channel = consumer.subscriptions.create<TestMixin>(
+    let sub = consumer.subscriptions.create<TestMixin>(
       {
-        channel: 'some_channel',
+        sub: 'some_channel',
         id: '2020'
       },
       mixin
     )
 
-    expect(channel.callbacks).toContain('initialized')
+    let channel = sub.channel
+
+    expect(sub.callbacks).toContain('initialized')
 
     await new Promise<void>((resolve, reject) => {
       let tid = setTimeout(() => {
@@ -310,13 +312,13 @@ describe('createConsumer', () => {
 
     expect(cable.hub.size).toEqual(1)
     expect(channel.state).toEqual('connected')
-    expect(channel.callbacks).toContain('connected')
+    expect(sub.callbacks).toContain('connected')
 
     let message = { foo: 'bar' }
 
     channel.receive(message)
 
-    expect(channel.messages).toEqual([message])
+    expect(sub.messages).toEqual([message])
 
     jest.spyOn(cable.protocol, 'unsubscribe').mockImplementation(() => {
       return Promise.resolve()
@@ -333,11 +335,11 @@ describe('createConsumer', () => {
       })
     })
 
-    channel.unsubscribe()
+    sub.unsubscribe()
 
     await closePromise
 
-    expect(channel.callbacks).toContain('disconnected')
+    expect(sub.callbacks).toContain('disconnected')
   })
 
   it('subscriptions + rejected', async () => {
@@ -351,7 +353,7 @@ describe('createConsumer', () => {
       return Promise.reject(new SubscriptionRejectedError('Forbidden'))
     })
 
-    let channel = consumer.subscriptions.create<TestMixin>(
+    let sub = consumer.subscriptions.create<TestMixin>(
       {
         channel: 'some_channel',
         id: '2020'
@@ -359,14 +361,16 @@ describe('createConsumer', () => {
       mixin
     )
 
-    expect(channel.callbacks).toContain('initialized')
+    let channel = sub.channel
+
+    expect(sub.callbacks).toContain('initialized')
 
     await new Promise<void>(resolve =>
       channel.once('close', () => {
         resolve()
       })
     )
-    expect(channel.callbacks).toContain('rejected')
+    expect(sub.callbacks).toContain('rejected')
   })
 
   it('subscription without params + disconnect', async () => {
@@ -380,12 +384,11 @@ describe('createConsumer', () => {
       return Promise.resolve('2020')
     })
 
-    let channel = consumer.subscriptions.create<TestMixin>(
-      'some_channel',
-      mixin
-    )
+    let sub = consumer.subscriptions.create<TestMixin>('some_channel', mixin)
 
-    expect(channel.callbacks).toContain('initialized')
+    let channel = sub.channel
+
+    expect(sub.callbacks).toContain('initialized')
 
     await new Promise<void>(resolve =>
       channel.once('connect', () => {
@@ -393,11 +396,11 @@ describe('createConsumer', () => {
       })
     )
 
-    expect(channel.callbacks).toContain('connected')
+    expect(sub.callbacks).toContain('connected')
 
     cable.disconnected()
 
-    expect(channel.callbacks).toContain('disconnected')
+    expect(sub.callbacks).toContain('disconnected')
   })
 
   it('subscription with partial mixin', async () => {
@@ -417,10 +420,12 @@ describe('createConsumer', () => {
       received: (msg: Message) => data.push(msg)
     }
 
-    let channel = consumer.subscriptions.create<TestMixin>(
+    let sub = consumer.subscriptions.create<TestMixin>(
       'some_channel',
       minimalMixin
     )
+
+    let channel = sub.channel
 
     await new Promise<void>(resolve =>
       channel.once('connect', () => {

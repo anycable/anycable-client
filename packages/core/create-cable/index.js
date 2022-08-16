@@ -155,28 +155,10 @@ function watchForExpiredToken(cable, callback) {
   })
 }
 
-class ActionCableChannel extends GhostChannel {
-  constructor(channelName, params, mixin) {
-    super(channelName, params)
-
-    for (let key in mixin) {
-      let value = mixin[key]
-      // Use prefix to avoid collisions with Channel
-      this[`_ac_${key}`] = value
-    }
-
-    this.on('connect', () => this.notify('_ac_connected'))
-    this.on('disconnect', () =>
-      this.notify('_ac_disconnected', { allowReconnect: true })
-    )
-    this.on('message', val => this.notify('_ac_received', val))
-    this.on('close', err => {
-      if (err && err instanceof SubscriptionRejectedError) {
-        this.notify('_ac_rejected')
-      } else {
-        this.notify('_ac_disconnected', { allowReconnect: false })
-      }
-    })
+// Wrapper over ActionCableChannel that acts like an Action Cable subscription object
+class ActionCableSubscription {
+  constructor(channel) {
+    this.channel = channel
   }
 
   notify(callback, ...args) {
@@ -186,7 +168,29 @@ class ActionCableChannel extends GhostChannel {
   }
 
   unsubscribe() {
-    return this.disconnect()
+    return this.channel.disconnect()
+  }
+}
+
+class ActionCableChannel extends GhostChannel {
+  constructor(channelName, params, mixin) {
+    super(channelName, params)
+
+    this.subscription = new ActionCableSubscription(this)
+    Object.assign(this.subscription, mixin)
+
+    this.on('connect', () => this.subscription.notify('connected'))
+    this.on('disconnect', () =>
+      this.subscription.notify('disconnected', { allowReconnect: true })
+    )
+    this.on('message', val => this.subscription.notify('received', val))
+    this.on('close', err => {
+      if (err && err instanceof SubscriptionRejectedError) {
+        this.subscription.notify('rejected')
+      } else {
+        this.subscription.notify('disconnected', { allowReconnect: false })
+      }
+    })
   }
 }
 
@@ -209,11 +213,11 @@ export class ActionCableSubscriptions {
     }
 
     let cableChannel = new ActionCableChannel(channelName, params, mixin)
-    cableChannel.notify('_ac_initialized')
+    cableChannel.subscription.notify('initialized')
 
     this.cable.subscribe(cableChannel)
 
-    return cableChannel
+    return cableChannel.subscription
   }
 }
 

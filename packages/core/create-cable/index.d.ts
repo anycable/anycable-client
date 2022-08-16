@@ -53,15 +53,20 @@ export type ActionCableMixin = Partial<{
   disconnected: () => void
 }>
 
-export class ActionCableChannel extends Channel {
+export class ActionCableSubscription {
+  channel: ActionCableChannel
   unsubscribe(): void
+}
+
+export class ActionCableChannel extends Channel {
+  subscription: ActionCableSubscription
 }
 
 export class ActionCableSubscriptions {
   create<M extends ActionCableMixin>(
     params: ChannelParamsMap | string,
     mixin: ActionCableMixin
-  ): ActionCableChannel & M
+  ): ActionCableSubscription & M
 }
 
 export class ActionCableConsumer {
