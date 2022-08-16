@@ -167,6 +167,18 @@ class ActionCableSubscription {
     this[callback](...args)
   }
 
+  perform(action, data = {}) {
+    this.channel.perform(action, data)
+  }
+
+  send(data) {
+    this.channel.send(data)
+  }
+
+  get identifier() {
+    return this.channel.identifier
+  }
+
   unsubscribe() {
     return this.channel.disconnect()
   }

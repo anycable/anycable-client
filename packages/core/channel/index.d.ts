@@ -13,7 +13,7 @@ export interface Receiver {
   unsubscribe(channel: Channel): void
   perform(
     identifier: Identifier,
-    action: string,
+    action?: string,
     payload?: object
   ): Promise<Message | void>
 }
@@ -57,6 +57,7 @@ export class Channel<
 
   disconnect(): void
   perform(action: string, payload?: object): Promise<Message | void>
+  send(payload: object): Promise<Message | void>
   receive(msg: MessageType, meta?: MessageMeta): void
 
   ensureSubscribed(): Promise<void>

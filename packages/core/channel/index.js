@@ -120,6 +120,10 @@ export class Channel {
     return this.receiver.perform(this.identifier, action, payload)
   }
 
+  async send(payload) {
+    return this.perform(undefined, payload)
+  }
+
   receive(msg, meta) {
     this.emit('message', msg, meta)
   }

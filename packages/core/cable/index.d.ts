@@ -54,7 +54,7 @@ export class Cable {
   unsubscribe(channel: Channel): void
   perform(
     identifier: Identifier,
-    action: string,
+    action?: string,
     payload?: object
   ): Promise<Message | void>
   disconnect(): void

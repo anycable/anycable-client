@@ -298,6 +298,7 @@ describe('createConsumer', () => {
 
     let channel = sub.channel
 
+    expect(sub.identifier).toEqual(channel.identifier)
     expect(sub.callbacks).toContain('initialized')
 
     await new Promise<void>((resolve, reject) => {
@@ -438,5 +439,58 @@ describe('createConsumer', () => {
     channel.receive(message)
 
     expect(data).toEqual([message])
+  })
+
+  it('subscription + perform + send', async () => {
+    let consumer = createConsumer('ws://example')
+    let cable = consumer.cable
+    cable.connected()
+
+    expect(cable.protocol).toBeInstanceOf(ActionCableProtocol)
+
+    jest.spyOn(cable.protocol, 'subscribe').mockImplementation(() => {
+      return Promise.resolve('2020')
+    })
+
+    let sentData
+
+    jest.spyOn(cable, 'send').mockImplementation(data => {
+      sentData = data
+    })
+
+    let sub = consumer.subscriptions.create('some_channel')
+
+    let channel = sub.channel
+
+    await new Promise<void>((resolve, reject) => {
+      let tid = setTimeout(() => {
+        reject(Error('Timed out to receive connect'))
+      }, 400)
+
+      channel.once('connect', () => {
+        clearTimeout(tid)
+        resolve()
+      })
+    })
+
+    sub.perform('test', { foo: 'bar' })
+
+    await new Promise<void>(resolve => setTimeout(resolve, 100))
+
+    expect(sentData).toEqual({
+      command: 'message',
+      identifier: '2020',
+      data: JSON.stringify({ foo: 'bar', action: 'test' })
+    })
+
+    sub.send({ type: 'history' })
+
+    await new Promise<void>(resolve => setTimeout(resolve, 100))
+
+    expect(sentData).toEqual({
+      command: 'message',
+      identifier: '2020',
+      data: JSON.stringify({ type: 'history' })
+    })
   })
 })

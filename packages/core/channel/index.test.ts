@@ -48,12 +48,12 @@ class TestReceiver implements Receiver {
 
   perform(
     _identifier: Identifier,
-    action: string,
+    action?: string,
     payload?: object
   ): Promise<Message | void> {
     let data = {}
     if (!payload) {
-      data = { action }
+      data = { action: action || 'receive' }
     } else {
       data = { action, ...payload }
     }
@@ -180,7 +180,7 @@ describe('receiver communicaton', () => {
     jest
       .spyOn(client, 'perform')
       .mockImplementation(
-        (_id: Identifier, action: string, payload?: Message) => {
+        (_id: Identifier, action?: string, payload?: Message) => {
           expect(action).toEqual('do')
           expect(payload).toMatchObject({ foo: 'bar' })
 
@@ -198,7 +198,7 @@ describe('receiver communicaton', () => {
     jest
       .spyOn(client, 'perform')
       .mockImplementation(
-        (identifier: Identifier, action: string, payload?: Message) => {
+        (identifier: Identifier, action?: string, payload?: Message) => {
           expect(identifier).toEqual(channel.identifier)
           expect(action).toEqual('do')
           expect(payload).toBeUndefined()
@@ -208,6 +208,25 @@ describe('receiver communicaton', () => {
       )
 
     let res = await channel.perform('do')
+    expect(res).toBeUndefined()
+  })
+
+  it('send', async () => {
+    client.subscribed(channel)
+
+    jest
+      .spyOn(client, 'perform')
+      .mockImplementation(
+        (identifier: Identifier, action?: string, payload?: Message) => {
+          expect(identifier).toEqual(channel.identifier)
+          expect(action).toBeUndefined
+          expect(payload).toMatchObject({ test: 'send' })
+
+          return Promise.resolve()
+        }
+      )
+
+    let res = await channel.send({ test: 'send' })
     expect(res).toBeUndefined()
   })
 

@@ -55,6 +55,10 @@ export type ActionCableMixin = Partial<{
 
 export class ActionCableSubscription {
   channel: ActionCableChannel
+  identifier: string
+
+  perform(action: string, payload?: object): void
+  send(payload: object): void
   unsubscribe(): void
 }
 
@@ -67,6 +71,7 @@ export class ActionCableSubscriptions {
     params: ChannelParamsMap | string,
     mixin: ActionCableMixin
   ): ActionCableSubscription & M
+  create(params: ChannelParamsMap | string): ActionCableSubscription
 }
 
 export class ActionCableConsumer {

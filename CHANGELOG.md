@@ -2,7 +2,9 @@
 
 ## master
 
-## 0.5.3 (2022-08-16)
+## ~~0.5.3~~ 0.5.4 (2022-08-16)
+
+- `core`: Add `Channel.send` function.
 
 - `core`: Use custom object as Action Cable subscription instead of a channel instance.
 
