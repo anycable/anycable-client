@@ -2,6 +2,8 @@
 
 ## master
 
+## 0.5.2 (2022-08-16)
+
 - `core`: Fix monitor triggering reconnect when cable was closed by user.
 
 ## 0.5.1 (2022-07-22)
