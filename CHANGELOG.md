@@ -2,6 +2,8 @@
 
 ## master
 
+- `core`: Fix monitor triggering reconnect when cable was closed by user.
+
 ## 0.5.1 (2022-07-22)
 
 - `web`: Print logs using the corresponding `console` methods, not just `log`.

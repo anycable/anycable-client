@@ -1,4 +1,4 @@
-import { Monitor as BaseMonitor } from '@anycable/core'
+import { Monitor as BaseMonitor, DisconnectedError } from '@anycable/core'
 
 export class Monitor extends BaseMonitor {
   watch(cable) {
@@ -26,7 +26,8 @@ export class Monitor extends BaseMonitor {
           this.logger.debug('Trigger reconnect', { event })
         }
       }
-      let disconnectFrozen = () => this.disconnect(Error('Page unloaded'))
+      let disconnectFrozen = () =>
+        this.disconnect(new DisconnectedError('page_frozen'))
 
       document.addEventListener('visibilitychange', visibility, false)
       window.addEventListener('focus', connect, false)
@@ -45,7 +46,7 @@ export class Monitor extends BaseMonitor {
   }
 
   disconnect(err) {
-    if (this.state === 'disconnected') return
+    if (this.state === 'disconnected' || this.state === 'closed') return
 
     this.logger.info('Disconnecting', { reason: err.message })
 

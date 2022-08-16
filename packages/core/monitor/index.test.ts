@@ -230,13 +230,13 @@ it('disconnect - reconnecting - close', () => {
   let spy = jest.spyOn(cable, 'connect')
 
   cable.emitter.emit('close')
-  expect(monitor.state).toEqual('disconnected')
+  expect(monitor.state).toEqual('closed')
 
   // Make sure reconnect is not called
   jest.advanceTimersByTime(strategy(0) * 2)
 
   expect(spy).toHaveBeenCalledTimes(0)
-  expect(monitor.state).toEqual('disconnected')
+  expect(monitor.state).toEqual('closed')
 })
 
 describe('reconnectNow', () => {
@@ -291,6 +291,12 @@ describe('reconnectNow', () => {
 
   it('when connected', () => {
     cable.emitter.emit('connect')
+
+    expect(monitor.reconnectNow()).toBe(false)
+  })
+
+  it('when closed', () => {
+    cable.emitter.emit('close')
 
     expect(monitor.reconnectNow()).toBe(false)
   })

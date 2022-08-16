@@ -60,7 +60,11 @@ export class Monitor {
   }
 
   reconnectNow() {
-    if (this.state === 'connected' || this.state === 'pending_connect') {
+    if (
+      this.state === 'connected' ||
+      this.state === 'pending_connect' ||
+      this.state === 'closed'
+    ) {
       return false
     }
 
@@ -101,7 +105,7 @@ export class Monitor {
     this.unbind.push(
       this.target.on('close', () => {
         this.disconnectedAt = now()
-        this.state = 'disconnected'
+        this.state = 'closed'
 
         this.cancelReconnect()
         this.stopPolling()
