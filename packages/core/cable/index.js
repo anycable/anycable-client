@@ -418,12 +418,12 @@ export class Cable {
           )
           return
         }
-      }
 
-      this.logger.error('failed to subscribe', {
-        error: err,
-        ...channelMeta
-      })
+        this.logger.error('failed to subscribe', {
+          error: err,
+          ...channelMeta
+        })
+      }
 
       subscription.notify('closed', err)
 
