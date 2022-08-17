@@ -6,6 +6,8 @@ import {
 import { stringifyParams } from '../stringify-params/index.js'
 import { NoopLogger } from '../logger/index.js'
 
+let commandID = 0
+
 export class ActionCableProtocol {
   constructor(opts = {}) {
     let { logger } = opts
@@ -53,29 +55,58 @@ export class ActionCableProtocol {
     let retryInterval = this.subscribeRetryInterval
 
     return new Promise((resolve, reject) => {
-      this.pendingSubscriptions[identifier] = { resolve, reject }
+      let id = ++commandID
+      this.pendingSubscriptions[identifier] = {
+        resolve,
+        reject,
+        id
+      }
 
       this.cable.send({
         command: 'subscribe',
         identifier
       })
 
-      setTimeout(() => {
-        // Subscription is still pending
-        if (this.pendingSubscriptions[identifier]) {
-          this.logger.warn(
-            `no subscription ack received in ${retryInterval}ms`,
-            identifier
-          )
-          delete this.pendingSubscriptions[identifier]
-          reject(
-            new SubscriptionTimeoutError(
-              `Haven't received subscription ack in ${retryInterval}ms for ${identifier}`
-            )
-          )
-        }
-      }, retryInterval)
+      this.maybeRetrySubscribe(id, identifier, retryInterval)
     })
+  }
+
+  maybeRetrySubscribe(id, identifier, retryInterval) {
+    setTimeout(() => {
+      let sub = this.pendingSubscriptions[identifier]
+      if (!sub) return
+      if (sub.id !== id) return
+
+      this.logger.warn(
+        `no subscription ack received in ${retryInterval}ms, retrying subscribe`,
+        identifier
+      )
+
+      this.cable.send({
+        command: 'subscribe',
+        identifier
+      })
+
+      this.maybeExpireSubscribe(id, identifier, retryInterval)
+    }, retryInterval)
+  }
+
+  maybeExpireSubscribe(id, identifier, retryInterval) {
+    setTimeout(() => {
+      let sub = this.pendingSubscriptions[identifier]
+      if (!sub) return
+      if (sub.id !== id) return
+
+      delete this.pendingSubscriptions[identifier]
+
+      sub.reject(
+        new SubscriptionTimeoutError(
+          `Haven't received subscription ack in ${
+            retryInterval * 2
+          }ms for ${identifier}`
+        )
+      )
+    }, retryInterval)
   }
 
   unsubscribe(identifier) {
@@ -139,7 +170,12 @@ export class ActionCableProtocol {
     if (type === 'confirm_subscription') {
       let subscription = this.pendingSubscriptions[identifier]
       if (!subscription) {
-        return this.logger.error('subscription not found', { type, identifier })
+        this.logger.error('subscription not found, unsubscribing', {
+          type,
+          identifier
+        })
+        this.unsubscribe(identifier)
+        return
       }
 
       delete this.pendingSubscriptions[identifier]

@@ -130,7 +130,99 @@ describe('subscriptions', () => {
     return res
   })
 
-  it('subscribe rejected if no ack received', async () => {
+  it('subscribe cofirmed after retrying', async () => {
+    identifier = JSON.stringify({
+      channel: 'TestChannel',
+      foo: 'bar',
+      id: 2021
+    })
+
+    protocol.subscribeRetryInterval = 500
+
+    let res = protocol.subscribe('TestChannel', { id: 2021, foo: 'bar' })
+
+    expect(cable.mailbox).toHaveLength(1)
+
+    // Cooldown
+    await new Promise(resolve =>
+      setTimeout(resolve, protocol.subscribeCooldownInterval * 2)
+    )
+
+    expect(cable.mailbox).toHaveLength(2)
+    expect(cable.mailbox[0]).toMatchObject({ command: 'subscribe', identifier })
+    expect(cable.mailbox[1]).toMatchObject({ command: 'subscribe', identifier })
+
+    protocol.receive({ type: 'confirm_subscription', identifier })
+
+    await res
+  })
+
+  it('subscribe cofirmed before retrying and a new subscribe is made', async () => {
+    identifier = JSON.stringify({
+      channel: 'TestChannel',
+      foo: 'bar',
+      id: 2021
+    })
+
+    protocol.subscribeRetryInterval = 500
+
+    let res = protocol.subscribe('TestChannel', { id: 2021, foo: 'bar' })
+
+    expect(cable.mailbox).toHaveLength(1)
+
+    protocol.receive({ type: 'confirm_subscription', identifier })
+
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    await res
+
+    let second = protocol.subscribe('TestChannel', { id: 2021, foo: 'bar' })
+
+    expect(cable.mailbox).toHaveLength(2)
+
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    protocol.receive({ type: 'confirm_subscription', identifier })
+
+    await second
+
+    // No new commands sent
+    expect(cable.mailbox).toHaveLength(2)
+  })
+
+  it('subscribe cofirmed before expiring and a new subscribe is made', async () => {
+    identifier = JSON.stringify({
+      channel: 'TestChannel',
+      foo: 'bar',
+      id: 2021
+    })
+
+    protocol.subscribeRetryInterval = 500
+
+    let res = protocol.subscribe('TestChannel', { id: 2021, foo: 'bar' })
+
+    expect(cable.mailbox).toHaveLength(1)
+
+    await new Promise(resolve => setTimeout(resolve, 600))
+
+    expect(cable.mailbox).toHaveLength(2)
+
+    protocol.receive({ type: 'confirm_subscription', identifier })
+
+    await res
+
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    let second = protocol.subscribe('TestChannel', { id: 2021, foo: 'bar' })
+
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    protocol.receive({ type: 'confirm_subscription', identifier })
+
+    await second
+  })
+
+  it('subscribe rejected if no ack received after retrying', async () => {
     identifier = JSON.stringify({
       channel: 'TestChannel',
       foo: 'bar',
@@ -143,14 +235,59 @@ describe('subscriptions', () => {
       protocol.subscribe('TestChannel', { id: 2021, foo: 'bar' })
     ).rejects.toEqual(
       new SubscriptionTimeoutError(
-        `Haven't received subscription ack in 500ms for ${identifier}`
+        `Haven't received subscription ack in 1000ms for ${identifier}`
       )
     )
 
     expect(cable.mailbox).toHaveLength(1)
-    expect(cable.mailbox[0]).toMatchObject({ command: 'subscribe', identifier })
 
-    return res
+    await res
+    expect(cable.mailbox).toHaveLength(2)
+
+    expect(cable.mailbox[0]).toMatchObject({ command: 'subscribe', identifier })
+    expect(cable.mailbox[1]).toMatchObject({ command: 'subscribe', identifier })
+  })
+
+  it('unsubscribe when subscribe confirmed after expired', async () => {
+    identifier = JSON.stringify({
+      channel: 'TestChannel',
+      foo: 'bar',
+      id: 2021
+    })
+
+    protocol.subscribeRetryInterval = 500
+
+    await expect(
+      protocol.subscribe('TestChannel', { id: 2021, foo: 'bar' })
+    ).rejects.toEqual(
+      new SubscriptionTimeoutError(
+        `Haven't received subscription ack in 1000ms for ${identifier}`
+      )
+    )
+
+    cable.mailbox.length = 0
+
+    protocol.receive({ type: 'confirm_subscription', identifier })
+
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toMatchObject({
+      command: 'unsubscribe',
+      identifier
+    })
+
+    let newSubscribe = protocol.subscribe('TestChannel', {
+      id: 2021,
+      foo: 'bar'
+    })
+
+    // Cooldown
+    await new Promise(resolve =>
+      setTimeout(resolve, protocol.subscribeCooldownInterval * 2)
+    )
+
+    protocol.receive({ type: 'confirm_subscription', identifier })
+
+    await newSubscribe
   })
 
   it('double subscribing warns', async () => {
@@ -261,7 +398,9 @@ describe('receive', () => {
     protocol.receive({ type: 'confirm_subscription', identifier: 'unknown' })
 
     expect(logger.errors).toHaveLength(1)
-    expect(logger.errors[0].message).toEqual('subscription not found')
+    expect(logger.errors[0].message).toEqual(
+      'subscription not found, unsubscribing'
+    )
   })
 
   it('reject unknown subscription', () => {
