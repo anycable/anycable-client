@@ -1,4 +1,14 @@
-import { createCable, Message, Channel, Cable, BaseLogger } from '../index.js'
+import { CableOptions, GhostChannel } from '../cable/index.js'
+import {
+  createCable,
+  Message,
+  Channel,
+  Cable,
+  BaseLogger,
+  DisconnectedError,
+  ActionCableProtocol,
+  CreateOptions
+} from '../index.js'
 import { TestTransport } from '../transport/testing'
 
 class CableTransport extends TestTransport {
@@ -13,6 +23,7 @@ class CableTransport extends TestTransport {
 
   open() {
     let promise = super.open()
+    this.subscriptions = {}
     this.sendLater({ type: 'welcome' })
     this.pingTid = setInterval(() => {
       this.sendLater({ type: 'ping' })
@@ -71,6 +82,10 @@ class CableTransport extends TestTransport {
   }
 }
 
+class TestChannel extends Channel {
+  static identifier = 'TestChannel'
+}
+
 class Logger extends BaseLogger {
   /* eslint-disable no-console */
   writeLogEntry(level: string, msg: string, details: any) {
@@ -95,9 +110,18 @@ describe('Action Cable protocol communication', () => {
   beforeEach(() => {
     transport = new CableTransport('ws://anycable.test')
 
-    cable = createCable('ws://example', {
+    let opts: Partial<CreateOptions> = {
       transport
-    })
+    }
+
+    if (process.env.DEBUG === '1') {
+      opts.logger = new Logger('debug')
+    }
+
+    cable = createCable('ws://example', opts)
+
+    let acprotocol = cable.protocol as ActionCableProtocol
+    acprotocol.subscribeRetryInterval = 2000
   })
 
   it('connects', async () => {
@@ -158,6 +182,143 @@ describe('Action Cable protocol communication', () => {
       expect(channel.state).toBe('closed')
       // origial subscribe + usubscribe
       expect(transport.sent).toHaveLength(2)
+    })
+
+    it('subscribed - unsubscribe + disconnect + subscribe + connected + (resubscribe)', async () => {
+      cable.connect()
+
+      let channel = cable.subscribeTo('TurboChannel', { stream_id: '1' })
+      await channel.ensureSubscribed()
+
+      await Promise.resolve()
+
+      expect(transport.sent).toHaveLength(1)
+
+      channel.disconnect()
+      transport.close()
+
+      await Promise.resolve()
+      cable.subscribe(channel)
+
+      await Promise.resolve()
+      cable.connect()
+
+      await channel.ensureSubscribed()
+
+      expect(channel.state).toBe('connected')
+
+      let messagePromise = new Promise<Message>((resolve, reject) => {
+        let tid = setTimeout(() => {
+          reject(Error('Timed out to receive messages'))
+        }, 200)
+
+        channel.on('message', msg => {
+          clearTimeout(tid)
+          resolve(msg)
+        })
+      })
+
+      channel.perform('echo', { foo: 'bar' })
+
+      let res = await messagePromise
+      expect(res).toEqual({ foo: 'bar', action: 'echo' })
+    })
+
+    it('subscribed - unsubscribe + subscribe + unsubscribe + confirmed + subscribe', async () => {
+      cable.connect()
+
+      let channel = cable.subscribeTo('TurboChannel', { stream_id: '1' })
+      await channel.ensureSubscribed()
+
+      await Promise.resolve()
+
+      expect(cable.hub.size).toEqual(1)
+
+      channel.disconnect()
+      let channel2 = cable.subscribeTo('TurboChannel', { stream_id: '1' })
+
+      channel2.disconnect()
+
+      let channel3 = cable.subscribeTo('TurboChannel', { stream_id: '1' })
+      await channel3.ensureSubscribed()
+
+      expect(channel.state).toBe('closed')
+      expect(channel2.state).toBe('closed')
+      expect(channel3.state).toBe('connected')
+
+      let messagePromise = new Promise<Message>((resolve, reject) => {
+        let tid = setTimeout(() => {
+          reject(Error('Timed out to receive messages'))
+        }, 200)
+
+        channel3.on('message', msg => {
+          clearTimeout(tid)
+          resolve(msg)
+        })
+      })
+
+      channel3.perform('echo', { foo: 'bar' })
+
+      let res = await messagePromise
+      expect(res).toEqual({ foo: 'bar', action: 'echo' })
+    })
+
+    it('subscribe + unsubscribe + confirmed + subscribe', async () => {
+      await cable.connect()
+
+      let channel = new TestChannel()
+
+      let origSubscribe = cable.protocol.subscribe.bind(cable.protocol)
+
+      let subPromise!: Promise<any>
+
+      cable.protocol.subscribe = (...args) => {
+        channel.disconnect()
+        subPromise = origSubscribe(...args)
+        return subPromise
+      }
+
+      let unsubResolver!: () => void
+      let unsubPromise = new Promise<void>(resolve => {
+        unsubResolver = resolve
+      })
+      let origUnsubscribe = cable.protocol.unsubscribe.bind(cable.protocol)
+      cable.protocol.unsubscribe = (...args) => {
+        unsubResolver()
+        return origUnsubscribe(...args)
+      }
+
+      cable.subscribe(channel)
+
+      await subPromise
+
+      cable.protocol.subscribe = origSubscribe
+
+      expect(cable.hub.size).toEqual(0)
+
+      await unsubPromise
+
+      cable.subscribe(channel)
+      await channel.ensureSubscribed()
+
+      expect(channel.state).toBe('connected')
+      expect(transport.sent).toHaveLength(3)
+
+      let messagePromise = new Promise<Message>((resolve, reject) => {
+        let tid = setTimeout(() => {
+          reject(Error('Timed out to receive messages'))
+        }, 200)
+
+        channel.on('message', msg => {
+          clearTimeout(tid)
+          resolve(msg)
+        })
+      })
+
+      channel.perform('echo', { foo: 'bar' })
+
+      let res = await messagePromise
+      expect(res).toEqual({ foo: 'bar', action: 'echo' })
     })
 
     it('subscribe + unsubscribe', async () => {

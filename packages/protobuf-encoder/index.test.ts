@@ -112,7 +112,7 @@ describe('decode', () => {
 })
 
 describe('protobuf message e2e sending', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     channel = new TestChannel({ id: '21' })
 
     cable.connect()
@@ -121,6 +121,7 @@ describe('protobuf message e2e sending', () => {
     cable.subscribe(channel)
 
     subscribeAndSendPromise = channel.perform(action, payload)
+    await Promise.resolve()
 
     cable.protocol.receive({ type: 'confirm_subscription', identifier })
   })

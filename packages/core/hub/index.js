@@ -4,7 +4,8 @@ export class Subscription {
     this.intent = 'unsubscribed'
     this.state = 'idle'
     this.channels = []
-    this._pendings = {}
+    this.disposed = false
+    this._pendings = []
   }
 
   add(channel) {
@@ -29,23 +30,108 @@ export class Subscription {
     }
   }
 
-  /* eslint-disable consistent-return */
-  pending(event, promise) {
-    if (!promise) return this._pendings[event] || Promise.resolve()
+  pending(intent) {
+    this._checkIntent(intent)
 
-    if (this._pendings[event]) throw Error(`Already pending ${event}`)
+    let nextPending = this._pendings[0]
 
-    this._pendings[event] = promise
-      .then(() => {
-        delete this._pendings[event]
-      })
-      .catch(() => {
-        delete this._pendings[event]
-      })
+    if (!nextPending || nextPending.intent !== intent) return Promise.resolve()
+
+    return nextPending.promise
   }
 
-  hasPending(event) {
-    return !!this._pendings[event]
+  ensureResubscribed() {
+    if (this.disposed) return
+
+    this.intent = undefined
+
+    this.ensureSubscribed()
+  }
+
+  ensureSubscribed() {
+    if (this.intent === 'subscribed') return
+    if (this.disposed) throw Error('Subscription is disposed')
+
+    this.intent = 'subscribed'
+
+    let merged = this._mergeWithPending('unsubscribed')
+    if (merged) return
+
+    this.subscriber(this)
+  }
+
+  maybeUnsubscribe() {
+    if (this.disposed) return
+    if (this.intent === 'unsubscribed') return
+
+    if (this.channels.length > 0) return
+
+    this.intent = 'unsubscribed'
+
+    let merged = this._mergeWithPending('subscribed')
+    if (merged) return
+
+    this.unsubscriber(this)
+  }
+
+  async acquire(intent) {
+    this._checkIntent(intent)
+
+    let resolver
+    let promise = new Promise(resolve => {
+      resolver = resolve
+    })
+
+    let lock = {
+      promise,
+      intent,
+      release: () => {
+        this._pendings.splice(this._pendings.indexOf(lock), 1)
+        resolver(lock)
+      },
+      canceled: false,
+      acquired: false
+    }
+
+    let top = this._pendingTop
+
+    this._pendings.push(lock)
+
+    if (top) {
+      await top.promise
+    }
+
+    lock.acquired = true
+    return lock
+  }
+
+  close(err) {
+    this.disposed = true
+    this.intent = undefined
+    this.notify('closed', err)
+  }
+
+  _checkIntent(event) {
+    if (event === 'unsubscribed' || event === 'subscribed') return
+
+    throw Error(`Unknown subscription intent: ${event}`)
+  }
+
+  get _pendingTop() {
+    return this._pendings.length
+      ? this._pendings[this._pendings.length - 1]
+      : undefined
+  }
+
+  _mergeWithPending(intent) {
+    let top = this._pendingTop
+    if (!top) return false
+    if (top.acquired) return false
+    if (top.intent !== intent) return false
+
+    this._pendings.pop()
+    top.canceled = true
+    return true
   }
 }
 
@@ -63,13 +149,11 @@ export class Subscriptions {
     return this._subscriptions[id]
   }
 
-  fetch(id) {
-    let sub = this._subscriptions[id]
-
-    if (sub) return sub
-
-    sub = this._subscriptions[id] = new Subscription(id)
+  create(id, { subscribe, unsubscribe }) {
+    let sub = (this._subscriptions[id] = new Subscription(id))
     sub.remoteId = this._localToRemote[id]
+    sub.subscriber = subscribe
+    sub.unsubscriber = unsubscribe
 
     return sub
   }
