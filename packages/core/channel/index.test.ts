@@ -129,9 +129,9 @@ describe('receiver communicaton', () => {
       channel.attached(new TestReceiver())
     }).toThrow('Already connected to a different receiver')
 
-    expect(() => {
-      client.subscribed()
-    }).toThrow('Already connected')
+    client.subscribed()
+
+    expect(channel.state).toEqual('connected')
   })
 
   it('restored', () => {

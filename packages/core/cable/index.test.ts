@@ -720,10 +720,6 @@ describe('channels', () => {
       new ReasonError('Channel was disconnected before subscribing', 'canceled')
     )
 
-    await cable.hub.subscriptions
-      .get(channel.identifier)!
-      .pending('unsubscribed')
-
     expect(logger.warnings).toHaveLength(1)
     expect(cable.hub.size).toEqual(0)
     expect(cable.hub.subscriptions.all()).toHaveLength(0)
@@ -933,6 +929,26 @@ describe('channels', () => {
     cable.connected()
 
     return res
+  })
+
+  it('connecting - perform - unsubscribe', async () => {
+    cable.subscribe(channel)
+    await channel.ensureSubscribed()
+
+    cable.disconnected()
+    cable.connect()
+
+    let perform = cable.perform(channel.identifier, 'do', { foo: 'bar' })
+    cable.unsubscribe(channel)
+
+    // Make sure connected is called asynchrounously
+    await Promise.resolve()
+    cable.connected()
+
+    await expect(perform).rejects.toEqual(
+      Error('Subscription is closed: {"channel":"TestChannel","id":"26"}')
+    )
+    expect(transport.sent).toHaveLength(0)
   })
 
   it('perform with unknown identifier', async () => {

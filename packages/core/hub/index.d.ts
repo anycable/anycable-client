@@ -9,11 +9,21 @@ import { ReasonError } from '../protocol/index.js'
 
 type subscriptionState = 'subscribed' | 'unsubscribed'
 
+type CreateSubscriptionOptions = {
+  subscribe: (sub: Subscription) => Promise<void>
+  unsubscribe: (sub: Subscription) => Promise<void>
+}
+
 export class Subscriptions {
   all(): Subscription[]
-  fetch(id: string): Subscription
+  create(id: string, opts: CreateSubscriptionOptions): Subscription
   get(id: string): Subscription | undefined
   remove(id: string): void
+}
+
+type subscriptionLock = {
+  release: () => void
+  canceled: boolean
 }
 
 export class Subscription {
@@ -28,12 +38,16 @@ export class Subscription {
   remove(channel: Channel): void
 
   notify(event: 'connecting' | 'connected' | 'restored'): void
-  notify(event: 'closed' | 'disconnected', err: ReasonError): void
+  notify(event: 'disconnected', err: ReasonError): void
+  notify(event: 'closed', err?: ReasonError): void
 
-  pending(state: subscriptionState, promise: Promise<void>): void
+  ensureSubscribed(): void
+  ensureResubscribed(): void
+  maybeUnsubscribe(): void
+  close(err?: ReasonError): void
+
+  acquire(state: subscriptionState): Promise<subscriptionLock>
   pending(state: subscriptionState): Promise<void>
-
-  hasPending(state: subscriptionState): boolean
 }
 
 export class Hub {

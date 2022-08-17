@@ -1,3 +1,4 @@
+import { CreateSubscriptionOptions } from '.'
 import {
   Hub,
   Channel,
@@ -40,11 +41,19 @@ class AnotherChannel extends Channel<{ x: string }> {
 let hub: Hub
 let channel: TestChannel
 let subscription: Subscription
+let options: CreateSubscriptionOptions
 
 let waitSec = () => {
   return new Promise<void>(resolve => {
     setTimeout(resolve, 100)
   })
+}
+
+let createOptions = () => {
+  return {
+    subscribe: waitSec,
+    unsubscribe: waitSec
+  }
 }
 
 beforeEach(() => {
@@ -56,7 +65,7 @@ describe('hub', () => {
   it('add-subscribe-transmit-remove-transmit', () => {
     hub.subscribe('a', 'A')
 
-    subscription = hub.subscriptions.fetch('a')
+    subscription = hub.subscriptions.create('a', createOptions())
     expect(subscription.remoteId).toBe('A')
 
     subscription.add(channel)
@@ -77,7 +86,7 @@ describe('hub', () => {
   })
 
   it('remove channel + dispose', () => {
-    subscription = hub.subscriptions.fetch('a')
+    subscription = hub.subscriptions.create('a', createOptions())
     subscription.add(channel)
 
     expect(hub.size).toEqual(1)
@@ -102,7 +111,7 @@ describe('hub', () => {
     hub.transmit('A', 'hello', { id: '1' })
     hub.transmit('A', 'goodbye', { id: '2' })
 
-    subscription = hub.subscriptions.fetch('a')
+    subscription = hub.subscriptions.create('a', createOptions())
     subscription.add(channel)
 
     hub.subscribe('a', 'A')
@@ -125,7 +134,7 @@ describe('hub', () => {
     hub.transmit('A', 'hello', { id: '1' })
     hub.transmit('B', 'goodbye', { id: '2' })
 
-    subscription = hub.subscriptions.fetch('a')
+    subscription = hub.subscriptions.create('a', createOptions())
     subscription.add(channel)
     subscription.add(channel)
 
@@ -141,7 +150,7 @@ describe('hub', () => {
     expect(hub.channels).toEqual([channel])
 
     let b = new TestChannel()
-    hub.subscriptions.fetch('b').add(b)
+    hub.subscriptions.create('b', createOptions()).add(b)
     hub.subscribe('b', 'B')
 
     expect(b.mailbox).toHaveLength(0)
@@ -150,7 +159,7 @@ describe('hub', () => {
   it('subscribe / unsubscribe', () => {
     hub.subscribe('a', 'A')
 
-    subscription = hub.subscriptions.fetch('a')
+    subscription = hub.subscriptions.create('a', createOptions())
     expect(subscription.remoteId).toBe('A')
 
     subscription.add(channel)
@@ -167,7 +176,7 @@ describe('hub', () => {
 
     expect(hub.size).toBe(0)
 
-    let newSubscription = hub.subscriptions.fetch('a')
+    let newSubscription = hub.subscriptions.create('a', createOptions())
     expect(newSubscription).not.toStrictEqual(subscription)
     expect(newSubscription.remoteId).toBeUndefined()
 
@@ -184,7 +193,7 @@ describe('hub', () => {
 describe('subscriptions', () => {
   it('fetch / get', () => {
     expect(hub.subscriptions.get('a')).toBeUndefined()
-    expect(hub.subscriptions.fetch('a')).toBeDefined()
+    expect(hub.subscriptions.create('a', createOptions())).toBeDefined()
 
     subscription = hub.subscriptions.get('a')!
     expect(subscription.channels).toHaveLength(0)
@@ -197,7 +206,7 @@ describe('subscriptions', () => {
   })
 
   it('notify keeps track of the channel states', () => {
-    subscription = hub.subscriptions.fetch('a')
+    subscription = hub.subscriptions.create('a', createOptions())
 
     expect(subscription.state).toEqual('idle')
 
@@ -222,51 +231,135 @@ describe('subscriptions', () => {
 })
 
 describe('pending requests', () => {
-  it('pending write + hasPending + pending read', async () => {
-    subscription = hub.subscriptions.fetch('a')
+  it('pending unknown intent', () => {
+    subscription = hub.subscriptions.create('a', createOptions())
+    expect(() => (subscription as any).pending('unknown')).toThrow(
+      Error('Unknown subscription intent: unknown')
+    )
+  })
+})
 
-    subscription.pending('subscribed', waitSec())
+describe('ensureSubscribed / maybeUnsubscribe', () => {
+  let subscribedCount = 0
+  let unsubscribedCount = 0
 
-    expect(subscription.hasPending('subscribed')).toBe(true)
+  beforeEach(() => {
+    subscribedCount = 0
+    unsubscribedCount = 0
 
-    await subscription.pending('subscribed')
+    options = {
+      subscribe: async sub => {
+        let lock = await sub.acquire('subscribed')
+        subscribedCount++
+        await waitSec()
+        sub.notify('connected')
+        lock.release()
+      },
+      unsubscribe: async sub => {
+        let lock = await sub.acquire('unsubscribed')
+        unsubscribedCount++
+        await waitSec()
+        sub.notify('closed')
+        lock.release()
+      }
+    }
 
-    expect(subscription.hasPending('subscribed')).toBe(false)
+    subscription = hub.subscriptions.create('a', options)
+    channel = new TestChannel()
   })
 
-  it('pending read when empty', async () => {
-    subscription = hub.subscriptions.fetch('a')
-    expect(subscription.hasPending('subscribed')).toBe(false)
-    await subscription.pending('subscribed')
-    expect(subscription.hasPending('subscribed')).toBe(false)
-  })
+  it('ensureSubscribed + maybeUnsubscribe', async () => {
+    subscription.ensureSubscribed()
 
-  it('pending double write', async () => {
-    subscription = hub.subscriptions.fetch('a')
-    subscription.pending('subscribed', waitSec())
-    expect(() => {
-      subscription.pending('subscribed', waitSec())
-    }).toThrow(Error('Already pending subscribed'))
-  })
-
-  it('pending different intents', async () => {
-    subscription = hub.subscriptions.fetch('a')
-    subscription.pending('subscribed', waitSec())
-    subscription.pending('unsubscribed', waitSec())
+    subscription.maybeUnsubscribe()
+    expect(unsubscribedCount).toBe(0)
 
     await subscription.pending('subscribed')
+    expect(subscribedCount).toBe(1)
+
     await subscription.pending('unsubscribed')
-
-    expect(subscription.hasPending('subscribed')).toBe(false)
-    expect(subscription.hasPending('unsubscribed')).toBe(false)
+    expect(unsubscribedCount).toBe(1)
   })
 
-  it('pending rejected', async () => {
-    subscription = hub.subscriptions.fetch('a')
-    subscription.pending('subscribed', Promise.reject(Error('test')))
+  it('ensureSubscribed when activated', async () => {
+    subscription.ensureSubscribed()
+    await Promise.resolve()
 
+    subscription.ensureSubscribed()
+    await Promise.resolve()
+
+    expect(subscribedCount).toBe(1)
+  })
+
+  it('ensureResubscribed after reset', async () => {
+    subscription.ensureSubscribed()
     await subscription.pending('subscribed')
 
-    expect(subscription.hasPending('subscribed')).toBe(false)
+    subscription.ensureResubscribed()
+    await subscription.pending('subscribed')
+
+    expect(subscribedCount).toBe(2)
+  })
+
+  it('ensureSubscribed when closed', () => {
+    subscription.close()
+    expect(() => {
+      subscription.ensureSubscribed()
+    }).toThrow(Error('Subscription is disposed'))
+  })
+
+  it('ensureResubscribed when closed', () => {
+    subscription.close()
+    subscription.ensureResubscribed()
+    expect(subscribedCount).toBe(0)
+  })
+
+  it('maybeUnsubscribe when non activated without channels', async () => {
+    subscription.maybeUnsubscribe()
+    await Promise.resolve()
+
+    expect(unsubscribedCount).toBe(0)
+
+    subscription.ensureSubscribed()
+    await Promise.resolve()
+
+    subscription.maybeUnsubscribe()
+    await Promise.resolve()
+
+    subscription.maybeUnsubscribe()
+    await waitSec()
+
+    expect(unsubscribedCount).toBe(1)
+  })
+
+  it('maybeUnsubscribe when has channels', () => {
+    subscription.add(channel)
+
+    subscription.ensureSubscribed()
+
+    subscription.maybeUnsubscribe()
+
+    expect(unsubscribedCount).toBe(0)
+  })
+
+  it('maybeUnsubscribe when closed', () => {
+    subscription.ensureSubscribed()
+    subscription.close()
+    subscription.maybeUnsubscribe()
+
+    expect(unsubscribedCount).toBe(0)
+  })
+
+  it('ensureSubscribed when locked', async () => {
+    let unsubPromise = subscription.acquire('unsubscribed')
+    let lockPromise = subscription.acquire('subscribed')
+
+    subscription.ensureSubscribed()
+
+    let unsubLock = await unsubPromise
+    unsubLock.release()
+
+    let lock = await lockPromise
+    lock.release()
   })
 })

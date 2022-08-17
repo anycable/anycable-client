@@ -56,7 +56,7 @@ export class Channel {
   }
 
   connected() {
-    if (this.state === 'connected') throw Error('Already connected')
+    if (this.state === 'connected') return
     if (this.state === 'closed') return
 
     this[STATE] = 'connected'
