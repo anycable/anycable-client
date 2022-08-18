@@ -10,6 +10,7 @@ import {
   Channel,
   Encoder,
   SubscriptionRejectedError,
+  StaleConnectionError,
   ReasonError,
   Message
 } from '../index.js'
@@ -459,12 +460,12 @@ describe('channels', () => {
     expect(cable.hub.size).toEqual(1)
   })
 
-  it('subscribe + disconnect + subscribe another channel', async () => {
+  it('subscribe + disconnect stale + subscribe another channel', async () => {
     let another = new TestChannel({ id: '26' })
 
     await cable.subscribe(channel).ensureSubscribed()
 
-    cable.disconnected(new DisconnectedError('first'))
+    cable.disconnected(new StaleConnectionError('stale'))
 
     cable.subscribe(another)
 

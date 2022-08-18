@@ -45,9 +45,9 @@ export class CommandError extends Error {
   }
 }
 
-export class StaleConnectionError extends Error {
+export class StaleConnectionError extends DisconnectedError {
   constructor(msg) {
-    super(msg)
+    super(msg, 'stale_connection')
     this.name = 'StaleConnectionError'
   }
 }
