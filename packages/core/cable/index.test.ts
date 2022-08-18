@@ -419,7 +419,7 @@ describe('channels', () => {
     cable.connected()
 
     await cable.hub.subscriptions
-      .fetch(channel.identifier)!
+      .get(channel.identifier)!
       .pending('unsubscribed')
 
     expect(channel.state).toEqual('closed')
@@ -605,11 +605,16 @@ describe('channels', () => {
   it('subscribing + cable disconnected + subscribed failed with disconnected error + cable connected', async () => {
     let message = { foo: 'bar' }
     let first = true
+    let transportCalledResolver: () => void
+    let transportCalled = new Promise<void>(resolve => {
+      transportCalledResolver = resolve
+    })
 
     jest
       .spyOn(protocol, 'subscribe')
       .mockImplementation(async (identifier, params) => {
         if (first) {
+          transportCalledResolver()
           first = false
           throw new DisconnectedError('protocol')
         } else {
@@ -655,6 +660,8 @@ describe('channels', () => {
         })
       })
 
+    await transportCalled
+
     cable.disconnected(new DisconnectedError('test'))
 
     // Make sure connected is called asynchrounously
@@ -691,6 +698,13 @@ describe('channels', () => {
   it('subscribe + unsubscribe + rejected', async () => {
     jest.spyOn(protocol, 'subscribe').mockImplementation(async () => {
       await Promise.resolve()
+
+      cable.unsubscribe(channel)
+
+      expect(channel.state).toEqual('closed')
+      expect(cable.hub.size).toEqual(0)
+      expect(cable.hub.subscriptions.all()).toHaveLength(1)
+
       throw new SubscriptionRejectedError()
     })
 
@@ -701,19 +715,13 @@ describe('channels', () => {
         return err
       })
 
-    cable.unsubscribe(channel)
-
-    expect(channel.state).toEqual('closed')
-    expect(cable.hub.size).toEqual(0)
-    expect(cable.hub.subscriptions.all()).toHaveLength(1)
-
     let err = await subscribePromise
     expect(err).toEqual(
       new ReasonError('Channel was disconnected before subscribing', 'canceled')
     )
 
     await cable.hub.subscriptions
-      .fetch(channel.identifier)
+      .get(channel.identifier)!
       .pending('unsubscribed')
 
     expect(logger.warnings).toHaveLength(1)
@@ -832,7 +840,7 @@ describe('channels', () => {
     cable.unsubscribe(channel)
 
     await cable.hub.subscriptions
-      .fetch(channel.identifier)!
+      .get(channel.identifier)!
       .pending('unsubscribed')
 
     expect(logger.errors).toHaveLength(1)
@@ -853,7 +861,7 @@ describe('channels', () => {
     expect(channel.state).toEqual('closed')
 
     await cable.hub.subscriptions
-      .fetch(channel.identifier)!
+      .get(channel.identifier)!
       .pending('unsubscribed')
 
     expect(channel.state).toEqual('closed')
@@ -974,16 +982,22 @@ describe('channels', () => {
 
   describe('closure and recovery with channels', () => {
     let channel2: TestChannel
+    let firstError: Promise<void>
 
     beforeEach(() => {
       channel2 = new TestChannel({ id: '27' })
       let attempt = 0
+      let firstErrorResolver: () => void
+      firstError = new Promise<void>(resolve => {
+        firstErrorResolver = resolve
+      })
 
       jest
         .spyOn(protocol, 'subscribe')
         .mockImplementation(async (identifier, params) => {
           if ((params as any).id === '27') {
             attempt++
+            firstErrorResolver()
 
             if (attempt === 1) {
               throw new DisconnectedError('protocol')
@@ -1084,6 +1098,8 @@ describe('channels', () => {
 
       expect(cable.hub.size).toEqual(2)
 
+      await firstError
+
       transport.closed('recover_me')
 
       await Promise.resolve()
@@ -1111,7 +1127,7 @@ describe('channels', () => {
 
       expect(channel.state).toEqual('connecting')
 
-      cable.hub.subscriptions.fetch(channel.identifier).remove(channel)
+      cable.hub.subscriptions.get(channel.identifier)!.remove(channel)
 
       // Make sure restored is called asynchrounously
       await Promise.resolve()
@@ -1120,7 +1136,7 @@ describe('channels', () => {
       expect(channel.state).toEqual('connecting')
     })
 
-    it('restored only markes matching channels as connected', async () => {
+    it('restored only marks matching channels as connected', async () => {
       await cable.subscribe(channel).ensureSubscribed()
 
       let event: DisconnectedError | undefined
@@ -1137,6 +1153,8 @@ describe('channels', () => {
         })
 
       expect(cable.hub.size).toEqual(2)
+
+      await firstError
 
       transport.closed('recover_me')
 
@@ -1194,14 +1212,23 @@ describe('channels', () => {
 
       expect(channel.state).toEqual('connecting')
 
-      let disconnectP = new Promise<void>(resolve => {
+      let disconnectP = new Promise<void>((resolve, reject) => {
+        let tid = setTimeout(() => {
+          reject(Error('timed out to disconnnect'))
+        }, 200)
         channel.on('disconnect', () => {
+          clearTimeout(tid)
           resolve()
         })
       })
 
-      let connectP = new Promise<void>(resolve => {
+      let connectP = new Promise<void>((resolve, reject) => {
+        let tid = setTimeout(() => {
+          reject(Error('timed out to connect'))
+        }, 200)
+
         channel.on('connect', () => {
+          clearTimeout(tid)
           resolve()
         })
 
@@ -1319,7 +1346,12 @@ describe('channels', () => {
       expect(unsubscribeSpy).toHaveBeenCalledTimes(0)
 
       let messagePromise = new Promise<Message>((resolve, reject) => {
+        let tid = setTimeout(() => {
+          reject(Error('Timed out to receive message'))
+        }, 500)
+
         another.on('message', msg => {
+          clearTimeout(tid)
           resolve(msg)
         })
       })
@@ -1341,6 +1373,11 @@ describe('channels', () => {
       another.disconnect()
       expect(channel.state).toEqual('closed')
       expect(another.state).toEqual('closed')
+
+      let sub = cable.hub.subscriptions.get(channel.identifier)!
+      await sub.pending('subscribed')
+      await sub.pending('unsubscribed')
+
       expect(unsubscribeSpy).toHaveBeenCalledTimes(1)
 
       await cable.subscribe(channel).ensureSubscribed()
@@ -1369,11 +1406,17 @@ describe('channels', () => {
 
       channel.disconnect()
 
-      await cable.hub.subscriptions
-        .get(channel.identifier)!
-        .pending('unsubscribed')
+      let sub = cable.hub.subscriptions.get(channel.identifier)!
+
+      await sub.pending('subscribed')
+      await sub.pending('unsubscribed')
 
       expect(unsubscribeSpy).toHaveBeenCalledTimes(1)
+
+      await sub.pending('unsubscribed')
+
+      expect(channel.state).toBe('closed')
+      expect(cable.hub.size).toBe(0)
     })
   })
 })
