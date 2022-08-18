@@ -18,6 +18,8 @@ There are multiple reasons that forced us to implement an alternative client lib
 - [Testability](#testing)
 - Future protocol extensions/modifications support.
 
+📖 Read also the [introductory post](https://evilmartians.com/chronicles/introducing-anycable-javascript-and-typescript-client).
+
 ## Usage: Web
 
 > See the [demo application](https://github.com/anycable/anycable_rails_demo/pull/21) using AnyCable web client
