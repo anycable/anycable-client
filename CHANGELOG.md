@@ -2,6 +2,13 @@
 
 ## master
 
+## 0.5.6 (2022-08-16)
+
+- `core`: Reduce the number of commands when subscribe/unsubscribe is called many times on the same subscription.
+
+New _command-locking_ mechanism prevents from `subscribe-unsubscribe-subscribe-...` cycles by dropping the unnecessary calls.
+For example, calling `subscribe-unsubsribe-subscribe` would only result into a single `subscribe` command being sent to the server.
+
 ## 0.5.5 (2022-08-16)
 
 - `core`: Fixed protocol race conditions.
