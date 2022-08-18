@@ -2,6 +2,12 @@
 
 ## master
 
+## 0.5.5 (2022-08-16)
+
+- `core`: Fixed protocol race conditions.
+
+Fixes [#20](https://github.com/anycable/anycable-client/issues/20).
+
 ## ~~0.5.3~~ 0.5.4 (2022-08-16)
 
 - `core`: Add `Channel.send` function.
