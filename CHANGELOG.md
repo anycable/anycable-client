@@ -2,6 +2,10 @@
 
 ## master
 
+## 0.5.7 (2022-08-31)
+
+- `core`: Treat stale connection as disconnect error.
+
 ## 0.5.6 (2022-08-16)
 
 - `core`: Reduce the number of commands when subscribe/unsubscribe is called many times on the same subscription.
