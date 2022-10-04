@@ -19,7 +19,7 @@ export interface Transport<PayloadType = string> {
   close(): Promise<void>
 
   setURL(url: string): void
-  set(key: string, value: string): void
+  setParam(key: string, value: string): void
 
   on<E extends keyof TransportEvents<PayloadType>>(
     event: E,

@@ -60,7 +60,7 @@ export class WebSocketTransport {
     this.url = url
   }
 
-  set() {}
+  setParam() {}
 
   send(data) {
     if (!this.ws || !this.connected) {

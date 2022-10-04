@@ -23,7 +23,7 @@ export class TestTransport implements Transport<string> {
     this.url = url
   }
 
-  set(key: string, value: string) {
+  setParam(key: string, value: string) {
     this.state[key] = value
   }
 

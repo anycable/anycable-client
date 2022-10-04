@@ -14,7 +14,7 @@ it('use global implementation when available', () => {
 
 it('set', () => {
   let t = new WebSocketTransport('ws://')
-  t.set('key', 'value')
+  t.setParam('key', 'value')
 })
 
 it('send when not connected', () => {
