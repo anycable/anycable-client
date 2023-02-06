@@ -2,6 +2,8 @@
 
 ## master
 
+## 0.6.0 (2023-02-06)
+
 - Dependencies upgrade and minor types changes.
 
 ## 0.5.7 (2022-08-31)
