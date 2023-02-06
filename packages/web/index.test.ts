@@ -65,7 +65,7 @@ describe('fetchTokenFromHTML', () => {
 
   let fetch = (global.fetch = jest.fn(() =>
     Promise.reject(Error('Not implemented'))
-  ) as jest.Mock)
+  ) as jest.Mock<any>)
 
   beforeEach(() => {
     fetch.mockClear()

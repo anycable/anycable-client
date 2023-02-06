@@ -1,3 +1,4 @@
+/*eslint n/no-unsupported-features/es-syntax: ["error", {version: "14.0"}] */
 import { Consumer, ReasonError } from '../index.js'
 
 type State = 'idle' | 'connected' | 'restored' | 'disconnected' | 'closed'

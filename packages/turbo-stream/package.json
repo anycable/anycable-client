@@ -2,6 +2,9 @@
   "name": "@anycable/turbo-stream",
   "version": "0.2.1",
   "description": "AnyCable Client plugin to support Turbo Streams",
+  "engines": {
+    "node": ">=8.3.0"
+  },
   "keywords": [
     "anycable",
     "actioncable",

@@ -20,6 +20,6 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "nanoevents": "^6.0.0"
+    "nanoevents": "^7.0.1"
   }
 }

@@ -1,15 +1,15 @@
-import WebSocket from 'ws'
+import { WebSocketServer, WebSocket } from 'ws'
 import { Socket } from 'net'
 import { clearInterval } from 'timers'
 
 import { WebSocketTransport } from '../index.js'
 
 let port: number
-let wss: WebSocket.Server
+let wss: WebSocketServer
 
 beforeEach(async () => {
   port = (8080 + Math.random() * 500) | 0
-  wss = new WebSocket.Server({ port })
+  wss = new WebSocketServer({ port })
 
   await new Promise<void>(resolve => {
     wss.on('listening', resolve)
@@ -18,10 +18,13 @@ beforeEach(async () => {
 
 afterEach(() => {
   wss.close()
+  for (let ws of wss.clients) {
+    ws.terminate()
+  }
 })
 
 function connect(
-  server: WebSocket.Server,
+  server: WebSocketServer,
   client: WebSocketTransport
 ): Promise<WebSocket> {
   return new Promise(resolve => {

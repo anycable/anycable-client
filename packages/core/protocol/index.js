@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/custom-error-definition */
 export class ReasonError extends Error {
   constructor(msg, reason) {
     if (msg instanceof Error) {

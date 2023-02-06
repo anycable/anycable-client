@@ -1,3 +1,4 @@
+/*eslint n/no-unsupported-features/es-syntax: ["error", {version: "14.0"}] */
 import { jest } from '@jest/globals'
 
 import {
@@ -83,7 +84,7 @@ class TestProtocol implements Protocol {
     return err.message === 'recover_me'
   }
 
-  /* eslint-disable node/handle-callback-err */
+  /* eslint-disable n/handle-callback-err */
   reset(err: Error): void {
     this.counter = 0
   }
@@ -144,7 +145,6 @@ describe('initialize', () => {
   })
 })
 
-/* eslint-disable jest/no-done-callback */
 describe('connect/disconnect', () => {
   it('connect', () => {
     cable.connect()

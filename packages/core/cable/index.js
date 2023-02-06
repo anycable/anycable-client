@@ -1,3 +1,4 @@
+/*eslint n/no-unsupported-features/es-syntax: ["error", {version: "14.0"}] */
 import { createNanoEvents } from 'nanoevents'
 
 import { Hub } from '../hub/index.js'

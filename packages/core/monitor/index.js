@@ -1,3 +1,4 @@
+/*eslint n/no-unsupported-features/es-syntax: ["error", {version: "14.0"}] */
 import { StaleConnectionError } from '../protocol/index.js'
 import { NoopLogger } from '../logger/index.js'
 

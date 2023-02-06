@@ -371,6 +371,7 @@ describe('subscriptions', () => {
     let p1 = protocol.subscribe('TestChannel')
     let p2 = protocol.subscribe('TestChannel', { id: 2021 })
 
+    /* eslint-disable n/no-unsupported-features/es-builtins */
     let res = Promise.allSettled([p1, p2]).then(results => {
       expect(results[0].status).toEqual('rejected')
       expect(results[1].status).toEqual('rejected')
