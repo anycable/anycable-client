@@ -4,7 +4,7 @@ import { Encoder } from '../encoder/index.js'
 import { Monitor, ReconnectStrategy } from '../monitor/index.js'
 import { Cable } from '../cable/index.js'
 import { Protocol } from '../protocol/index.js'
-import { Channel, Message, ChannelParamsMap } from '../channel/index.js'
+import { Channel, ChannelParamsMap } from '../channel/index.js'
 
 export type ProtocolID =
   | 'actioncable-v1-json'
@@ -49,7 +49,7 @@ export type ActionCableMixin = Partial<{
   initialized: () => void
   connected: () => void
   rejected: () => void
-  received: (data: Message) => void
+  received: (data: any) => void
   disconnected: () => void
 }>
 
