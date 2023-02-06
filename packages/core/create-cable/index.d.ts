@@ -45,11 +45,11 @@ export const DEFAULT_OPTIONS: Partial<CreateOptions>
 export function createCable(url: string, opts?: Partial<CreateOptions>): Cable
 export function createCable(opts?: Partial<CreateOptions>): Cable
 
-export type ActionCableMixin = Partial<{
+export type ActionCableMixin<T extends Message> = Partial<{
   initialized: () => void
   connected: () => void
   rejected: () => void
-  received: (data: Message) => void
+  received: (data: T) => void
   disconnected: () => void
 }>
 
@@ -67,9 +67,9 @@ export class ActionCableChannel extends Channel {
 }
 
 export class ActionCableSubscriptions {
-  create<M extends ActionCableMixin>(
+  create<M extends ActionCableMixin<T> = {}, T extends Message = Message>(
     params: ChannelParamsMap | string,
-    mixin: ActionCableMixin
+    mixin: ActionCableMixin<T>
   ): ActionCableSubscription & M
   create(params: ChannelParamsMap | string): ActionCableSubscription
 }

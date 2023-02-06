@@ -41,7 +41,7 @@ export interface ChannelEvents<T> {
 
 export class Channel<
   ParamsType extends ChannelParamsMap = {},
-  MessageType = Message,
+  MessageType extends Message = Message,
   EventsType extends ChannelEvents<MessageType> = ChannelEvents<MessageType>
 > {
   static readonly identifier: string
@@ -56,8 +56,8 @@ export class Channel<
   attached(receiver: Receiver): boolean
 
   disconnect(): void
-  perform(action: string, payload?: object): Promise<Message | void>
-  send(payload: object): Promise<Message | void>
+  perform(action: string, payload?: object): Promise<MessageType | void>
+  send(payload: object): Promise<MessageType | void>
   receive(msg: MessageType, meta?: MessageMeta): void
 
   ensureSubscribed(): Promise<void>

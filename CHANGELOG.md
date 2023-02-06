@@ -2,6 +2,8 @@
 
 ## master
 
+- Dependencies upgrade and minor types changes.
+
 ## 0.5.7 (2022-08-31)
 
 - `core`: Treat stale connection as disconnect error.
