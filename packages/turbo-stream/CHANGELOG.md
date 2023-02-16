@@ -2,6 +2,8 @@
 
 ## master
 
+## 0.3.1 (2023-02-15)
+
 - Add `connected` state to stream source element. ([@palkan][])
 
 Backport of [turbo-rails#430](https://github.com/hotwired/turbo-rails/pull/430).
