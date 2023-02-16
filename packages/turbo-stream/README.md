@@ -1,3 +1,5 @@
+[![npm version](https://badge.fury.io/js/%40anycable%2Fturbo-stream.svg)](https://badge.fury.io/js/%40anycable%2Fturbo-stream)
+
 # AnyCable Turbo Streams
 
 This package provides AnyCable client integration for [Turbo Streams][turbo-streams].
