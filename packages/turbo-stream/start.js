@@ -5,10 +5,6 @@ export function start(cable, opts = {}) {
   let tagName = opts.tagName || 'turbo-cable-stream-source'
   let channelClass = opts.channelClass || TurboChannel
 
-  if (!cable) {
-    throw Error(`A cable instance must be provided`)
-  }
-
   let C = class extends TurboStreamSourceElement {}
 
   C.cable = cable

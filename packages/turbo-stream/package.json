@@ -28,5 +28,8 @@
   },
   "peerDependencies": {
     "@hotwired/turbo": ">= 7.0"
+  },
+  "devDependencies": {
+    "@hotwired/turbo": ">= 7.0"
   }
 }

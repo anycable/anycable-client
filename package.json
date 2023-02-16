@@ -48,7 +48,8 @@
       "/node_modules/",
       ".*/testing.ts",
       "packages/web",
-      "packages/protobuf-encoder/generated"
+      "packages/protobuf-encoder/generated",
+      "packages/turbo-stream/snakeize"
     ]
   },
   "eslintConfig": {
@@ -103,6 +104,14 @@
         "rules": {
           "node/no-unsupported-features/es-syntax": "off",
           "unicorn/prefer-optional-catch-binding": "off"
+        }
+      },
+      {
+        "files": [
+          "packages/turbo-stream/*.{ts,js}"
+        ],
+        "rules": {
+          "camelcase": "off"
         }
       }
     ]

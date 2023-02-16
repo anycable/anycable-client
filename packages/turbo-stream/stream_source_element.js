@@ -19,28 +19,35 @@ export class TurboStreamSourceElement extends HTMLElement {
     let signedStreamName = this.getAttribute('signed-stream-name')
     let params = snakeize({ ...this.dataset })
 
+    this.listeners = []
+
     this.channel = new ChannelClass(this, channelName, {
       signed_stream_name: signedStreamName,
       ...params
     })
 
-    this.unbindOnMessage = this.channel.on(
-      'message',
-      this.dispatchMessageEvent.bind(this)
+    this.listeners.push(
+      this.channel.on('connect', () => this.setAttribute('connected', ''))
     )
 
-    try {
-      cable.subscribe(this.channel)
-      await this.channel.ensureSubscribed()
-    } catch (err) {
-      cable.logger.warn(err)
-    }
+    this.listeners.push(
+      this.channel.on('disconnect', () => this.removeAttribute('connected'))
+    )
+
+    this.listeners.push(
+      this.channel.on('message', this.dispatchMessageEvent.bind(this))
+    )
+
+    cable.subscribe(this.channel)
   }
 
   disconnectedCallback() {
     disconnectStreamSource(this)
     if (this.channel) {
-      this.unbindOnMessage()
+      for (let listener of this.listeners) {
+        listener()
+      }
+      this.listeners.length = 0
       this.channel.disconnect()
     }
   }
