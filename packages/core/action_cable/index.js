@@ -62,13 +62,17 @@ export class ActionCableProtocol {
         id
       }
 
-      this.cable.send({
-        command: 'subscribe',
-        identifier
-      })
+      this.cable.send(this.buildSubscribeRequest(identifier))
 
       this.maybeRetrySubscribe(id, identifier, retryInterval)
     })
+  }
+
+  buildSubscribeRequest(identifier) {
+    return {
+      command: 'subscribe',
+      identifier
+    }
   }
 
   maybeRetrySubscribe(id, identifier, retryInterval) {

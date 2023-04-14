@@ -48,30 +48,40 @@ export function createCable(url, opts) {
 
   logger = logger || new NoopLogger(logLevel)
 
-  if (typeof protocol === 'string') subprotocol = subprotocol || protocol
+  if (typeof protocol === 'string') {
+    subprotocol = subprotocol || protocol
 
-  if (protocol === 'actioncable-v1-json') {
-    protocol = new ActionCableProtocol({ logger })
-    encoder = encoder || new JSONEncoder()
-    websocketFormat = websocketFormat || 'text'
-  } else if (protocol === 'actioncable-v1-msgpack') {
-    protocol = new ActionCableProtocol({ logger })
-    websocketFormat = 'binary'
-    if (!encoder) {
-      throw Error(
-        'Msgpack encoder must be specified explicitly. Use `@anycable/msgpack-encoder` package or build your own'
-      )
+    // split protocol into two parts by last '-' symbol
+    // e.g. actioncable-v1-json -> actioncable-v1, json
+    let protocolName = protocol.substring(0, protocol.lastIndexOf('-'))
+    let protocolEncoderName = protocol.substring(protocol.lastIndexOf('-') + 1)
+
+    if (protocolName === 'actioncable-v1') {
+      protocol = new ActionCableProtocol({ logger })
+    } else {
+      throw Error(`Protocol is not supported yet: ${protocol}`)
     }
-  } else if (protocol === 'actioncable-v1-protobuf') {
-    protocol = new ActionCableProtocol({ logger })
-    websocketFormat = websocketFormat || 'binary'
-    if (!encoder) {
-      throw Error(
-        'Protobuf encoder must be specified explicitly. Use `@anycable/protobuf-encoder` package or build your own'
-      )
+
+    if (protocolEncoderName === 'json') {
+      encoder = encoder || new JSONEncoder()
+      websocketFormat = websocketFormat || 'text'
+    } else if (protocolEncoderName === 'msgpack') {
+      websocketFormat = 'binary'
+      if (!encoder) {
+        throw Error(
+          'Msgpack encoder must be specified explicitly. Use `@anycable/msgpack-encoder` package or build your own'
+        )
+      }
+    } else if (protocolEncoderName === 'protobuf') {
+      websocketFormat = websocketFormat || 'binary'
+      if (!encoder) {
+        throw Error(
+          'Protobuf encoder must be specified explicitly. Use `@anycable/protobuf-encoder` package or build your own'
+        )
+      }
+    } else {
+      throw Error(`Protocol is not supported yet: ${protocol}`)
     }
-  } else if (typeof protocol === 'string') {
-    throw Error(`Protocol is not supported yet: ${protocol}`)
   }
 
   if (!protocol) throw Error('Protocol must be specified')
