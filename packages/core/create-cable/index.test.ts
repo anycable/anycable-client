@@ -80,6 +80,11 @@ it('unsupported protocol', () => {
     // @ts-ignore
     createCable('ws://example', { protocol: 'actioncable-v1-whatever' })
   ).toThrow(/protocol is not supported/i)
+
+  expect(() =>
+    // @ts-ignore
+    createCable('ws://example', { protocol: 'action-cable-v1-json' })
+  ).toThrow(/protocol is not supported/i)
 })
 
 it('missing protocol', () => {

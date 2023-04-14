@@ -24,6 +24,7 @@ export { Logger, LogLevel, BaseLogger, NoopLogger } from './logger/index.js'
 export { stringifyParams } from './stringify-params/index.js'
 
 export { ActionCableProtocol } from './action_cable/index.js'
+export { ActionCableExtendedProtocol } from './action_cable_ext/index.js'
 export {
   CableOptions,
   Cable,
