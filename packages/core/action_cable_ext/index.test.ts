@@ -27,6 +27,21 @@ describe('connection', () => {
     expect(cable.mailbox).toHaveLength(0)
   })
 
+  it('welcome + sid', () => {
+    protocol.receive({ type: 'welcome', sid: '231' })
+
+    expect(cable.state).toEqual('connected')
+    expect(cable.mailbox).toHaveLength(0)
+    expect(cable.sessionId).toEqual('231')
+  })
+
+  it('welcome + restored', () => {
+    protocol.receive({ type: 'welcome', sid: '123', restored: true })
+
+    expect(cable.state).toEqual('restored')
+    expect(cable.mailbox).toHaveLength(0)
+  })
+
   it('disconnect', () => {
     protocol.receive({ type: 'disconnect' })
 
@@ -86,6 +101,67 @@ describe('receive', () => {
     ).toEqual({
       identifier: 'channel',
       message: 'hello'
+    })
+  })
+
+  it('message with offset + unsubscribe + subscribe', async () => {
+    let identifier = '{"channel":"TestChannel"}'
+    let subscribePromise = expect(
+      protocol.subscribe('TestChannel')
+    ).resolves.toEqual(identifier)
+
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toMatchObject({ command: 'subscribe', identifier })
+
+    protocol.receive({
+      identifier,
+      message: 'before',
+      epoch: '2023',
+      offset: 49,
+      stream_id: 'abc'
+    })
+
+    protocol.receive({ type: 'confirm_subscription', identifier })
+    await subscribePromise
+
+    protocol.receive({
+      identifier,
+      message: 'after',
+      epoch: '2023',
+      offset: 99,
+      stream_id: 'abc'
+    })
+
+    expect(
+      protocol.receive({
+        identifier,
+        message: 'hallo',
+        epoch: '2023',
+        offset: 101,
+        stream_id: 'abc'
+      })
+    ).toEqual({
+      identifier,
+      message: 'hallo'
+    })
+
+    cable.mailbox.length = 0
+
+    protocol.receive({ type: 'welcome', sid: '123', restored: true })
+
+    expect(cable.state).toEqual('restored')
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toMatchObject({
+      command: 'history',
+      identifier,
+      history: {
+        streams: {
+          abc: {
+            offset: 101,
+            epoch: '2023'
+          }
+        }
+      }
     })
   })
 

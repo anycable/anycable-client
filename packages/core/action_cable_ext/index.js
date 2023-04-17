@@ -27,6 +27,12 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
       type === 'confirm_subscription' ||
       type === 'reject_subscription'
     ) {
+      if (type === 'confirm_subscription') {
+        if (!this.subscriptionStreams[identifier]) {
+          this.subscriptionStreams[identifier] = new Set()
+        }
+      }
+
       return super.receive(msg)
     }
 
@@ -38,23 +44,21 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
     if (type === 'welcome') {
       this.sessionId = msg.sid
 
-      if (this.sessionId) {
-        this.addSessionIdToUrl()
-      }
+      if (this.sessionId) this.cable.setSessionId(this.sessionId)
 
       if (msg.restored) {
-        this.cable.restored()
-
         for (let streamIdentifier in this.subscriptionStreams) {
           this.cable.send({
             identifier: streamIdentifier,
-            command: "history",
-            history: this.historyRequestFor(identifier)
+            command: 'history',
+            history: this.historyRequestFor(streamIdentifier)
           })
         }
+
+        return this.cable.restored(Object.keys(this.subscriptionStreams))
       }
 
-      return this.cable.connected()
+      return this.cable.connected(this.sessionId)
     }
 
     if (message) {
@@ -101,16 +105,6 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
     }
 
     this.subscriptionStreams[identifier].add(stream)
-    this.streamsPositions[stream] = {epoch, offset}
-  }
-
-  addSessionIdToUrl() {
-    let transport = this.cable.transport;
-
-    // TODO: replace with transport.setParam('sid', this.sessionId)
-    let url = new URL(transport.url);
-    url.searchParams.set("sid", this.sessionId);
-    let newURL = `${url.protocol}//${url.host}${url.pathname}?${url.searchParams}`;
-    transport.setURL(newURL);
+    this.streamsPositions[stream] = { epoch, offset }
   }
 }
