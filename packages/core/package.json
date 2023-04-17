@@ -7,6 +7,9 @@
     "client",
     "websocket"
   ],
+  "engines": {
+    "node": "^14.0.0 || >=16.0.0"
+  },
   "homepage": "https://anycable.io/",
   "repository": "https://github.com/anycable/anycable-client",
   "author": "Vladimir Dementyev",

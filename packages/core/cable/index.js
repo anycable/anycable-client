@@ -87,6 +87,11 @@ export class Cable {
     return promise
   }
 
+  setSessionId(sessionId) {
+    this.sessionId = sessionId
+    this.transport.setParam('sid', sessionId)
+  }
+
   connected() {
     if (this.state === 'connected') return
 

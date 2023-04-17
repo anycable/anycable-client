@@ -1551,3 +1551,11 @@ describe('subscribeTo', () => {
     expect(received).toEqual(message)
   })
 })
+
+describe('setSessionID', () => {
+  it('sets session id and updates transport params', () => {
+    cable.setSessionId('session-id')
+    expect(cable.sessionId).toEqual('session-id')
+    expect(transport.state.sid).toEqual('session-id')
+  })
+})

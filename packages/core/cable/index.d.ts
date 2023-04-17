@@ -46,6 +46,7 @@ export class Cable {
   monitor?: Monitor
 
   readonly state: CableState
+  readonly sessionId: string | undefined
 
   constructor(opts: CableOptions)
 
@@ -84,6 +85,8 @@ export class Cable {
   restored(remoteIds: string[]): void
   disconnected(reason?: ReasonError): void
   closed(reason?: string | ReasonError): void
+
+  setSessionId(sid: string): void
 }
 
 export class NoConnectionError extends Error {}
