@@ -60,7 +60,12 @@ export class WebSocketTransport {
     this.url = url
   }
 
-  setParam() {}
+  setParam(key, val) {
+    let url = new URL(this.url)
+    url.searchParams.set(key, val)
+    let newURL = `${url.protocol}//${url.host}${url.pathname}?${url.searchParams}`
+    this.setURL(newURL)
+  }
 
   send(data) {
     if (!this.ws || !this.connected) {
