@@ -8,6 +8,7 @@ import { Channel, Message, ChannelParamsMap } from '../channel/index.js'
 
 export type ProtocolID =
   | 'actioncable-v1-json'
+  | 'actioncable-v1-ext-json'
   | 'actioncable-v1-msgpack'
   | 'actioncable-v1-protobuf'
 

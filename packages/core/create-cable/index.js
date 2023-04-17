@@ -1,5 +1,6 @@
 import { Cable, GhostChannel } from '../cable/index.js'
 import { ActionCableProtocol } from '../action_cable/index.js'
+import { ActionCableExtendedProtocol } from '../action_cable_ext/index.js'
 import { JSONEncoder } from '../encoder/index.js'
 import { NoopLogger } from '../logger/index.js'
 import { WebSocketTransport } from '../websocket/index.js'
@@ -58,6 +59,8 @@ export function createCable(url, opts) {
 
     if (protocolName === 'actioncable-v1') {
       protocol = new ActionCableProtocol({ logger })
+    } else if (protocolName === 'actioncable-v1-ext') {
+      protocol = new ActionCableExtendedProtocol({ logger })
     } else {
       throw Error(`Protocol is not supported yet: ${protocol}`)
     }

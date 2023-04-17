@@ -3,6 +3,7 @@ import { jest } from '@jest/globals'
 import {
   createCable,
   ActionCableProtocol,
+  ActionCableExtendedProtocol,
   WebSocketTransport,
   Message,
   createConsumer,
@@ -85,6 +86,13 @@ it('unsupported protocol', () => {
     // @ts-ignore
     createCable('ws://example', { protocol: 'action-cable-v1-json' })
   ).toThrow(/protocol is not supported/i)
+})
+
+it('supported protocols', () => {
+  let cable = createCable('ws://example', {
+    protocol: 'actioncable-v1-ext-json'
+  })
+  expect(cable.protocol).toBeInstanceOf(ActionCableExtendedProtocol)
 })
 
 it('missing protocol', () => {
