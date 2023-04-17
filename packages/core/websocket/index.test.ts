@@ -12,9 +12,25 @@ it('use global implementation when available', () => {
   expect(() => new WebSocketTransport('ws://')).not.toThrow()
 })
 
-it('set', () => {
-  let t = new WebSocketTransport('ws://')
+it('setParam', () => {
+  let t = new WebSocketTransport('wss://example.cable/ws')
   t.setParam('key', 'value')
+
+  expect(t.url).toBe('wss://example.cable/ws?key=value')
+})
+
+it('setParam + existing url query params', () => {
+  let t = new WebSocketTransport('ws://example.cable/ws?token=xxx')
+  t.setParam('key', 'value')
+
+  expect(t.url).toBe('ws://example.cable/ws?token=xxx&key=value')
+})
+
+it('setParam + overwrite query param', () => {
+  let t = new WebSocketTransport('ws://example.cable/ws?token=xxx')
+  t.setParam('token', 'yyy')
+
+  expect(t.url).toBe('ws://example.cable/ws?token=yyy')
 })
 
 it('send when not connected', () => {
