@@ -5,12 +5,17 @@ type State = 'idle' | 'connected' | 'restored' | 'disconnected' | 'closed'
 
 export class TestConsumer implements Consumer {
   state: State
+  sessionId: string | undefined
   mailbox: object[]
   lastPingedAt!: number
 
   constructor() {
     this.state = 'idle'
     this.mailbox = []
+  }
+
+  setSessionId(sid: string) {
+    this.sessionId = sid
   }
 
   connected() {
