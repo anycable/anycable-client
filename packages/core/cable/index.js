@@ -128,11 +128,6 @@ export class Cable {
   }
 
   restored(remoteIds) {
-    if (!this.recovering) {
-      this.connected()
-      return
-    }
-
     this.logger.info('connection recovered', { remoteIds })
 
     this[STATE] = 'connected'

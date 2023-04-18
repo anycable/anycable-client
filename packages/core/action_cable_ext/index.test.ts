@@ -11,7 +11,11 @@ let logger: TestLogger
 beforeEach(() => {
   logger = new TestLogger()
   cable = new TestConsumer()
-  protocol = new ActionCableExtendedProtocol({ logger })
+  // Create protocol with history.since disable by default
+  protocol = new ActionCableExtendedProtocol({
+    logger,
+    historyTimestamp: false
+  })
   protocol.attached(cable)
 })
 
@@ -70,6 +74,29 @@ describe('subscriptions', () => {
     return res
   })
 
+  it('subscribes with history since', async () => {
+    ;(protocol as any).restoreSince = 1952
+
+    let subscribed = false
+    let subscribePromise = protocol.subscribe('TestChannel').then(() => {
+      subscribed = true
+    })
+
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toMatchObject({
+      command: 'subscribe',
+      identifier,
+      history: {
+        since: 1952
+      }
+    })
+
+    protocol.receive({ type: 'confirm_subscription', identifier })
+    await subscribePromise
+
+    expect(subscribed).toBe(true)
+  })
+
   it('performs action', async () => {
     await protocol.perform('test_id', 'do')
 
@@ -95,6 +122,15 @@ describe('receive', () => {
     expect(cable.lastPingedAt).toEqual(42)
   })
 
+  it('ping when restoreSince is enabled', () => {
+    protocol = new ActionCableExtendedProtocol({ logger })
+    protocol.attached(cable)
+
+    protocol.receive({ type: 'ping', message: '42' })
+
+    expect(cable.lastPingedAt).toEqual(42)
+  })
+
   it('message', () => {
     expect(
       protocol.receive({ identifier: 'channel', message: 'hello' })
@@ -111,7 +147,7 @@ describe('receive', () => {
     ).resolves.toEqual(identifier)
 
     expect(cable.mailbox).toHaveLength(1)
-    expect(cable.mailbox[0]).toMatchObject({ command: 'subscribe', identifier })
+    expect(cable.mailbox[0]).toEqual({ command: 'subscribe', identifier })
 
     protocol.receive({
       identifier,
@@ -140,16 +176,22 @@ describe('receive', () => {
         offset: 101,
         stream_id: 'abc'
       })
-    ).toEqual({
+    ).toMatchObject({
       identifier,
       message: 'hallo'
     })
 
     cable.mailbox.length = 0
 
-    protocol.receive({ type: 'welcome', sid: '123', restored: true })
+    protocol.receive({
+      type: 'welcome',
+      sid: '123',
+      restored: true,
+      restored_ids: [identifier]
+    })
 
     expect(cable.state).toEqual('restored')
+
     expect(cable.mailbox).toHaveLength(1)
     expect(cable.mailbox[0]).toMatchObject({
       command: 'history',
@@ -165,10 +207,101 @@ describe('receive', () => {
     })
   })
 
+  it('one subscription restored and one not', async () => {
+    let identifier = '{"channel":"TestChannel"}'
+    let identifier2 = '{"channel":"ChatChannel"}'
+
+    let subscribePromise = expect(
+      protocol.subscribe('TestChannel')
+    ).resolves.toEqual(identifier)
+
+    let subscribePromise2 = expect(
+      protocol.subscribe('ChatChannel')
+    ).resolves.toEqual(identifier2)
+
+    expect(cable.mailbox).toHaveLength(2)
+
+    protocol.receive({ type: 'confirm_subscription', identifier })
+    protocol.receive({ type: 'confirm_subscription', identifier: identifier2 })
+    await subscribePromise
+    await subscribePromise2
+
+    expect(
+      protocol.receive({
+        identifier,
+        message: 'Splean',
+        epoch: '3007',
+        offset: 31,
+        stream_id: 'signal'
+      })
+    ).toEqual({
+      identifier,
+      message: 'Splean',
+      meta: {
+        stream: 'signal',
+        offset: 31,
+        epoch: '3007'
+      }
+    })
+
+    protocol.receive({ type: 'ping' })
+
+    cable.mailbox.length = 0
+
+    protocol.receive({
+      type: 'welcome',
+      sid: '123',
+      restored: true,
+      restored_ids: [identifier]
+    })
+
+    expect(cable.state).toEqual('restored')
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toMatchObject({
+      command: 'history',
+      identifier,
+      history: {
+        streams: {
+          signal: {
+            offset: 31,
+            epoch: '3007'
+          }
+        }
+      }
+    })
+  })
+
   it('warns on unknown message type', () => {
     protocol.receive({ type: 'custom' })
 
     expect(logger.warnings).toHaveLength(1)
     expect(logger.warnings[0].message).toEqual('unknown message type: custom')
+  })
+})
+
+describe('history', () => {
+  let identifier: string
+
+  beforeEach(() => {
+    logger.level = 'debug'
+    identifier = JSON.stringify({ channel: 'TestChannel' })
+  })
+
+  it('logs confirm_history', () => {
+    expect(
+      protocol.receive({ type: 'confirm_history', identifier })
+    ).toBeUndefined()
+
+    expect(logger.logs).toHaveLength(1)
+    expect(logger.logs[0].message).toEqual('history result received')
+  })
+
+  it('logs reject_history', () => {
+    expect(
+      protocol.receive({ type: 'reject_history', identifier })
+    ).toBeUndefined()
+
+    expect(logger.warnings).toHaveLength(1)
+    expect(logger.warnings[0].message).toEqual('failed to retrieve history')
   })
 })

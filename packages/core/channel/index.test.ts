@@ -162,9 +162,8 @@ describe('receiver communicaton', () => {
     channel.disconnected()
     expect(channel.state).toEqual('disconnected')
 
-    expect(() => {
-      channel.restored()
-    }).toThrow('Must be connecting')
+    channel.restored()
+    expect(channel.state).toEqual('connected')
   })
 
   it('pending subscribed when closed', () => {

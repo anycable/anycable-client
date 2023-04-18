@@ -39,6 +39,8 @@ export interface CreateOptions {
   reconnectStrategy: ReconnectStrategy
   maxMissingPings: number
   maxReconnectAttempts: number
+
+  historyTimestamp: number | false
 }
 
 export const DEFAULT_OPTIONS: Partial<CreateOptions>
