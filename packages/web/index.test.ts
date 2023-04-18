@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals'
 import {
+  ActionCableExtendedProtocol,
   ActionCableProtocol,
   TokenRefresher,
   Transport,
@@ -56,6 +57,15 @@ describe('createCable', () => {
     let cable = createCable()
     let ws = cable.transport
     expect(ws.url).toEqual(`ws://anycable.test/cablitto`)
+  })
+
+  it('uses history timestamp from action-cable-history-timestamp meta', () => {
+    document.head.innerHTML = `
+      <meta name="action-cable-history-timestamp" content="20230416">
+    `
+    let cable = createCable({ protocol: 'actioncable-v1-ext-json' })
+    let protocol = cable.protocol as any
+    expect(protocol.restoreSince).toEqual(20230416)
   })
 })
 

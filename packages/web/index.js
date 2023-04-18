@@ -49,6 +49,16 @@ const generateUrlFromDOM = () => {
   return absoluteWSUrl(defaultUrl)
 }
 
+const historyTimestampFromMeta = () => {
+  if (typeof document !== 'undefined' && document.head) {
+    let value = fetchMeta(document, 'history-timestamp')
+
+    if (value) {
+      return value | 0
+    }
+  }
+}
+
 export function createCable(url, opts) {
   if (typeof url === 'object' && typeof opts === 'undefined') {
     opts = url
@@ -57,6 +67,8 @@ export function createCable(url, opts) {
 
   url = url || generateUrlFromDOM()
   opts = opts || {}
+
+  opts.historyTimestamp ||= historyTimestampFromMeta()
 
   opts = Object.assign({}, DEFAULTS, opts)
 

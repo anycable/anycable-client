@@ -44,7 +44,8 @@ export function createCable(url, opts) {
     maxMissingPings,
     maxReconnectAttempts,
     subprotocol,
-    tokenRefresher
+    tokenRefresher,
+    historyTimestamp
   } = opts
 
   logger = logger || new NoopLogger(logLevel)
@@ -60,7 +61,7 @@ export function createCable(url, opts) {
     if (protocolName === 'actioncable-v1') {
       protocol = new ActionCableProtocol({ logger })
     } else if (protocolName === 'actioncable-v1-ext') {
-      protocol = new ActionCableExtendedProtocol({ logger })
+      protocol = new ActionCableExtendedProtocol({ logger, historyTimestamp })
     } else {
       throw Error(`Protocol is not supported yet: ${protocol}`)
     }

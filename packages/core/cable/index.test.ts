@@ -1194,7 +1194,7 @@ describe('channels', () => {
       await subscribePromise
     })
 
-    it('restored after non-recoverable disconnect should resubscribe channels', async () => {
+    it('restored after non-recoverable disconnect', async () => {
       await cable.subscribe(channel).ensureSubscribed()
 
       expect(cable.hub.size).toEqual(1)

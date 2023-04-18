@@ -8,7 +8,9 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
 
     this.streamsPositions = {}
     this.subscriptionStreams = {}
-    this.restoreSince = opts.historyTimestamp || now()
+    this.pendingHistory = {}
+    this.restoreSince = opts.historyTimestamp
+    if (this.restoreSince === undefined) this.restoreSince = now()
     this.sessionId = undefined
   }
 
@@ -22,22 +24,32 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
     let { type, identifier, message } = msg
 
     // These message types do not require special handling
-    if (
-      type === 'disconnect' ||
-      type === 'confirm_subscription' ||
-      type === 'reject_subscription'
-    ) {
-      if (type === 'confirm_subscription') {
-        if (!this.subscriptionStreams[identifier]) {
-          this.subscriptionStreams[identifier] = new Set()
-        }
+    if (type === 'disconnect' || type === 'reject_subscription') {
+      return super.receive(msg)
+    }
+
+    if (type === 'confirm_subscription') {
+      if (!this.subscriptionStreams[identifier]) {
+        this.subscriptionStreams[identifier] = new Set()
       }
 
       return super.receive(msg)
     }
 
+    if (type === 'confirm_history') {
+      this.logger.debug('history result received', msg)
+      return
+    }
+
+    if (type === 'reject_history') {
+      this.logger.warn('failed to retrieve history', msg)
+      return
+    }
+
     if (type === 'ping') {
-      this.restoreSince = now()
+      if (!this.restoreSince === false) {
+        this.restoreSince = now()
+      }
       return this.cable.keepalive(msg.message)
     }
 
@@ -47,34 +59,47 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
       if (this.sessionId) this.cable.setSessionId(this.sessionId)
 
       if (msg.restored) {
-        for (let streamIdentifier in this.subscriptionStreams) {
+        let restoredIds =
+          msg.restored_ids || Object.keys(this.subscriptionStreams)
+        for (let restoredId of restoredIds) {
           this.cable.send({
-            identifier: streamIdentifier,
+            identifier: restoredId,
             command: 'history',
-            history: this.historyRequestFor(streamIdentifier)
+            history: this.historyRequestFor(restoredId)
           })
         }
 
-        return this.cable.restored(Object.keys(this.subscriptionStreams))
+        return this.cable.restored(restoredIds)
       }
 
       return this.cable.connected(this.sessionId)
     }
 
     if (message) {
-      this.trackStreamPosition(identifier, msg.stream_id, msg.epoch, msg.offset)
-      return { identifier, message }
+      let meta = this.trackStreamPosition(
+        identifier,
+        msg.stream_id,
+        msg.epoch,
+        msg.offset
+      )
+      return { identifier, message, meta }
     }
 
     this.logger.warn(`unknown message type: ${type}`, { message: msg })
   }
 
   buildSubscribeRequest(identifier) {
-    return {
-      command: 'subscribe',
-      identifier,
-      history: this.historyRequestFor(identifier)
+    let req = super.buildSubscribeRequest(identifier)
+
+    let historyReq = this.historyRequestFor(identifier)
+
+    if (historyReq) {
+      req.history = historyReq
+
+      this.pendingHistory[identifier] = true
     }
+
+    return req
   }
 
   // TODO: Which error can be non-recoverable?
@@ -84,15 +109,19 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
 
   historyRequestFor(identifier) {
     let streams = {}
+    let hasStreams = false
 
     if (this.subscriptionStreams[identifier]) {
       for (let stream of this.subscriptionStreams[identifier]) {
         let record = this.streamsPositions[stream]
         if (record) {
+          hasStreams = true
           streams[stream] = record
         }
       }
     }
+
+    if (!hasStreams && !this.restoreSince) return
 
     return { since: this.restoreSince, streams }
   }
@@ -105,6 +134,9 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
     }
 
     this.subscriptionStreams[identifier].add(stream)
+
     this.streamsPositions[stream] = { epoch, offset }
+
+    return { stream, epoch, offset }
   }
 }

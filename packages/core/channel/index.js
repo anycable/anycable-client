@@ -74,7 +74,6 @@ export class Channel {
 
   restored() {
     if (this.state === 'connected') throw Error('Already connected')
-    if (this.state !== 'connecting') throw Error('Must be connecting')
 
     this[STATE] = 'connected'
 
