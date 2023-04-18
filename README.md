@@ -9,14 +9,14 @@ This repository contains JavaScript packages to build AnyCable clients.
 
 ## Motivation
 
-There are multiple reasons that forced us to implement an alternative client library for Action Cable / AnyCable:
+Multiple reasons that forced us to implement an alternative client library for Action Cable / AnyCable:
 
 - [AnyCable Pro][pro] features support (e.g., binary formats).
 - Multi-platform out-of-the-box (web, workers, React Native).
 - TypeScript support.
 - Revisited client-side APIs.
 - [Testability](#testing)
-- Future protocol extensions/modifications support.
+- Future [protocol extensions/modifications support](#extended-action-cable-protocol).
 
 📖 Read also the [introductory post](https://evilmartians.com/chronicles/introducing-anycable-javascript-and-typescript-client).
 
@@ -261,6 +261,49 @@ export default createCable({protocol: 'actioncable-v1-protobuf', encoder: new Pr
 ```
 
 **NOTE:** You MUST install the corresponding encoder package yourself, e.g., `yarn add @anycable/msgpack-encoder` or `yarn add @anycable/protobuf-encoder`.
+
+### Extended Action Cable protocol
+
+AnyCable client also supports an extended version of the Action Cable protocol (`actioncable-v1-ext-json`) implemented by AnyCable server (v1.4+).
+
+This version provides additional functionality to improve data consistency:
+
+- Session recovery mechanism to restore subscriptions without re-subscribing.
+- History support for streams, or automatic retrieval of missing messages during short-term disconnects.
+
+The features are implemented by the protocol itself, no need to update any existing channels code. All you need is to specify the protocol version when creating a client:
+
+```js
+import { createCable } from '@anycable/web'
+// or for non-web projects
+// import { createCable } from '@anycable/core'
+
+export default createCable({protocol: 'actioncable-v1-ext-json'})
+```
+
+#### Loading initial history on client initialization
+
+To catch up messages broadcasted during the initial page load (or client-side application initialization), you can specify the `historyTimestamp` option to retrieve messages after the specified time along with subscription requests. The value must be a UTC timestamp (the number of seconds).
+
+By default, we use the current time (`Date.now() / 1000`). For web applications, you can specify the value using a meta tag with the name "action-cable-history-timestamp" (or "cable-history-timestamp"). For example, in Rails, you can add the following to your application layout
+
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- ... -->
+    <%= action_cable_meta_tag %>
+    <meta name="action-cable-history-timestamp" content="<%= Time.now.to_i %>">
+  </head>
+  <!-- ... -->
+</html>
+```
+
+This is a recommended way to use this feature with Hotwire applications, where initial state is included in the HTML response.
+
+**IMPORTANT:** For later subscriptions (not during the initial page initialization), the value of the `historyTimestamp` is automatically adjusted to the last time a "ping" message has been received.
+
+You can also disable retrieving history since the specified time completely by setting the `historyTimestamp` option to `false`.
 
 ### Refreshing authentication tokens
 

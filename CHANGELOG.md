@@ -2,6 +2,8 @@
 
 ## master
 
+- Add `actioncable-v1-ext-json` protocol support.
+
 ## 0.6.0 (2023-02-06)
 
 - Dependencies upgrade and minor types changes.
