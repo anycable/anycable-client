@@ -30,6 +30,8 @@ export class WebSocketTransport<
   setURL(url: string): void
   setParam(key: string, value: string): void
 
+  displayName(): string
+
   on<E extends keyof TransportEvents<DataType>>(
     event: E,
     callback: TransportEvents<DataType>[E]

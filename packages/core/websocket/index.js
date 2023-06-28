@@ -24,6 +24,10 @@ export class WebSocketTransport {
     this.subprotocol = subprotocol
   }
 
+  displayName() {
+    return 'WebSocket(' + this.url + ')'
+  }
+
   open() {
     if (this.connectionOptions) {
       this.ws = new this.Impl(

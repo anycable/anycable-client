@@ -12,6 +12,11 @@ it('use global implementation when available', () => {
   expect(() => new WebSocketTransport('ws://')).not.toThrow()
 })
 
+it('displayName', () => {
+  let t = new WebSocketTransport('ws://example.cable/path')
+  expect(t.displayName()).toBe('WebSocket(ws://example.cable/path)')
+})
+
 it('setParam', () => {
   let t = new WebSocketTransport('wss://example.cable/ws')
   t.setParam('key', 'value')

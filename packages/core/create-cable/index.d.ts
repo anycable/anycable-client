@@ -24,6 +24,8 @@ export interface CreateOptions {
   websocketFormat: string
   websocketOptions: object
 
+  fallbacks: Transport[]
+
   encoder: Encoder
 
   logger: Logger

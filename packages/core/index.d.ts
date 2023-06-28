@@ -6,7 +6,7 @@ export {
   MessageMeta,
   Identifier
 } from './channel/index.js'
-export { Transport } from './transport/index.js'
+export { Transport, FallbackTransport } from './transport/index.js'
 export { Encoder, JSONEncoder } from './encoder/index.js'
 export {
   Protocol,
