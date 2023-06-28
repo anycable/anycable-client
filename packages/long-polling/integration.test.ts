@@ -109,6 +109,31 @@ describe('LongPollingTransport', () => {
     )
   })
 
+  it('rejects if the server responds with 401 without messages', async () => {
+    responseStatus = 401
+
+    await expect(transport.open()).rejects.toEqual(
+      Error('Unexpected status code: 401')
+    )
+  })
+
+  it('rejects if the server responds with 401 code but process messages', async () => {
+    let incoming: string[] = []
+    transport.on('data', (msg: string) => {
+      if (!msg.match(/ping/)) incoming.push(msg)
+    })
+
+    responseStatus = 401
+    responses.push('unauthorized')
+
+    await expect(transport.open()).rejects.toEqual(
+      Error('Unexpected status code: 401')
+    )
+
+    expect(transport.connected).toBe(false)
+    expect(incoming).toEqual(['unauthorized'])
+  })
+
   it('rejects if the server responds with 50x code', async () => {
     responseStatus = 503
 
@@ -262,6 +287,33 @@ describe('LongPollingTransport', () => {
         }, 500)
         transport.once('close', () => {
           clearTimeout(tid)
+          resolve()
+        })
+      })
+
+      await closePromise
+    })
+
+    it('when poll request fails with 401 process messages', async () => {
+      let incoming: string[] = []
+      transport.on('data', (msg: string) => {
+        if (!msg.match(/ping/)) incoming.push(msg)
+      })
+
+      responseStatus = 401
+      responses.push('session_expired')
+
+      let closePromise = new Promise<void>((resolve, reject) => {
+        let tid = setTimeout(() => {
+          reject(Error('Failed to close'))
+        }, 500)
+        transport.once('close', () => {
+          clearTimeout(tid)
+
+          if (!incoming.length || incoming[0] !== 'session_expired') {
+            reject(Error('No expected messages were received'))
+            return
+          }
           resolve()
         })
       })

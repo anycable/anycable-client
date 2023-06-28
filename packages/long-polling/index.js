@@ -53,6 +53,10 @@ export class LongPollingTransport {
         this._pollTimer = setTimeout(this.poll, this.cooldown)
         this._pingTimer = setInterval(this.emulatePing, this.pingInterval)
       } else {
+        if (response.status === 401) {
+          await this.processResponse(response)
+        }
+
         throw new Error(`Unexpected status code: ${response.status}`)
       }
     } catch (error) {
@@ -103,6 +107,10 @@ export class LongPollingTransport {
           this._pollTimer = setTimeout(this.poll, this.cooldown)
         }
       } else {
+        if (response.status === 401) {
+          await this.processResponse(response)
+        }
+
         throw new Error(`Unexpected status code: ${response.status}`)
       }
     } catch (error) {
@@ -158,13 +166,11 @@ export class LongPollingTransport {
   }
 
   async processResponse(response) {
-    if (response.status === 200) {
-      let data = await response.text()
-      let lines = data.split('\n')
-      for (let line of lines) {
-        if (line) {
-          this.emitter.emit('data', line)
-        }
+    let data = await response.text()
+    let lines = data.split('\n')
+    for (let line of lines) {
+      if (line) {
+        this.emitter.emit('data', line)
       }
     }
   }
