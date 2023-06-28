@@ -19,6 +19,10 @@ export class TestTransport implements Transport<string> {
     this.sent = []
   }
 
+  displayName(): string {
+    return 'TestTransport(' + this.url + ')'
+  }
+
   setURL(url: string) {
     this.url = url
   }

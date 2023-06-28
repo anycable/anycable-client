@@ -15,6 +15,7 @@ export { ActionCableExtendedProtocol } from './action_cable_ext/index.js'
 export { Cable, NoConnectionError } from './cable/index.js'
 export { Monitor, backoffWithJitter } from './monitor/index.js'
 export { stringifyParams } from './stringify-params/index.js'
+export { FallbackTransport } from './transport/index.js'
 export { WebSocketTransport } from './websocket/index.js'
 export {
   createCable,

@@ -11,7 +11,8 @@ import {
   SubscriptionRejectedError,
   DisconnectedError,
   Cable,
-  TokenRefresher
+  TokenRefresher,
+  FallbackTransport
 } from '../index.js'
 import { TestTransport } from '../transport/testing'
 
@@ -24,6 +25,15 @@ it('with transport', () => {
   let cable = createCable({ transport: tt })
 
   expect(cable.transport).toBe(tt)
+})
+
+it('with fallbacks', () => {
+  let t1 = new TestTransport('ws://anycable.test')
+  let t2 = new TestTransport('ws://fallback.cable')
+
+  let cable = createCable({ transport: t1, fallbacks: [t2] })
+
+  expect(cable.transport).toBeInstanceOf(FallbackTransport)
 })
 
 class FakeSocket {

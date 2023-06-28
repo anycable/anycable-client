@@ -6,6 +6,7 @@ import { NoopLogger } from '../logger/index.js'
 import { WebSocketTransport } from '../websocket/index.js'
 import { Monitor, backoffWithJitter } from '../monitor/index.js'
 import { SubscriptionRejectedError } from '../protocol/index.js'
+import { FallbackTransport } from '../transport/index.js'
 
 export const DEFAULT_OPTIONS = {
   protocol: 'actioncable-v1-json',
@@ -33,6 +34,7 @@ export function createCable(url, opts) {
     websocketImplementation,
     websocketFormat,
     websocketOptions,
+    fallbacks,
     logLevel,
     logger,
     transport,
@@ -98,6 +100,10 @@ export function createCable(url, opts) {
       subprotocol,
       format: websocketFormat
     })
+
+  if (fallbacks) {
+    transport = new FallbackTransport([transport, ...fallbacks], { logger })
+  }
 
   reconnectStrategy = reconnectStrategy || backoffWithJitter(pingInterval)
 

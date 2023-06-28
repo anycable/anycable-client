@@ -1,4 +1,4 @@
-import { createConsumer } from './index.js'
+import { createCable, createConsumer } from './index.js'
 
 interface MyMessage {
   payload: {
