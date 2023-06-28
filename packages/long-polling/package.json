@@ -1,0 +1,31 @@
+{
+  "name": "@anycable/long-polling",
+  "version": "0.1.0",
+  "description": "Long-polling transport for AnyCable client",
+  "engines": {
+    "node": "^14.0.0 || >=16.0.0"
+  },
+  "keywords": [
+    "anycable",
+    "actioncable"
+  ],
+  "homepage": "https://anycable.io/",
+  "repository": "https://github.com/anycable/anycable-client",
+  "author": "Vladimir Dementyev",
+  "license": "MIT",
+  "sideEffects": false,
+  "main": "index.js",
+  "type": "module",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@anycable/core": "^0.7.0"
+  },
+  "devDependencies": {
+    "@types/node-fetch": "^2.6.4",
+    "node-fetch": "^2.6.0"
+  }
+}
