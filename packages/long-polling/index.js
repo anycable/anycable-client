@@ -5,10 +5,9 @@ export class LongPollingTransport {
     this.url = url
     this.cooldown = opts.cooldownPeriod || 500
     this.sendBuffer = opts.sendBuffer || 500
-    this.authMode = opts.auth || 'headers'
     this.pingInterval = opts.pingInterval || 3000
 
-    this.fetchCredentials = this.authMode === 'cookies' ? 'include' : 'omit'
+    this.fetchCredentials = opts.credentials || 'same-origin'
 
     this.connected = false
     this.emitter = createNanoEvents()
@@ -25,7 +24,7 @@ export class LongPollingTransport {
     if (fetchFn) {
       this.fetch = fetchFn
     } else if (typeof fetch !== 'undefined') {
-      this.fetch = fetch
+      this.fetch = (...args) => fetch(...args)
     } else {
       throw new Error('No fetch support')
     }
@@ -84,10 +83,7 @@ export class LongPollingTransport {
       this.abortController = new AbortController()
 
       let headers = {}
-
-      if (this.authMode === 'headers') {
-        headers['X-Anycable-Poll-ID'] = this.sessionID
-      }
+      headers['X-Anycable-Poll-ID'] = this.sessionID
 
       let response = await this.fetch(this.url, {
         method: 'POST',

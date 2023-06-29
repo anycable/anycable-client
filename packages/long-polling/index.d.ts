@@ -6,10 +6,10 @@ type LongPollingOptions = Partial<{
   cooldownPeriod: number
   // For how long to buffer outgoing commands (in ms) before sending them to the server
   sendBuffer: number
-  // Authentication method: cookie or headers
-  auth: 'cookies' | 'headers'
   // Interval for emulated ping events. Must correspond to monitor's ping interval
   pingInterval: number
+  // Credentials for underlying fetch
+  credentials: 'omit' | 'same-origin' | 'include'
   /* eslint-disable @typescript-eslint/no-explicit-any */
   fetchImplementation: any
 }>
