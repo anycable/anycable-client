@@ -22,11 +22,16 @@ describe('LongPollingTransport', () => {
     )
   })
 
-  it('use global implementation when available', () => {
+  it('use global implementation when available', async () => {
     if (!(global as any).fetch) {
-      ;(global as any).fetch = () => {}
+      ;(global as any).fetch = () => {
+        throw new Error('Fake fetch')
+      }
     }
     expect(() => new LongPollingTransport('http://')).not.toThrow()
+    let transport = new LongPollingTransport('http://')
+
+    await expect(transport.open()).rejects.toEqual(Error('Fake fetch'))
   })
 
   it('setParam', () => {

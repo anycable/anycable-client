@@ -47,7 +47,7 @@ new LongPollingTransport(
     cooldownPeriod: 500, // For how long (in ms) to wait before sending a new request
     sendBuffer: 500, // For how long to buffer outgoing commands (in ms) before sending them to the server
     pingInterval: 30000, // How often (in ms) to emit emulated ping messages (to make connection monitor think that the connection is alive)
-    auth: 'headers', // Which method to use for polling session authentication: 'headers' or 'cookies'.
+    credentials: 'same-origin', // Underlying fetch credentials
     fetchImplementation: fetch, // A fetch-compatible implementation (e.g. node-fetch)
   }
 )
