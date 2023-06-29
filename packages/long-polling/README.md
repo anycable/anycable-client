@@ -54,3 +54,9 @@ new LongPollingTransport(
 ```
 
 **IMPORTANT:** When using `headers` as authentication method, we omit client's credentials when performing HTTP requests (`credential: "omit"` in `fetch`). When using `cookies`, we send cookies with the request (using `credentials: "include"` configuration). Keep this in mind if your clients authentication relies on cookies.
+
+## Legacy browsers support
+
+This package uses [fetch](https://developer.mozilla.org/en-US/docs/Web/API/fetch) to perform requests and [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController) to cancel in-flight requests when necessary. Both APIs are not supported in legacy browsers (e.g., Internet Explorer). You must configure polyfills for them yourself. We recommend using [whatwg-fetch](https://github.com/github/fetch) and [abortcontroller-polyfill](https://github.com/mo/abortcontroller-polyfill) packages.
+
+See also [anycable-browser-playground](https://github.com/anycable/anycable-browser-playground) project for a working example.
