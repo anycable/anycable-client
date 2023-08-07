@@ -33,7 +33,12 @@ export type CableOptions = {
   lazy?: boolean
 }
 
-export type CableState = 'idle' | 'disconnected' | 'connecting' | 'connected'
+export type CableState =
+  | 'idle'
+  | 'disconnected'
+  | 'connecting'
+  | 'connected'
+  | 'closed'
 
 export class GhostChannel extends Channel {}
 
