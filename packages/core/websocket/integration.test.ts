@@ -164,8 +164,11 @@ it('connection error', async () => {
 })
 
 it('close', async () => {
+  let serverWS!: WebSocket
+
   let closePromise = new Promise<void>(resolve => {
     wss.on('connection', ws => {
+      serverWS = ws
       ws.on('close', resolve)
     })
   })
@@ -175,11 +178,35 @@ it('close', async () => {
     { websocketImplementation: WebSocket }
   )
 
+  let clientReceived: string[] = []
+
+  let receivedOnce = new Promise<void>(resolve => {
+    let firstMsg = true
+
+    client.on('data', msg => {
+      clientReceived.push(msg)
+      if (firstMsg) {
+        firstMsg = false
+        resolve()
+      }
+    })
+  })
+
   await client.open()
+  serverWS.send('data 1')
+
+  await receivedOnce
 
   client.close()
+  serverWS.send('data 2')
 
   await closePromise
+
+  serverWS.send('data 3')
+
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  expect(clientReceived).toEqual(['data 1'])
 })
 
 it('with binary protocol', async () => {

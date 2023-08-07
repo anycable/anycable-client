@@ -123,6 +123,9 @@ export class WebSocketTransport {
 
   onclose() {
     this.ws.onclose = undefined
+    this.ws.onmessage = undefined
+    this.ws.onerror = undefined
+    this.ws.onopen = undefined
     this.ws.close()
     delete this.ws
     this.connected = false
