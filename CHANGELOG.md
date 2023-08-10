@@ -2,6 +2,10 @@
 
 ## master
 
+## 0.7.3 (2023-08-09)
+
+- `core`: Handle WebSocket error messages on close gracefully.
+
 ## 0.7.2 (2023-08-07)
 
 - `core`: Remove stale WS connection event listeners on close.
