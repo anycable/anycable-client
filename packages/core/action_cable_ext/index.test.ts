@@ -277,6 +277,29 @@ describe('receive', () => {
     expect(logger.warnings).toHaveLength(1)
     expect(logger.warnings[0].message).toEqual('unknown message type: custom')
   })
+
+  describe('pongs', () => {
+    beforeEach(() => {
+      protocol = new ActionCableExtendedProtocol({
+        logger,
+        historyTimestamp: false,
+        pongs: true
+      })
+      protocol.attached(cable)
+    })
+
+    it('sends pong in response to ping', async () => {
+      protocol.receive({ type: 'ping', message: '42' })
+      expect(cable.lastPingedAt).toEqual(42)
+
+      await new Promise(resolve => setTimeout(resolve, 0))
+
+      expect(cable.mailbox).toHaveLength(1)
+      expect(cable.mailbox[0]).toMatchObject({
+        command: 'pong'
+      })
+    })
+  })
 })
 
 describe('history', () => {

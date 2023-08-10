@@ -5,18 +5,30 @@ import { Monitor, ReconnectStrategy } from '../monitor/index.js'
 import { Cable } from '../cable/index.js'
 import { Protocol } from '../protocol/index.js'
 import { Channel, Message, ChannelParamsMap } from '../channel/index.js'
+import { Options } from '../action_cable/index.js'
+import { ExtendedOptions } from '../action_cable_ext/index.js'
+
+export type ExtendedProtocolID = 'actioncable-v1-ext-json'
 
 export type ProtocolID =
   | 'actioncable-v1-json'
-  | 'actioncable-v1-ext-json'
   | 'actioncable-v1-msgpack'
   | 'actioncable-v1-protobuf'
+  | ExtendedProtocolID
 
 export type TokenRefresher = (transport: Transport) => Promise<void>
 
-export interface CreateOptions {
-  protocol: ProtocolID | Protocol
+type ProtocolOptions<T extends Protocol | ProtocolID> = T extends Protocol
+  ? never
+  : T extends ExtendedProtocolID
+  ? ExtendedOptions
+  : Options
+
+export interface CreateOptions<P extends ProtocolID | Protocol> {
+  protocol: P
   subprotocol: string
+
+  protocolOptions: ProtocolOptions<P>
 
   transport: Transport
   /* eslint-disable @typescript-eslint/no-explicit-any */

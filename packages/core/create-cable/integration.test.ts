@@ -10,10 +10,12 @@ import {
   CreateOptions
 } from '../index.js'
 import { TestTransport } from '../transport/testing'
+import { ProtocolID } from './index.js'
 
 class CableTransport extends TestTransport {
   pingTid?: any
   subscriptions: any
+  pongsCount: number = 0
 
   constructor(url: string) {
     super(url)
@@ -39,7 +41,9 @@ class CableTransport extends TestTransport {
     let identifier = msg.identifier
     let command = msg.command
 
-    if (command === 'subscribe') {
+    if (command === 'pong') {
+      this.pongsCount++
+    } else if (command === 'subscribe') {
       if (!identifier) {
         this.sendLater({ type: 'reject_subscription', identifier })
         return
@@ -104,13 +108,14 @@ let waitSec = (val?: number) => {
 }
 
 describe('Action Cable protocol communication', () => {
-  let transport: TestTransport
+  let transport: CableTransport
   let cable: Cable
+  let opts: Partial<CreateOptions<ProtocolID>>
 
   beforeEach(() => {
     transport = new CableTransport('ws://anycable.test')
 
-    let opts: Partial<CreateOptions> = {
+    opts = {
       transport
     }
 
@@ -154,6 +159,36 @@ describe('Action Cable protocol communication', () => {
     cable.connect()
 
     await keepalivePromise
+  })
+
+  it('responds with pongs when enabled', async () => {
+    let extOpts: Partial<CreateOptions<'actioncable-v1-ext-json'>> = {
+      protocol: 'actioncable-v1-ext-json',
+      protocolOptions: { pongs: true },
+      transport: opts.transport,
+      logger: opts.logger
+    }
+
+    cable = createCable('ws://example', extOpts)
+
+    let keepalivePromise = new Promise<void>((resolve, reject) => {
+      let tid = setTimeout(() => {
+        reject(Error('Timed out to received pings'))
+      }, 1000)
+
+      cable.on('keepalive', async () => {
+        clearTimeout(tid)
+
+        await waitSec(0)
+        resolve()
+      })
+    })
+
+    cable.connect()
+
+    await keepalivePromise
+
+    expect(transport.pongsCount).toBeGreaterThan(0)
   })
 
   describe('basic race conditions', () => {

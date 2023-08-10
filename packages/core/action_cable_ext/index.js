@@ -12,6 +12,7 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
     this.restoreSince = opts.historyTimestamp
     if (this.restoreSince === undefined) this.restoreSince = now()
     this.sessionId = undefined
+    this.sendPongs = opts.pongs
   }
 
   receive(msg) {
@@ -50,6 +51,11 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
       if (!this.restoreSince === false) {
         this.restoreSince = now()
       }
+
+      if (this.sendPongs) {
+        this.sendPong()
+      }
+
       return this.cable.keepalive(msg.message)
     }
 
@@ -138,5 +144,11 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
     this.streamsPositions[stream] = { epoch, offset }
 
     return { stream, epoch, offset }
+  }
+
+  // Send pongs asynchrounously—no need to block the main thread
+  async sendPong() {
+    await new Promise(resolve => setTimeout(resolve, 0))
+    this.cable.send({ command: 'pong' })
   }
 }

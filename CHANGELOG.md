@@ -2,6 +2,8 @@
 
 ## master
 
+- `core`: Add PONGs support to the extended protocol and allow passing protocol options via `protocolOptions`.
+
 ## 0.7.3 (2023-08-09)
 
 - `core`: Handle WebSocket error messages on close gracefully.

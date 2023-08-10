@@ -283,7 +283,16 @@ export default createCable({protocol: 'actioncable-v1-ext-json'})
 
 #### Loading initial history on client initialization
 
-To catch up messages broadcasted during the initial page load (or client-side application initialization), you can specify the `historyTimestamp` option to retrieve messages after the specified time along with subscription requests. The value must be a UTC timestamp (the number of seconds).
+To catch up messages broadcasted during the initial page load (or client-side application initialization), you can specify the `historyTimestamp` option to retrieve messages after the specified time along with subscription requests. The value must be a UTC timestamp (the number of seconds). For example:
+
+```js
+export default createCable({
+  protocol: 'actioncable-v1-ext-json',
+  protocolOptions: {
+    historyTimestamp: 1614556800 // 2021-03-01 00:00:00 UTC
+  }
+})
+```
 
 By default, we use the current time (`Date.now() / 1000`). For web applications, you can specify the value using a meta tag with the name "action-cable-history-timestamp" (or "cable-history-timestamp"). For example, in Rails, you can add the following to your application layout
 
@@ -304,6 +313,21 @@ This is a recommended way to use this feature with Hotwire applications, where i
 **IMPORTANT:** For later subscriptions (not during the initial page initialization), the value of the `historyTimestamp` is automatically adjusted to the last time a "ping" message has been received.
 
 You can also disable retrieving history since the specified time completely by setting the `historyTimestamp` option to `false`.
+
+#### PONGs support
+
+The extended protocol also support sending `pong` commands in response to `ping` messages. A server (AnyCable-Go) keeps track of pongs and disconnect the client if no pongs received in time. This helps to identify broken connections quicker.
+
+You must opt-in to use this feature by setting the `pongs` option to `true`:
+
+```js
+export default createCable({
+  protocol: 'actioncable-v1-ext-json',
+  protocolOptions: {
+    pongs: true
+  }
+})
+```
 
 ### Refreshing authentication tokens
 
