@@ -1,20 +1,12 @@
 # Change log
 
+**NOTE:** This log only reflects important changes related to all packages. The version here indicates the `core` package version. For the full list of changes, please refer to the corresponding package changelogs.
+
 ## master
-
-- `core`: Add PONGs support to the extended protocol and allow passing protocol options via `protocolOptions`.
-
-## 0.7.3 (2023-08-09)
-
-- `core`: Handle WebSocket error messages on close gracefully.
-
-## 0.7.2 (2023-08-07)
-
-- `core`: Remove stale WS connection event listeners on close.
 
 ## 0.7.1 (2023-06-28)
 
-- `core`: Add FallbackTransport.
+- Add FallbackTransport and a new `@anycable/long-polling` package.
 
 ## 0.7.0 (2023-04-18)
 
@@ -23,39 +15,6 @@
 ## 0.6.0 (2023-02-06)
 
 - Dependencies upgrade and minor types changes.
-
-## 0.5.7 (2022-08-31)
-
-- `core`: Treat stale connection as disconnect error.
-
-## 0.5.6 (2022-08-16)
-
-- `core`: Reduce the number of commands when subscribe/unsubscribe is called many times on the same subscription.
-
-New _command-locking_ mechanism prevents from `subscribe-unsubscribe-subscribe-...` cycles by dropping the unnecessary calls.
-For example, calling `subscribe-unsubsribe-subscribe` would only result into a single `subscribe` command being sent to the server.
-
-## 0.5.5 (2022-08-16)
-
-- `core`: Fixed protocol race conditions.
-
-Fixes [#20](https://github.com/anycable/anycable-client/issues/20).
-
-## ~~0.5.3~~ 0.5.4 (2022-08-16)
-
-- `core`: Add `Channel.send` function.
-
-- `core`: Use custom object as Action Cable subscription instead of a channel instance.
-
-That prevents from potential incompatible extensions (e.g., `graphql-ruby` sets the `closed` property thus overriding the `closed()` function).
-
-## 0.5.2 (2022-08-16)
-
-- `core`: Fix monitor triggering reconnect when cable was closed by user.
-
-## 0.5.1 (2022-07-22)
-
-- `web`: Print logs using the corresponding `console` methods, not just `log`.
 
 ## 0.5.0 (2022-07-21)
 
@@ -81,16 +40,6 @@ Similarly, `cable.subscribeTo(...)` is not longer async and returns the channel 
 
 The `channel.disconnect()` function is no longer async and has not return value. It records the **intention** to unsubscribe. The actual `unsubscribe` command is sent asynchrounously (if requried, i.e., if there are no other channel instances with the same identifier).
 
-## 0.4.1 (2022-07-13)
-
-- `core`: Make token refresher is not affected by connection failures.
-
-Previosly, we stopped handling `token_expired` errors if the reconnection attempt made by the refresher failed.
-
-- `core`: Do not emit 'close' for channels when cable is closed.
-
-The `close` event should indicate unsubscription (initiated by a user). When the cable is closed, subscriptions are disconnected, not closed (since they got restored if cable is connected back).
-
 ## 0.4.0 (2022-07-12)
 
 - `core`: Standardize `close` and `disconnect` events and the corresponding methods to always emit/return ReasonError instances (not just DisconnectEvents). Transport errors (e.g., connection failure) are now also wrapped into `DisconnectedError` with the reason `transport_close`. You can access the original error via `error.cause` property.
@@ -104,28 +53,6 @@ Now `disconnected` always implies reconnection (which might be done by a monitor
 This makes it possible to use `await cable.subscribe(channel)` and don't care about underlying cable state (unless it's closed manually or subscription is rejected).
 
 The `channel.disconnect()` works similarly in a sense that it considers lack of connection as success, and tries to send the `unsubscribe` command otherwise.
-
-## 0.3.5 (2022-07-02)
-
-- `core`: Prevent unsubscribe/subscribe race conditions. ([@palkan][])
-
-Since Action Cable protocol doesn't support `unsubscribe` acks, we need to hack around to make sure subsequent `subscribe` commands arrived at the server after the previous `unsubscribe` has been processed.
-
-## 0.3.4 (2022-06-03)
-
-- `core`: Add WebSocket options (e.g., headers) support. ([@palkan][])
-
-## 0.3.3 (2022-05-24)
-
-- `core`: Fixed channels caching for anonymous channels. ([@palkan][])
-
-## 0.3.2 (2022-01-26)
-
-- `web`: Fixed generating URL from meta tags when value includes only the path (e.g., `/cable`). ([@palkan][])
-
-## 0.3.1 (2022-01-26)
-
-- Fixed subscriptions cache by switching to a WeakMap. ([@palkan][], [@lokkirill][])
 
 ## 0.3.0 (2021-12-14)
 
@@ -150,11 +77,10 @@ Each component takes care of subscribing and unsubsribing; the actual subscripti
 
 - Added `tokenRefresher` option to `createCable` to handle `token_expired` disconnections. ([@palkan][])
 
-- `core`: Fix unhandled Promise rejection in Monitor. ([@tienle][], [@gydroperit][], [@palkan][])
+- Fix unhandled Promise rejection in Monitor. ([@tienle][], [@gydroperit][], [@palkan][])
 
 [@palkan]: https://github.com/palkan
 [@tienle]: https://github.com/tienle
 [@gydroperit]: https://github.com/gydroperit
 [@charlie-wasp]: https://github.com/charlie-wasp
 [@TheSeally]: https://github.com/TheSeally
-[@lokkirill]: https://github.com/lokkirill
