@@ -99,7 +99,10 @@ export class WebSocketTransport {
 
   initListeners() {
     this.ws.onerror = event => {
-      this.emitter.emit('error', event.error || new Error('WS Error'))
+      // Only emit errors if the socket hasn't been closed
+      if (this.connected) {
+        this.emitter.emit('error', event.error || new Error('WS Error'))
+      }
     }
 
     this.ws.onclose = () => {
@@ -124,7 +127,6 @@ export class WebSocketTransport {
   onclose() {
     this.ws.onclose = undefined
     this.ws.onmessage = undefined
-    this.ws.onerror = undefined
     this.ws.onopen = undefined
     this.ws.close()
     delete this.ws
