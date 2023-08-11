@@ -8,7 +8,10 @@ import { Channel, Message, ChannelParamsMap } from '../channel/index.js'
 import { Options } from '../action_cable/index.js'
 import { ExtendedOptions } from '../action_cable_ext/index.js'
 
-export type ExtendedProtocolID = 'actioncable-v1-ext-json'
+export type ExtendedProtocolID =
+  | 'actioncable-v1-ext-json'
+  | 'actioncable-v1-ext-msgpack'
+  | 'actioncable-v1-ext-protobuf'
 
 export type ProtocolID =
   | 'actioncable-v1-json'

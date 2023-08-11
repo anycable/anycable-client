@@ -4,6 +4,7 @@ import { action_cable as protos } from './generated/message_pb.js'
 import { EnumWrapper } from './enum_wrapper.js'
 
 const Message = protos.Message
+const Reply = protos.Reply
 const MessageType = new EnumWrapper(protos.Type)
 const Command = new EnumWrapper(protos.Command)
 
@@ -29,7 +30,7 @@ export class ProtobufEncoder {
   /* eslint-disable consistent-return */
   decode(data) {
     try {
-      let decodedMessage = Message.decode(data)
+      let decodedMessage = this.decodeReply(data)
 
       // We can't skip check for presence here, since enums always have
       // zero value by default in protobuf, even if nothing was passed
@@ -42,5 +43,16 @@ export class ProtobufEncoder {
 
       return decodedMessage
     } catch (_e) {}
+  }
+
+  decodeReply(data) {
+    return Message.decode(data)
+  }
+}
+
+export class ProtobufEncoderV2 extends ProtobufEncoder {
+  decodeReply(data) {
+    let decoded = Reply.decode(data)
+    return decoded
   }
 }

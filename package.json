@@ -19,7 +19,12 @@
     "test:dev": "NODE_OPTIONS='--experimental-vm-modules' jest",
     "test": "yarn test:dev --coverage && check-dts",
     "lint": "eslint . && prettier --check 'packages/**/*.{js,ts}'",
-    "lint:fix": "eslint . --fix && prettier --check 'packages/**/*.{js,ts}' --write"
+    "lint:fix": "eslint . --fix && prettier --check 'packages/**/*.{js,ts}' --write",
+    "protos": "yarn protos:build && yarn protos:fix",
+    "protos:build": "yarn protos:build:js && yarn protos:build:ts",
+    "protos:build:js": "pbjs -t static-module --keep-case --force-number -w es6 -o packages/protobuf-encoder/generated/message_pb.js packages/protobuf-encoder/message.proto",
+    "protos:build:ts": "pbts -o packages/protobuf-encoder/generated/message_pb.d.ts packages/protobuf-encoder/generated/message_pb.js",
+    "protos:fix": "sed -i '' 's/import \\* as \\$protobuf from \"protobufjs\\/minimal\";/import \\$protobuf from \"protobufjs\\/minimal.js\"\\\n\\$protobuf.util.Long = undefined;\\\n\\$protobuf.configure();/g' packages/protobuf-encoder/generated/message_pb.js"
   },
   "homepage": "https://anycable.io/",
   "repository": "https://github.com/anycable/anycable-client",

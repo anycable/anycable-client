@@ -20,7 +20,10 @@
   },
   "dependencies": {
     "@anycable/core": "^0.6.0",
-    "protobufjs": "^7.2.1",
-    "@ygoe/msgpack": "^1.0.0"
+    "@ygoe/msgpack": "^1.0.0",
+    "protobufjs": "^7.2.1"
+  },
+  "devDependencies": {
+    "protobufjs-cli": "^1.1.1"
   }
 }

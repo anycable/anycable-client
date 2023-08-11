@@ -172,6 +172,7 @@ describe('connect/disconnect', () => {
     let p2 = cable.connect()
 
     cable.connected()
+    cable.connected()
 
     await p1
     await p2

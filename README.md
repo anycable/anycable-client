@@ -281,6 +281,24 @@ import { createCable } from '@anycable/web'
 export default createCable({protocol: 'actioncable-v1-ext-json'})
 ```
 
+#### Using with Protobuf and Msgpack
+
+You can use the extended protocol with Protobuf and Msgpack encoders as follows:
+
+```js
+// cable.js
+import { createCable } from '@anycable/web'
+import { MsgpackEncoder } from '@anycable/msgpack-encoder'
+
+export default createCable({protocol: 'actioncable-v1-ext-msgpack', encoder: new MsgpackEncoder()})
+
+// or for protobuf
+import { createCable } from '@anycable/web'
+import { ProtobufEncoderV2 } from '@anycable/protobuf-encoder'
+
+export default createCable({protocol: 'actioncable-v1-ext-protobuf', encoder: new ProtobufEncoderV2()})
+```
+
 #### Loading initial history on client initialization
 
 To catch up messages broadcasted during the initial page load (or client-side application initialization), you can specify the `historyTimestamp` option to retrieve messages after the specified time along with subscription requests. The value must be a UTC timestamp (the number of seconds). For example:

@@ -1,4 +1,5 @@
 import { Encoder } from '@anycable/core'
+import { off } from 'process'
 
 export interface MessageObject {
   command?: string
@@ -7,6 +8,19 @@ export interface MessageObject {
   identifier?: string
   reason?: string
   reconnect?: boolean
+}
+
+export interface ReplyObject {
+  type?: string
+  message?: object
+  identifier?: string
+  reason?: string
+  reconnect?: boolean
+  stream_id?: string
+  epoch?: string
+  offset?: number
+  restored_ids?: string[]
+  restored?: bool
 }
 
 export class EnumWrapper {
@@ -19,3 +33,5 @@ export class ProtobufEncoder implements Encoder<MessageObject, Uint8Array> {
   encode(msg: MessageObject): Uint8Array
   decode(raw: Uint8Array): MessageObject | void
 }
+
+export class ProtobufEncoderV2 extends ProtobufEncoder {}
