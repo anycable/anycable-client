@@ -2,9 +2,13 @@
 
 ## master
 
+## 0.7.5 (2023-08-10)
+
+- Recognize `actioncable-v1-ext-msgpack` and `actioncable-v1-ext-protobuf` protocols.
+
 - Fix re-subscription attempt to include history request.
 
-## 0.7.4
+## 0.7.4 (2023-08-10)
 
 - Add PONGs support to the extended protocol and allow passing protocol options via `protocolOptions`.
 
