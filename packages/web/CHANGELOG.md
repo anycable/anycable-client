@@ -2,6 +2,10 @@
 
 ## master
 
+## 0.7.1 (2023-08-11)
+
+- Require `@anycable/core` ^0.7.5.
+
 ## 0.7.0 (2023-04-18)
 
 - Add `actioncable-v1-ext-json` protocol support.
