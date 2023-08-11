@@ -86,10 +86,7 @@ export class ActionCableProtocol {
         identifier
       )
 
-      this.cable.send({
-        command: 'subscribe',
-        identifier
-      })
+      this.cable.send(this.buildSubscribeRequest(identifier))
 
       this.maybeExpireSubscribe(id, identifier, retryInterval)
     }, retryInterval)

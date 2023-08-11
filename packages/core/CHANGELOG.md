@@ -2,6 +2,8 @@
 
 ## master
 
+- Fix re-subscription attempt to include history request.
+
 ## 0.7.4
 
 - Add PONGs support to the extended protocol and allow passing protocol options via `protocolOptions`.
