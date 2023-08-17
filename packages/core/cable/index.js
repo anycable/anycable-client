@@ -36,7 +36,7 @@ export class GhostChannel extends Channel {
 const STATE = Symbol('state')
 
 export class Cable {
-  constructor({ transport, protocol, encoder, logger, lazy }) {
+  constructor({ transport, protocol, encoder, logger, lazy, hubOptions }) {
     this.emitter = createNanoEvents()
     this.transport = transport
     this.encoder = encoder
@@ -45,7 +45,7 @@ export class Cable {
 
     this.protocol.attached(this)
 
-    this.hub = new Hub()
+    this.hub = new Hub(hubOptions || {})
 
     this[STATE] = 'idle'
 

@@ -2,6 +2,10 @@
 
 ## master
 
+## 0.7.6 (2023-08-17)
+
+- Add `concurrentSubscribes: false` option to prevent sending multiple `subscribe` commands concurrently.
+
 ## 0.7.5 (2023-08-10)
 
 - Recognize `actioncable-v1-ext-msgpack` and `actioncable-v1-ext-protobuf` protocols.

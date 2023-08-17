@@ -363,3 +363,263 @@ describe('ensureSubscribed / maybeUnsubscribe', () => {
     lock.release()
   })
 })
+
+describe('concurrentSubscribes', () => {
+  let commands: any[]
+  let resolvers: ((value?: any) => void)[]
+
+  let subscribed = async () => {
+    return new Promise<void>(resolve => {
+      resolvers.push(resolve)
+    })
+  }
+
+  beforeEach(() => {
+    commands = []
+    resolvers = []
+    options = {
+      subscribe: async sub => {
+        let lock = await sub.acquire('subscribed')
+        if (lock.canceled) {
+          lock.release()
+          return
+        }
+
+        commands.push({ type: 'subscribe', id: sub.id })
+        await subscribed()
+        sub.notify('connected')
+        lock.release()
+      },
+      unsubscribe: async sub => {
+        let lock = await sub.acquire('unsubscribed')
+        if (lock.canceled) {
+          lock.release()
+          return
+        }
+
+        commands.push({ type: 'unsubscribe', id: sub.id })
+        await waitSec()
+        sub.notify('closed')
+        lock.release()
+      }
+    }
+  })
+
+  describe('when true', () => {
+    it('allows subscribing concurrently', async () => {
+      subscription = hub.subscriptions.create('a', options)
+      let another = hub.subscriptions.create('b', options)
+      another.add(channel)
+
+      subscription.ensureSubscribed()
+      another.ensureSubscribed()
+
+      // subscriber is an async function
+      await Promise.resolve()
+
+      expect(commands).toHaveLength(2)
+
+      expect(commands).toEqual([
+        { type: 'subscribe', id: 'a' },
+        { type: 'subscribe', id: 'b' }
+      ])
+
+      resolvers[0]()
+      resolvers[1]()
+
+      await channel.ensureSubscribed()
+    })
+
+    it('subscribe + subscribe(b) + unsubscribe(b)', async () => {
+      subscription = hub.subscriptions.create('a', options)
+      let another = hub.subscriptions.create('b', options)
+      another.add(channel)
+
+      subscription.ensureSubscribed()
+      another.ensureSubscribed()
+
+      another.remove(channel)
+      another.maybeUnsubscribe()
+
+      // subscriber is an async function
+      await Promise.resolve()
+
+      resolvers.forEach(r => {
+        r()
+      })
+
+      await waitSec()
+
+      expect(commands).toHaveLength(3)
+      expect(commands).toEqual([
+        { type: 'subscribe', id: 'a' },
+        { type: 'subscribe', id: 'b' },
+        { type: 'unsubscribe', id: 'b' }
+      ])
+    })
+
+    it('multiple locks', async () => {
+      subscription = hub.subscriptions.create('a', options)
+      let another = hub.subscriptions.create('b', options)
+      another.add(channel)
+
+      subscription.ensureSubscribed()
+      another.ensureSubscribed()
+
+      subscription.acquire('subscribed').then(() => {
+        commands.push({ type: 'lock', id: 'a' })
+      })
+
+      // subscriber is an async function
+      await Promise.resolve()
+
+      expect(commands).toHaveLength(2)
+
+      resolvers[0]()
+
+      await waitSec()
+      expect(commands).toHaveLength(3)
+
+      expect(commands).toEqual([
+        { type: 'subscribe', id: 'a' },
+        { type: 'subscribe', id: 'b' },
+        { type: 'lock', id: 'a' }
+      ])
+
+      resolvers[1]()
+
+      await channel.ensureSubscribed()
+    })
+
+    it('unsubscribed can be acquired concurrently', async () => {
+      let a = hub.subscriptions.create('a', options)
+      let b = hub.subscriptions.create('b', options)
+      let c = hub.subscriptions.create('c', options)
+
+      let lockA = await a.acquire('unsubscribed')
+      let lockB = await b.acquire('subscribed')
+      let lockC = await c.acquire('unsubscribed')
+
+      lockC.release()
+      lockB.release()
+      lockA.release()
+    })
+  })
+
+  describe('when false', () => {
+    beforeEach(() => {
+      hub = new Hub({ concurrentSubscribes: false })
+    })
+
+    it('subscribes one by one', async () => {
+      subscription = hub.subscriptions.create('a', options)
+      let another = hub.subscriptions.create('b', options)
+      another.add(channel)
+
+      subscription.ensureSubscribed()
+      another.ensureSubscribed()
+
+      // subscriber is an async function
+      await Promise.resolve()
+      await Promise.resolve()
+
+      expect(commands).toHaveLength(1)
+
+      expect(commands).toEqual([{ type: 'subscribe', id: 'a' }])
+
+      resolvers[0]()
+
+      await waitSec()
+
+      expect(commands).toHaveLength(2)
+      expect(commands).toEqual([
+        { type: 'subscribe', id: 'a' },
+        { type: 'subscribe', id: 'b' }
+      ])
+
+      resolvers[1]()
+
+      await channel.ensureSubscribed()
+    })
+
+    it('subscribe + subscribe(b) + unsubscribe(b)', async () => {
+      subscription = hub.subscriptions.create('a', options)
+      let another = hub.subscriptions.create('b', options)
+      another.add(channel)
+
+      subscription.ensureSubscribed()
+      another.ensureSubscribed()
+
+      another.remove(channel)
+      another.maybeUnsubscribe()
+
+      // subscriber is an async function
+      await Promise.resolve()
+
+      resolvers.forEach(r => {
+        r()
+      })
+
+      await waitSec()
+
+      expect(commands).toHaveLength(1)
+      expect(commands).toEqual([{ type: 'subscribe', id: 'a' }])
+    })
+
+    it('multiple locks', async () => {
+      subscription = hub.subscriptions.create('a', options)
+      let another = hub.subscriptions.create('b', options)
+      another.add(channel)
+
+      subscription.ensureSubscribed()
+      another.ensureSubscribed()
+
+      // This lock must be acquire after the second subscription is done
+      subscription.acquire('subscribed').then(async () => {
+        await waitSec()
+        commands.push({ type: 'lock', id: 'a' })
+      })
+
+      // subscriber is an 2x-async function
+      await waitSec()
+
+      expect(commands).toHaveLength(1)
+
+      resolvers[0]()
+
+      await waitSec()
+      expect(commands).toHaveLength(2)
+
+      expect(commands).toEqual([
+        { type: 'subscribe', id: 'a' },
+        { type: 'subscribe', id: 'b' }
+      ])
+
+      resolvers[1]()
+
+      await waitSec()
+
+      expect(commands).toEqual([
+        { type: 'subscribe', id: 'a' },
+        { type: 'subscribe', id: 'b' },
+        { type: 'lock', id: 'a' }
+      ])
+
+      await channel.ensureSubscribed()
+    })
+
+    it('unsubscribed can be acquired concurrently', async () => {
+      let a = hub.subscriptions.create('a', options)
+      let b = hub.subscriptions.create('b', options)
+      let c = hub.subscriptions.create('c', options)
+
+      let lockA = await a.acquire('unsubscribed')
+      let lockB = await b.acquire('subscribed')
+      let lockC = await c.acquire('unsubscribed')
+
+      lockC.release()
+      lockB.release()
+      lockA.release()
+    })
+  })
+})

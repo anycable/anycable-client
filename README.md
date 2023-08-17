@@ -597,6 +597,50 @@ channel.on('message', msg => console.log("component two received message", `${ms
 
 Which way to choose is up to the developer. From the library point of view, both are viable and supported.
 
+## Fine-tuning for higher loads 📈
+
+### Customizing PING interval
+
+The default PING interval is 3 seconds. When server handles tons of connections, sending pings that often might result in a noticeable overhead.
+
+This value is defined by the WebSocket server. If you use AnyCable, you can customize it via the `--ping_interval` parameter. Also, since [v1.4.3](https://github.com/anycable/anycable-go/releases/tag/v1.4.3), AnyCable-Go allows you to configure a ping interval for an individual connection by adding a query param to the connection URL (`?pi=10`).
+
+We recommend increasing the ping interval for high-load applications.
+
+You MUST also update the client-side configuration to use the same value (so the client won't decide to reconnect due to missing pings):
+
+```js
+export default createCable({
+  pingInterval: 10 // 10 seconds
+})
+```
+
+### Customizing subscription confirmation timeout
+
+By default, we expect a subscription confirmation (or rejection) to arrive **within 5 seconds**. If it doesn't happen, AnyCable client re-issues the subscription request and waits for another 5 seconds. If the second attempt fails, the **subscription is considered to be rejected** due to timeout.
+
+Under load (usually, during _connectaion avalanches_, i.e., when most clients are re-connecting), the server might not be able to respond within 5 seconds (and even 10 seconds). In that case, you can increase the retry interval:
+
+```js
+export default createCable({
+  protocolOptions: {
+    subscribeRetryInterval: 10 // 10 seconds
+  }
+})
+```
+
+### Linearizing subscription requests
+
+Another way to reduce the load on the server and avoid subscription timeouts is to **linearize subscription requests**. By default, AnyCable client sends subscription requests concurrently. However, you have many active subscriptions, this might result in a huge number of requests sent to the server at the same time during re-connections.
+
+To smooth the load, you can disable concurrent subscription requests (so, every next subscription request would be sent only after the previous one is confirmed or rejected):
+
+```js
+export default createCable({
+  concurrentSubscribes: false
+});
+```
+
 ## Further reading
 
 - [Architecture](./docs/architecture.md)

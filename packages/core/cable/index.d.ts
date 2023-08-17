@@ -8,7 +8,7 @@ import {
 } from '../channel/index.js'
 import { Transport } from '../transport/index.js'
 import { Protocol, ReasonError } from '../protocol/index.js'
-import { Hub } from '../hub/index.js'
+import { Hub, HubOptions } from '../hub/index.js'
 import { Encoder } from '../encoder/index.js'
 import { Logger } from '../logger/index.js'
 import { Monitor } from '../monitor/index.js'
@@ -31,6 +31,7 @@ export type CableOptions = {
   encoder: Encoder
   logger?: Logger
   lazy?: boolean
+  hubOptions?: HubOptions
 }
 
 export type CableState =

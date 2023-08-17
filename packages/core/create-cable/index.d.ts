@@ -58,6 +58,8 @@ export interface CreateOptions<P extends ProtocolID | Protocol> {
   maxReconnectAttempts: number
 
   historyTimestamp: number | false
+
+  concurrentSubscribes: boolean
 }
 
 export const DEFAULT_OPTIONS: Partial<CreateOptions>

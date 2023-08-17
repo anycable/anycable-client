@@ -50,10 +50,16 @@ export class Subscription {
   pending(state: subscriptionState): Promise<void>
 }
 
+export type HubOptions = Partial<{
+  concurrentSubscribes: bool
+}>
+
 export class Hub {
   get subscriptions(): Subscriptions
   get channels(): Channel[]
   get size(): number
+
+  constructor(opts?: HubOptions)
 
   subscribe(id: string, remoteId: string): void
   unsubscribe(id: string): void

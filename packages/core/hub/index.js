@@ -101,6 +101,10 @@ export class Subscription {
       await top.promise
     }
 
+    if (this.gvl) {
+      await this.gvl.acquire(lock, intent)
+    }
+
     lock.acquired = true
     return lock
   }
@@ -135,8 +139,33 @@ export class Subscription {
   }
 }
 
-export class Subscriptions {
+// Use to limit concurrent actions
+class GlobalLock {
   constructor() {
+    this.queue = []
+  }
+
+  async acquire(lock, intent) {
+    // We currently only limit subscribe commands
+    if (intent !== 'subscribed') return
+
+    this.queue.push(
+      lock.promise.then(() => {
+        this.queue.splice(this.queue.indexOf(lock), 1)
+      })
+    )
+
+    if (this.queue.length > 1) {
+      await this.queue[this.queue.length - 2]
+    }
+  }
+}
+
+export class Subscriptions {
+  constructor(opts) {
+    if (opts.concurrentSubscribes === false) {
+      this.glv = new GlobalLock()
+    }
     this._subscriptions = {}
     this._localToRemote = {}
   }
@@ -154,6 +183,7 @@ export class Subscriptions {
     sub.remoteId = this._localToRemote[id]
     sub.subscriber = subscribe
     sub.unsubscriber = unsubscribe
+    sub.gvl = this.glv
 
     return sub
   }
@@ -172,8 +202,8 @@ export class Subscriptions {
 }
 
 export class Hub {
-  constructor() {
-    this.subscriptions = new Subscriptions()
+  constructor(opts = {}) {
+    this.subscriptions = new Subscriptions(opts)
     this._pendingMessages = []
     this._remoteToLocal = {}
   }

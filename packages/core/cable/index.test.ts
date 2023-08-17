@@ -1437,6 +1437,66 @@ describe('channels', () => {
       expect(cable.hub.size).toBe(0)
     })
   })
+
+  describe('with concurrentSubscribes=false', () => {
+    let anotherChannel: TestChannel
+
+    beforeEach(() => {
+      anotherChannel = new TestChannel({ id: '27' })
+
+      cable = new Cable({
+        protocol,
+        encoder,
+        logger,
+        transport,
+        hubOptions: { concurrentSubscribes: false }
+      })
+
+      cable.connect()
+      cable.connected()
+    })
+
+    it('concurrent subscribe commands are executed sequentially', async () => {
+      let firstSubResolver!: (value: string) => void
+      let firstSubConfirmed = new Promise<string>(resolve => {
+        firstSubResolver = resolve
+      })
+
+      let secondSubResolver!: (value: string) => void
+      let secondSubConfirmed = new Promise<string>(resolve => {
+        secondSubResolver = resolve
+      })
+
+      let subscribeSpy = jest
+        .spyOn(protocol, 'subscribe')
+        .mockImplementation((identifier, params) => {
+          if ((params as any).id === '26') {
+            return firstSubConfirmed
+          } else {
+            return secondSubConfirmed
+          }
+        })
+
+      let p1 = cable.subscribe(channel).ensureSubscribed()
+      let p2 = cable.subscribe(anotherChannel).ensureSubscribed()
+
+      // Subscribes are sent asynchronously, so we need to continue execution after they're processed
+      await Promise.resolve()
+      await Promise.resolve()
+
+      expect(subscribeSpy).toHaveBeenCalledTimes(1)
+
+      firstSubResolver('test_1')
+
+      await p1
+
+      secondSubResolver('test_2')
+
+      await p2
+
+      expect(subscribeSpy).toHaveBeenCalledTimes(2)
+    })
+  })
 })
 
 it('logs encode errors', () => {

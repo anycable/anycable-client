@@ -19,7 +19,7 @@ export {
   ProcessedMessage,
   StaleConnectionError
 } from './protocol/index.js'
-export { Hub, Subscription, Subscriptions } from './hub/index.js'
+export { Hub, Subscription, Subscriptions, HubOptions } from './hub/index.js'
 export { Logger, LogLevel, BaseLogger, NoopLogger } from './logger/index.js'
 export { stringifyParams } from './stringify-params/index.js'
 
