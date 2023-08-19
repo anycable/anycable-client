@@ -611,7 +611,7 @@ You MUST also update the client-side configuration to use the same value (so the
 
 ```js
 export default createCable({
-  pingInterval: 10 // 10 seconds
+  pingInterval: 10000 // 10 seconds
 })
 ```
 
@@ -624,7 +624,7 @@ Under load (usually, during _connectaion avalanches_, i.e., when most clients ar
 ```js
 export default createCable({
   protocolOptions: {
-    subscribeRetryInterval: 10 // 10 seconds
+    subscribeRetryInterval: 10000 // 10 seconds
   }
 })
 ```
