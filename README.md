@@ -53,7 +53,7 @@ createCable('ws://cable.example.com/my_cable')
 
 ### Channels
 
-AnyCable client provide multiple ways to subscribe to channels: class-based subscriptions and _headless_ subscriptions.
+AnyCable client provides multiple ways to subscribe to channels: class-based subscriptions and _headless_ subscriptions.
 
 #### Class-based subscriptions
 
@@ -124,7 +124,7 @@ channel.disconnect()
 
 **IMPORTANT:** `cable.subscribe(channel)` is optimistic: it doesn't require the cable to be connected, and waits for it to connect before performing a subscription request. Even if the cable got disconnected before subscription was confirmed or rejected, a new attempt is made as soon as the connectivity restored.
 
-Calling `channel.disconnect()` removes the _subscription_ for this channel right away and send `unsubscribe` request asynchrounously; if there is no connectivity, we asume that the server takes care of peforming unsubscribe tasks, so we don't need to retry them.
+Calling `channel.disconnect()` removes the _subscription_ for this channel right away and send `unsubscribe` request asynchronously; if there is no connectivity, we assume that the server takes care of performing unsubscribe tasks, so we don't need to retry them.
 
 #### Headless subscriptions
 
@@ -524,7 +524,7 @@ let cableWithHeader = createCable(url, {
 
 ## Duplicating or reusing channel instances?
 
-It is safe to call `cable.subscribe(channel)` multiple times—only a single subscription (from the protocol point of view) is made, i.e., this action is idempotent. At the same time, it's safe to have multuple channel instances with the same identifiers client-side—only a single _real_ subscription would be made.
+It is safe to call `cable.subscribe(channel)` multiple times—only a single subscription (from the protocol point of view) is made, i.e., this action is idempotent. At the same time, it's safe to have multiple channel instances with the same identifiers client-side—only a single _real_ subscription would be made.
 
 Let's consider an example. Suppose you have two _components_ relying on the same channel:
 
@@ -619,7 +619,7 @@ export default createCable({
 
 By default, we expect a subscription confirmation (or rejection) to arrive **within 5 seconds**. If it doesn't happen, AnyCable client re-issues the subscription request and waits for another 5 seconds. If the second attempt fails, the **subscription is considered to be rejected** due to timeout.
 
-Under load (usually, during _connectaion avalanches_, i.e., when most clients are re-connecting), the server might not be able to respond within 5 seconds (and even 10 seconds). In that case, you can increase the retry interval:
+Under load (usually, during _connection avalanches_, i.e., when most clients are re-connecting), the server might not be able to respond within 5 seconds (and even 10 seconds). In that case, you can increase the retry interval:
 
 ```js
 export default createCable({
