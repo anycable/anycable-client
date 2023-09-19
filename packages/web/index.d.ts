@@ -1,4 +1,4 @@
-import {
+export {
   CreateOptions,
   Cable,
   ActionCableConsumer,
