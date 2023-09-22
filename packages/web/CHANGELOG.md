@@ -2,6 +2,12 @@
 
 ## master
 
+## 0.7.7 (2023-09-21)
+
+- Require `@anycable/core` ^0.7.7.
+
+- Fix exporting core Cable types.
+
 ## 0.7.2 (2023-08-17)
 
 - Require `@anycable/core` ^0.7.6.
