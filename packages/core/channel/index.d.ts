@@ -50,7 +50,7 @@ export class Channel<
   ParamsType extends ChannelParamsMap = {},
   MessageType extends Message = Message,
   EventsType extends ChannelEvents<MessageType> = ChannelEvents<MessageType>,
-  ActionsType = ChannelActions
+  ActionsType = any
 > {
   static readonly identifier: string
 

@@ -2,6 +2,10 @@
 
 ## master
 
+## 0.7.8 (2023-09-21)
+
+- Fix default ActionsType type (any). ([@palkan][])
+
 ## 0.7.7 (2023-09-21)
 
 - Add ActionsType to `Channel` class. ([@palkan][])

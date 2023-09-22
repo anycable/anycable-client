@@ -87,3 +87,6 @@ export class AnotherTypedChannel extends Channel<
     this.perform('ping', { time: 42 })
   }
 }
+
+let che: Channel
+che = new AnotherTypedChannel()
