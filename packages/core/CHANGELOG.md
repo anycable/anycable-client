@@ -2,6 +2,10 @@
 
 ## master
 
+- Add ActionsType to `Channel` class. ([@palkan][])
+
+  Now you can specify which actions can be _performed_ by the channel.
+
 ## 0.7.6 (2023-08-17)
 
 - Add `concurrentSubscribes: false` option to prevent sending multiple `subscribe` commands concurrently.

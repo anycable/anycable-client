@@ -13,7 +13,7 @@ Multiple reasons that forced us to implement an alternative client library for A
 
 - [AnyCable Pro][pro] features support (e.g., binary formats).
 - Multi-platform out-of-the-box (web, workers, React Native).
-- TypeScript support.
+- [TypeScript support](#typescript-support)
 - Revisited client-side APIs.
 - [Testability](#testing)
 - Future [protocol extensions/modifications support](#extended-action-cable-protocol).
@@ -211,7 +211,13 @@ interface Events extends ChannelEvents<Message> {
   typing: (msg: TypingMessage) => void
 }
 
-export class ChatChannel extends Channel<Params,Message,Events> {
+// Which actions can be performed on this channel
+interface Actions {
+  speak: (msg: ChatMessage) => void
+  typing: () => void
+}
+
+export class ChatChannel extends Channel<Params,Message,Events,Actions> {
   static identifier = 'ChatChannel'
 
   receive(message: Message) {
@@ -220,6 +226,14 @@ export class ChatChannel extends Channel<Params,Message,Events> {
     }
 
     super.receive(message)
+  }
+
+  sendMessage(msg: ChatMessage) {
+    return this.perform('speak', msg)
+  }
+
+  sendTyping() {
+    return this.perform('typing')
   }
 }
 ```
@@ -238,6 +252,14 @@ channel.on('typing', (msg: TypingMessage) => {}) //=> OK
 
 channel.on('typing', (msg: string) => {}) //=> NOT OK: 'msg' type mismatch
 channel.on('types', (msg: TypingMessage) => {}) //=> NOT OK: unknown event
+
+channel.perform('speak', {type: 'message', username: 'John', userId: '42'}) //=> OK
+channel.perform('speak', {body: 'hello!'}) //=> NOT OK: incorrect message type
+
+channel.perform('typing') //=> OK
+channel.perform('typing', {type: 'typing', username: 'John'}) //=> NOT OK: no payload expected
+
+channel.perform('type') //=> NOT OK: unknown action
 ```
 
 ### Supported protocols

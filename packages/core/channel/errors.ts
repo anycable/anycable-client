@@ -56,14 +56,34 @@ interface CustomEvents extends ChannelEvents<{ tupe: number }> {
 // THROWS Type 'CustomEvents' does not satisfy the constraint 'ChannelEvents<{ type: string; }>'
 export class TypedChannel extends Channel<{}, { type: string }, CustomEvents> {}
 
+interface ChannelActions {
+  sendMessage: (data: { message: string }) => void
+  ping: () => void
+}
+
 export class AnotherTypedChannel extends Channel<
   {},
   { tupe: number },
-  CustomEvents
+  CustomEvents,
+  ChannelActions
 > {
   trigger() {
     this.emit('custom')
     // THROWS Argument of type
     this.emit('kustom')
+
+    // Should not throw
+    this.perform('sendMessage', { message: 'hello' })
+
+    this.perform('ping')
+
+    // THROWS Type 'number' is not assignable to type 'string'
+    this.perform('sendMessage', { message: 42 })
+
+    // THROWS Argument of type
+    this.perform('newMessage', { message: 'hello' })
+
+    // THROWS Expected 1 arguments, but got 2
+    this.perform('ping', { time: 42 })
   }
 }

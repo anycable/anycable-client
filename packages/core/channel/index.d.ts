@@ -39,10 +39,18 @@ export interface ChannelEvents<T> {
   message: (msg: T, meta?: MessageMeta) => void
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export type ActionPayload = Record<string, any>
+
+export interface ChannelActions {
+  [key: string]: (...args: ActionPayload[]) => void
+}
+
 export class Channel<
   ParamsType extends ChannelParamsMap = {},
   MessageType extends Message = Message,
-  EventsType extends ChannelEvents<MessageType> = ChannelEvents<MessageType>
+  EventsType extends ChannelEvents<MessageType> = ChannelEvents<MessageType>,
+  ActionsType = ChannelActions
 > {
   static readonly identifier: string
 
@@ -56,7 +64,14 @@ export class Channel<
   attached(receiver: Receiver): boolean
 
   disconnect(): void
-  perform(action: string, payload?: object): Promise<MessageType | void>
+  perform<A extends keyof ActionsType>(
+    action: A,
+    ...payload: ActionsType extends ChannelActions
+      ? [ActionPayload?]
+      : ActionsType[A] extends () => void
+      ? []
+      : [Parameters<ActionsType[A]>[0]]
+  ): Promise<MessageType | void>
   send(payload: object): Promise<MessageType | void>
   receive(msg: MessageType, meta?: MessageMeta): void
 

@@ -4,6 +4,10 @@
 
 ## master
 
+- Add ActionsType to `Channel` class. ([@palkan][])
+
+  Now you can specify which actions can be _performed_ by the channel.
+
 ## 0.7.1 (2023-06-28)
 
 - Add FallbackTransport and a new `@anycable/long-polling` package.
