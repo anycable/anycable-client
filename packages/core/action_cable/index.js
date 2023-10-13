@@ -153,6 +153,10 @@ export class ActionCableProtocol {
     if (type === 'ping') return this.cable.keepalive(msg.message)
 
     if (type === 'welcome') {
+      let sessionId = msg.sid
+
+      if (sessionId) this.cable.setSessionId(sessionId)
+
       return this.cable.connected()
     }
 

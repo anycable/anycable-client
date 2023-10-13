@@ -36,6 +36,14 @@ describe('connection', () => {
     expect(cable.mailbox).toHaveLength(0)
   })
 
+  it('welcome with sid', () => {
+    protocol.receive({ type: 'welcome', sid: '20231013' })
+
+    expect(cable.state).toEqual('connected')
+    expect(cable.mailbox).toHaveLength(0)
+    expect(cable.sessionId).toEqual('20231013')
+  })
+
   it('disconnect', () => {
     protocol.receive({ type: 'disconnect' })
 
