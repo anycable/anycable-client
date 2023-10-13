@@ -2,6 +2,10 @@
 
 ## master
 
+## 0.7.9 (2023-10-13)
+
+- Set `cable.sessionId` when using Action Cable (base) protocol. ([@palkan][])
+
 ## 0.7.8 (2023-09-21)
 
 - Fix default ActionsType type (any). ([@palkan][])
