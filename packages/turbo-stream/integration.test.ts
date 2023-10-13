@@ -1,7 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws'
 import { createCable } from '@anycable/core'
 
-import { start } from './index.js'
+import { start, DEFAULT_SOCKET_HEADER } from './index.js'
 
 let port: number
 let wss: WebSocketServer
@@ -168,5 +168,67 @@ describe('<turbo-stream-source>', () => {
 
     expect(cable.hub.channels.length).toEqual(0)
     expect(receivedByServer.length).toEqual(0)
+  })
+
+  it('with requestSocketIDHeader=true', async () => {
+    let cable = createCable(`ws://localhost:${port}`)
+    cable.setSessionId('42')
+
+    start(cable, {
+      requestSocketIDHeader: true,
+      tagName: 'turbo-cable-stream-source-socket-id'
+    })
+
+    let event = new CustomEvent('turbo:before-fetch-request', {
+      detail: {
+        fetchOptions: {
+          headers: {}
+        }
+      }
+    })
+
+    document.dispatchEvent(event)
+
+    expect(
+      (event.detail.fetchOptions.headers as any)[DEFAULT_SOCKET_HEADER]
+    ).toEqual('42')
+
+    let eventWithHeader = new CustomEvent('turbo:before-fetch-request', {
+      detail: {
+        fetchOptions: {
+          headers: {
+            'X-Socket-ID': '123'
+          }
+        }
+      }
+    })
+
+    expect(eventWithHeader.detail.fetchOptions.headers['X-Socket-ID']).toEqual(
+      '123'
+    )
+  })
+
+  it('with requestSocketIDHeader=<custom-header-name>', async () => {
+    let cable = createCable(`ws://localhost:${port}`)
+    cable.setSessionId('42')
+
+    start(cable, {
+      requestSocketIDHeader: 'X-TURBO-SOCKET',
+      tagName: 'turbo-cable-stream-source-custom-socket-id'
+    })
+
+    let event = new CustomEvent('turbo:before-fetch-request', {
+      detail: {
+        fetchOptions: {
+          headers: {}
+        }
+      }
+    })
+
+    document.dispatchEvent(event)
+
+    expect(
+      (event.detail.fetchOptions.headers as any)['X-TURBO-SOCKET']
+    ).toEqual('42')
   })
 })

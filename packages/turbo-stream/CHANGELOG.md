@@ -2,6 +2,8 @@
 
 ## master
 
+- Add `requestSocketIDHeader` option to automatically add `X-Socket-ID` header with the current session ID to Turbo requests. ([@palkan][])
+
 ## 0.3.1 (2023-02-15)
 
 - Add `connected` state to stream source element. ([@palkan][])

@@ -34,6 +34,20 @@ One subtle but important difference is that **`@anycable/turbo-stream` does not 
 
 ## Advanced configuration
 
+### Attaching `X-Socket-ID` header to Turbo requests
+
+You can automatically add a header to all Turbo requests with the current socket session ID. This can be used to perform **broadcasts to others** (see [Rails integration docs](https://docs.anycable.io/rails/getting_started?id=action-cable-extensions)):
+
+```js
+import { start } from "@anycable/turbo-stream"
+import cable from "cable"
+
+start(cable, { requestSocketIDHeader: true })
+
+// You can also specify a custom header name
+// start(cable, { requestSocketIDHeader: 'X-My-Socket-ID' })
+```
+
 ### Custom channel classes
 
 You define a custom JS channel class for Turbo Streams subscriptions:
