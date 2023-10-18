@@ -2,6 +2,10 @@
 
 ## master
 
+- Treat any incoming message as keepalive. ([@palkan][])
+
+  See the corresponding [Rails PR](https://github.com/rails/rails/pull/49168).
+
 ## 0.7.9 (2023-10-13)
 
 - Set `cable.sessionId` when using Action Cable (base) protocol. ([@palkan][])

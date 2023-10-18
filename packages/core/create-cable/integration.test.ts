@@ -28,7 +28,7 @@ class CableTransport extends TestTransport {
     this.subscriptions = {}
     this.sendLater({ type: 'welcome' })
     this.pingTid = setInterval(() => {
-      this.sendLater({ type: 'ping' })
+      this.sendLater({ type: 'ping', message: Date.now() })
     }, 500)
     return promise
   }
@@ -150,7 +150,8 @@ describe('Action Cable protocol communication', () => {
         reject(Error('Timed out to received pings'))
       }, 1000)
 
-      cable.on('keepalive', () => {
+      cable.on('keepalive', msg => {
+        if (!msg) return
         clearTimeout(tid)
         resolve()
       })
@@ -176,7 +177,9 @@ describe('Action Cable protocol communication', () => {
         reject(Error('Timed out to received pings'))
       }, 1000)
 
-      cable.on('keepalive', async () => {
+      cable.on('keepalive', async msg => {
+        if (!msg) return
+
         clearTimeout(tid)
 
         await waitSec(0)

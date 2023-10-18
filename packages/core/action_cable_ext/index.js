@@ -37,16 +37,6 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
       return super.receive(msg)
     }
 
-    if (type === 'confirm_history') {
-      this.logger.debug('history result received', msg)
-      return
-    }
-
-    if (type === 'reject_history') {
-      this.logger.warn('failed to retrieve history', msg)
-      return
-    }
-
     if (type === 'ping') {
       if (!this.restoreSince === false) {
         this.restoreSince = now()
@@ -57,6 +47,19 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
       }
 
       return this.cable.keepalive(msg.message)
+    } else {
+      // Any incoming message may be considered as a heartbeat
+      this.cable.keepalive()
+    }
+
+    if (type === 'confirm_history') {
+      this.logger.debug('history result received', msg)
+      return
+    }
+
+    if (type === 'reject_history') {
+      this.logger.warn('failed to retrieve history', msg)
+      return
     }
 
     if (type === 'welcome') {

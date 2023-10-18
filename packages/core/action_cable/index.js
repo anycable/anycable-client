@@ -150,7 +150,12 @@ export class ActionCableProtocol {
 
     let { type, identifier, message, reason, reconnect } = msg
 
-    if (type === 'ping') return this.cable.keepalive(msg.message)
+    if (type === 'ping') {
+      return this.cable.keepalive(msg.message)
+    } else {
+      // Any incoming message may be considered as a heartbeat
+      this.cable.keepalive()
+    }
 
     if (type === 'welcome') {
       let sessionId = msg.sid
