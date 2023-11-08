@@ -2,6 +2,8 @@
 
 ## master
 
+## 0.7.10 (2023-11-07)
+
 - Fix subscription state tracking when recovered. ([@palkan][])
 
 - Treat any incoming message as keepalive. ([@palkan][])
