@@ -21,7 +21,8 @@ export class Subscription {
   }
 
   notify(state, ...args) {
-    this.state = state
+    // TODO: Should we get rid of restored state completely?
+    this.state = state === 'restored' ? 'connected' : state
 
     if (args.length === 1) {
       this.channels.forEach(channel => channel[state](args[0]))

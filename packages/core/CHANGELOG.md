@@ -2,6 +2,8 @@
 
 ## master
 
+- Fix subscription state tracking when recovered. ([@palkan][])
+
 - Treat any incoming message as keepalive. ([@palkan][])
 
   See the corresponding [Rails PR](https://github.com/rails/rails/pull/49168).

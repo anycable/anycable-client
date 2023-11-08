@@ -4,6 +4,8 @@
 
 ## master
 
+- Fix subscription state tracking when recovered. ([@palkan][])
+
 - Add ActionsType to `Channel` class. ([@palkan][])
 
   Now you can specify which actions can be _performed_ by the channel.

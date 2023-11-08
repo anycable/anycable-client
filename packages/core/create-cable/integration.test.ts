@@ -7,6 +7,7 @@ import {
   BaseLogger,
   DisconnectedError,
   ActionCableProtocol,
+  ActionCableExtendedProtocol,
   CreateOptions
 } from '../index.js'
 import { TestTransport } from '../transport/testing'
@@ -16,6 +17,8 @@ class CableTransport extends TestTransport {
   pingTid?: any
   subscriptions: any
   pongsCount: number = 0
+  nextSid: string = ''
+  nextRestoredIds: string[] | null = null
 
   constructor(url: string) {
     super(url)
@@ -26,7 +29,23 @@ class CableTransport extends TestTransport {
   open() {
     let promise = super.open()
     this.subscriptions = {}
-    this.sendLater({ type: 'welcome' })
+    if (this.nextSid) {
+      let sid = this.nextSid
+      this.nextSid = ''
+      if (this.nextRestoredIds) {
+        this.sendLater({
+          type: 'welcome',
+          sid,
+          restored: true,
+          restored_ids: this.nextRestoredIds
+        })
+        this.nextRestoredIds = null
+      } else {
+        this.sendLater({ type: 'welcome', sid })
+      }
+    } else {
+      this.sendLater({ type: 'welcome' })
+    }
     this.pingTid = setInterval(() => {
       this.sendLater({ type: 'ping', message: Date.now() })
     }, 500)
@@ -36,7 +55,7 @@ class CableTransport extends TestTransport {
   send(data: string) {
     let msg = JSON.parse(data)
 
-    this.sent.push(msg)
+    this.sent.push(data)
 
     let identifier = msg.identifier
     let command = msg.command
@@ -397,6 +416,77 @@ describe('Action Cable protocol communication', () => {
 
       expect(channel.state).toBe('closed')
       expect(cable.hub.size).toBe(0)
+    })
+  })
+
+  describe('extended protocol', () => {
+    beforeEach(() => {
+      transport = new CableTransport('ws://anycable.test')
+
+      opts = {
+        protocol: 'actioncable-v1-ext-json',
+        transport
+      }
+
+      if (process.env.DEBUG === '1') {
+        opts.logger = new Logger('debug')
+      }
+
+      cable = createCable('ws://example', opts)
+
+      let acprotocol = cable.protocol as ActionCableExtendedProtocol
+      acprotocol.subscribeRetryInterval = 2000
+    })
+
+    // Ref https://github.com/anycable/anycable-client/issues/30
+    it('subscribed - disconnected - recovered - unsubscribe + subscribe', async () => {
+      // Make sure we send SID
+      transport.nextSid = '42'
+
+      await cable.connect()
+
+      let channel = cable.subscribeTo('TurboChannel', { stream_id: '1' })
+      await channel.ensureSubscribed()
+
+      expect(channel.state).toBe('connected')
+      expect(cable.hub.size).toBe(1)
+
+      cable.disconnected(new DisconnectedError('whateva'))
+
+      transport.nextSid = '43'
+      transport.nextRestoredIds = [channel.identifier]
+
+      await cable.connect()
+
+      channel.disconnect()
+      let newChannel = cable.subscribeTo('TurboChannel', { stream_id: '1' })
+
+      // Wait for all promises to resolve
+      await cable.hub.subscriptions
+        .get(channel.identifier)!
+        .pending('subscribed')
+      await cable.hub.subscriptions
+        .get(channel.identifier)!
+        .pending('unsubscribed')
+
+      await Promise.resolve()
+
+      expect(newChannel.state).toBe('connected')
+      expect(cable.hub.size).toBe(1)
+
+      let subscribeCommands = transport.sent.filter(
+        (msg: string | Uint8Array) => {
+          return (msg as string).match(/command":"subscribe/)
+        }
+      )
+      let historyCommands = transport.sent.filter(
+        (msg: string | Uint8Array) => {
+          return (msg as string).match(/command":"history/)
+        }
+      )
+
+      expect(historyCommands).toHaveLength(1)
+      expect(subscribeCommands).toHaveLength(1)
     })
   })
 
