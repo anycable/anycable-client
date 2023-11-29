@@ -4,6 +4,8 @@
 
 ## master
 
+## 0.7.7 (2023-09-21)
+
 - Add ActionsType to `Channel` class. ([@palkan][])
 
   Now you can specify which actions can be _performed_ by the channel.

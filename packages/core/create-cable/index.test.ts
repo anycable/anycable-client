@@ -516,4 +516,26 @@ describe('createConsumer', () => {
       data: JSON.stringify({ type: 'history' })
     })
   })
+
+  it('subscriptions.findAll', async () => {
+    let consumer = createConsumer('ws://example')
+    let cable = consumer.cable
+    cable.connected()
+
+    expect(cable.protocol).toBeInstanceOf(ActionCableProtocol)
+
+    jest.spyOn(cable.protocol, 'subscribe').mockImplementation(() => {
+      return Promise.resolve('2023')
+    })
+
+    let sub1 = consumer.subscriptions.create('some_channel')
+    consumer.subscriptions.create('another_channel')
+
+    let subs = consumer.subscriptions.findAll(sub1.channel.identifier)
+
+    expect(subs).toEqual([sub1])
+
+    let nosubs = consumer.subscriptions.findAll('no_channel')
+    expect(nosubs).toEqual([])
+  })
 })

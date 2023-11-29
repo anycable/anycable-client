@@ -2,6 +2,10 @@
 
 ## master
 
+## 0.7.11 (2023-11-29)
+
+- Implement `subscriptions.findAll` for Action Cable compat. ([@palkan][])
+
 ## 0.7.10 (2023-11-07)
 
 - Fix subscription state tracking when recovered. ([@palkan][])

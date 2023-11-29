@@ -94,6 +94,7 @@ export class ActionCableSubscriptions {
     mixin: ActionCableMixin<T>
   ): ActionCableSubscription & M
   create(params: ChannelParamsMap | string): ActionCableSubscription
+  findAll(identifier: string): ActionCableSubscription[]
 }
 
 export class ActionCableConsumer {

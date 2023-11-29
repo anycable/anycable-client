@@ -262,6 +262,12 @@ export class ActionCableSubscriptions {
 
     return cableChannel.subscription
   }
+
+  findAll(identifier) {
+    return this.cable.hub.channels
+      .filter(channel => channel.identifier === identifier)
+      .map(channel => channel.subscription)
+  }
 }
 
 export class ActionCableConsumer {
