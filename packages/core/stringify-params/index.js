@@ -3,6 +3,7 @@ export function stringifyParams(params) {
 
   let parts = Object.keys(params)
     .sort()
+    .filter(k => params[k] !== undefined)
     .map(k => {
       let v = JSON.stringify(params[k])
       return `${JSON.stringify(k)}:${v}`
