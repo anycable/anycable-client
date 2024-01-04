@@ -2,6 +2,12 @@
 
 ## master
 
+- Omit `undefined` within Channels' params to fix invalid JSON serialization. ([@ardecvz][])
+
+It's intended to mimic the ActionCable behavior when using `JSON.stringify`.
+
+Also, extend the type signature to allow `null` values.
+
 ## 0.7.11 (2023-11-29)
 
 - Implement `subscriptions.findAll` for Action Cable compat. ([@palkan][])
@@ -183,3 +189,4 @@ Each component takes care of subscribing and unsubsribing; the actual subscripti
 [@gydroperit]: https://github.com/gydroperit
 [@TheSeally]: https://github.com/TheSeally
 [@lokkirill]: https://github.com/lokkirill
+[@ardecvz]: https://github.com/ardecvz
