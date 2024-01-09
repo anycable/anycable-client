@@ -4,6 +4,10 @@
 
 ## master
 
+## 0.7.12 (2024-01-08)
+
+- Omit `undefined` in serialized channel identifiers. ([@ardecvz][])
+
 ## 0.7.7 (2023-09-21)
 
 - Add ActionsType to `Channel` class. ([@palkan][])
@@ -90,3 +94,4 @@ Each component takes care of subscribing and unsubsribing; the actual subscripti
 [@gydroperit]: https://github.com/gydroperit
 [@charlie-wasp]: https://github.com/charlie-wasp
 [@TheSeally]: https://github.com/TheSeally
+[@ardecvz]: https://github.com/ardecvz

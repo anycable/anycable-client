@@ -2,6 +2,8 @@
 
 ## master
 
+## 0.7.12 (2024-01-08)
+
 - Omit `undefined` within Channels' params to fix invalid JSON serialization. ([@ardecvz][])
 
 It's intended to mimic the ActionCable behavior when using `JSON.stringify`.
