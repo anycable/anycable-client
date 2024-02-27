@@ -152,6 +152,9 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
   // Send pongs asynchrounously—no need to block the main thread
   async sendPong() {
     await new Promise(resolve => setTimeout(resolve, 0))
-    this.cable.send({ command: 'pong' })
+    // Only send pong if the connection is still open
+    if (this.cable.state === 'connected') {
+      this.cable.send({ command: 'pong' })
+    }
   }
 }

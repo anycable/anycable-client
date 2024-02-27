@@ -2,6 +2,8 @@
 
 ## master
 
+- Do not try to send `pong` if cable is no longer connected. ([@palkan][])
+
 ## 0.7.12 (2024-01-08)
 
 - Omit `undefined` within Channels' params to fix invalid JSON serialization. ([@ardecvz][])

@@ -289,6 +289,7 @@ describe('receive', () => {
     })
 
     it('sends pong in response to ping', async () => {
+      cable.connected()
       protocol.receive({ type: 'ping', message: '42' })
       expect(cable.lastPingedAt).toEqual(42)
 
@@ -298,6 +299,15 @@ describe('receive', () => {
       expect(cable.mailbox[0]).toMatchObject({
         command: 'pong'
       })
+    })
+
+    it('does not try to send pong if cable is no longer connected', async () => {
+      protocol.receive({ type: 'ping', message: '42' })
+      expect(cable.lastPingedAt).toEqual(42)
+      cable.disconnected()
+      await new Promise(resolve => setTimeout(resolve, 0))
+
+      expect(cable.mailbox).toHaveLength(0)
     })
   })
 })
