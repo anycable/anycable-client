@@ -1,6 +1,6 @@
 {
   "name": "@anycable/core",
-  "version": "0.7.12",
+  "version": "0.7.13",
   "description": "AnyCable JavaScript client library core functionality",
   "keywords": [
     "anycable",

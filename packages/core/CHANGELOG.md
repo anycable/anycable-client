@@ -2,6 +2,8 @@
 
 ## master
 
+## 0.7.13 (2024-02-26)
+
 - Do not try to send `pong` if cable is no longer connected. ([@palkan][])
 
 ## 0.7.12 (2024-01-08)
