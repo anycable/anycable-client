@@ -12,7 +12,9 @@ export function start(cable, opts = {}) {
   C.cable = cable
   C.channelClass = channelClass
 
-  customElements.define(tagName, C)
+  if (customElements.get(tagName) === undefined) {
+    customElements.define(tagName, C)
+  }
 
   if (opts.requestSocketIDHeader) {
     let headerName =
