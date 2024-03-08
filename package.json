@@ -1,5 +1,5 @@
 {
-  "name": "anycable-client",
+  "name": "@janeapp/anycable-client",
   "private": true,
   "version": "0.0.1",
   "description": "AnyCable JavaScript client library (browsers, React Native)",
@@ -15,7 +15,11 @@
     "node": "^14.0.0 || >=16.0.0"
   },
   "type": "module",
+  "main": "dist/index.cjs",
+  "types": "dist/web/index.d.ts",
+  "files": ["dist"],
   "scripts": {
+    "build": "rm -rf dist/* && tsup packages/web/index.js && tsc && tsc-alias",
     "test:dev": "NODE_OPTIONS='--experimental-vm-modules' jest",
     "test": "yarn test:dev --coverage && check-dts",
     "lint": "eslint . && prettier --check 'packages/**/*.{js,ts}'",
@@ -151,6 +155,8 @@
     "jest-environment-jsdom": "^29.4.1",
     "prettier": "^2.3.1",
     "ts-jest": "^29.0.5",
+    "tsc-alias": "^1.8.8",
+    "tsup": "^8.0.2",
     "typescript": "^4.9.5",
     "ws": "^8.12.0"
   }
