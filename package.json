@@ -16,6 +16,7 @@
   },
   "type": "module",
   "scripts": {
+    "build": "tsup packages/web/index.js && cp -r packages/core dist/core && cp -r packages/web dist/web",
     "test:dev": "NODE_OPTIONS='--experimental-vm-modules' jest",
     "test": "yarn test:dev --coverage && check-dts",
     "lint": "eslint . && prettier --check 'packages/**/*.{js,ts}'",
@@ -151,6 +152,7 @@
     "jest-environment-jsdom": "^29.4.1",
     "prettier": "^2.3.1",
     "ts-jest": "^29.0.5",
+    "tsup": "^8.0.2",
     "typescript": "^4.9.5",
     "ws": "^8.12.0"
   }
