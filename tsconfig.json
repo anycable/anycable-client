@@ -8,16 +8,13 @@
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
-    "lib": [
-      "ES2020.Promise",
-      "DOM"
-    ],
-    "types": [
-      "node",
-      "jest"
-    ]
+    "lib": ["ES2020.Promise", "DOM"],
+    "types": ["node", "jest"],
+    "baseUrl": ".",
+    "outDir": "dist",
+    "paths": {
+      "@anycable/core": ["packages/core"]
+    }
   },
-  "exclude": [
-    "**/errors.ts"
-  ]
+  "exclude": ["**/errors.ts"]
 }
