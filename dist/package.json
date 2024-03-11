@@ -1,0 +1,24 @@
+{
+  "name": "@janeapp/anycable-client",
+  "version": "0.7.3",
+  "description": "AnyCable JavaScript client library (browsers, React Native)",
+  "type": "commonjs",
+  "main": "index.cjs",
+  "types": "web/index.d.ts",
+  "files": [
+    "index.cjs",
+    "web",
+    "core"
+  ],
+  "scripts": {
+    "release": "auto shipit"
+  },
+  "keywords": [],
+  "homepage": "https://anycable.io/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/janeapp/anycable-client"
+  },
+  "author": "Jake Bottrall",
+  "license": "MIT"
+}
