@@ -2,6 +2,14 @@
 
 ## master
 
+## 0.5.0
+
+- Require `@anycable/core` ^0.8.0.
+
+- Only define custom element if it doesn't exist. ([@omarluq][])
+
+## 0.4.0
+
 - Add `requestSocketIDHeader` option to automatically add `X-Socket-ID` header with the current session ID to Turbo requests. ([@palkan][])
 
 ## 0.3.1 (2023-02-15)
@@ -19,3 +27,4 @@ Backport of [turbo-rails#430](https://github.com/hotwired/turbo-rails/pull/430).
 - Major refactoring: use channel classes (allow custom), ignore Turbo cached pages, avoid waiting for subscribe (to unsubscribe on element disconnect). ([@palkan][])
 
 [@palkan]: https://github.com/palkan
+[@omarluq]: https://github.com/omarluq

@@ -2,6 +2,8 @@
 
 ## master
 
+## 0.8.0 (2024-03-14) 🥧
+
 - Added AnyCable signed streams support. ([@palkan][])
 
   Two new methods have been added to connect to streams directly without any channels: `cable.streamFrom(name)` and `cable.streamFromSigned(signedName)`. See [signed streams docs](https://docs.anycable.io/edge/anycable-go/signed_streams).
