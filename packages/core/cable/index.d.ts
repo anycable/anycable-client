@@ -43,6 +43,19 @@ export type CableState =
 
 export class GhostChannel extends Channel {}
 
+export const PUBSUB_CHANNEL: string
+
+type PubSubChannelParams =
+  | { stream_name: string }
+  | { signed_stream_name: string }
+
+export class PubSubChannel extends Channel<
+  PubSubChannelParams,
+  Message,
+  ChannelEvents<Message>,
+  never
+> {}
+
 export class Cable {
   transport: Transport
   hub: Hub
@@ -73,6 +86,9 @@ export class Cable {
     },
     ...args: {} extends P ? [undefined?] : [P]
   ): T
+
+  streamFrom(name: string): PubSubChannel
+  streamFromSigned(signedName: string): PubSubChannel
 
   keepalive(msg?: Message): void
 
