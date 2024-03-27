@@ -375,6 +375,23 @@ describe('subscriptions', () => {
     })
   })
 
+  it('performs whisper with objects', async () => {
+    await protocol.perform('test_id', '$whisper', {
+      event: 'typing',
+      name: 'vova'
+    })
+
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toMatchObject({
+      command: 'whisper',
+      identifier: 'test_id',
+      data: {
+        event: 'typing',
+        name: 'vova'
+      }
+    })
+  })
+
   it('reset rejects all pending subscriptions', () => {
     let p1 = protocol.subscribe('TestChannel')
     let p2 = protocol.subscribe('TestChannel', { id: 2021 })

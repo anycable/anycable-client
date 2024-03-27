@@ -4,6 +4,10 @@
 
 ## master
 
+- Added `channel.whisper(...)`. ([@palkan][])
+
+  Clients can send transient publications to channels via whispering. NOTE: it must be supported by the server and enabled for the channel. See [docs](https://docs.anycable.io/edge/anycable-go/signed_streams#whispering).
+
 ## 0.8.0 (2024-03-14) 🥧
 
 - Added AnyCable signed streams support. ([@palkan][])

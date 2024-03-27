@@ -2,6 +2,8 @@
 
 ## master
 
+- Added `channel.whisper(...)`. ([@palkan][])
+
 ## 0.8.0 (2024-03-14) 🥧
 
 - Added AnyCable signed streams support. ([@palkan][])

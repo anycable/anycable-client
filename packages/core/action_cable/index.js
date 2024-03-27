@@ -126,6 +126,11 @@ export class ActionCableProtocol {
   }
 
   perform(identifier, action, payload) {
+    // Handle whispering separately
+    if (action === '$whisper') {
+      return this.whisper(identifier, payload)
+    }
+
     if (!payload) {
       payload = {}
     }
@@ -136,6 +141,16 @@ export class ActionCableProtocol {
       command: 'message',
       identifier,
       data: JSON.stringify(payload)
+    })
+
+    return Promise.resolve()
+  }
+
+  whisper(identifier, data) {
+    this.cable.send({
+      command: 'whisper',
+      identifier,
+      data
     })
 
     return Promise.resolve()
