@@ -38,7 +38,11 @@ export const PUBSUB_CHANNEL = '$pubsub'
 export class PubSubChannel extends Channel {
   static identifier = PUBSUB_CHANNEL
 
-  async perform() {
+  async perform(action, payload) {
+    if (action === '$whisper') {
+      return super.perform(action, payload)
+    }
+
     throw Error('not implemented')
   }
 }

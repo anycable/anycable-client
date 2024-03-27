@@ -2,6 +2,10 @@
 
 ## master
 
+## 0.8.2 (2024-03-27)
+
+- Fix whispering for pub/sub channels. ([@palkan][])
+
 ## 0.8.1 (2024-03-27)
 
 - Added `channel.whisper(...)`. ([@palkan][])

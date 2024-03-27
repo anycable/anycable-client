@@ -1705,6 +1705,22 @@ describe('streamFrom / streamFromSigned', () => {
       Error('not implemented')
     )
   })
+
+  it('allows whispering', async () => {
+    let channel = cable.streamFrom('chat_15')
+    await channel.ensureSubscribed()
+
+    jest
+      .spyOn(protocol, 'perform')
+      .mockImplementation(async (id, action, payload) => {
+        expect(action).toEqual('$whisper')
+        expect(payload).toEqual({ foo: 'bar' })
+
+        return Promise.resolve()
+      })
+
+    await channel.whisper({ foo: 'bar' })
+  })
 })
 
 describe('setSessionID', () => {
