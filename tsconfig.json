@@ -13,7 +13,8 @@
     "baseUrl": ".",
     "outDir": "dist",
     "paths": {
-      "@anycable/core": ["packages/core"]
+      "@anycable/core": ["packages/core"],
+      "@anycable/core/testing": ["packages/core/testing"]
     }
   },
   "exclude": ["**/errors.ts"]

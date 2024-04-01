@@ -10,6 +10,8 @@ import { Monitor } from './monitor/index.js'
 
 export { Channel } from '@anycable/core'
 
+export { TestCable } from '@anycable/core/testing'
+
 const metaPrefixes = ['cable', 'action-cable']
 
 const defaultUrl = '/cable'
