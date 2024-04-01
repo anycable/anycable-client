@@ -4,6 +4,18 @@
 
 ## master
 
+## 0.8.1 (2024-03-27)
+
+- Added `channel.whisper(...)`. ([@palkan][])
+
+  Clients can send transient publications to channels via whispering. NOTE: it must be supported by the server and enabled for the channel. See [docs](https://docs.anycable.io/edge/anycable-go/signed_streams#whispering).
+
+## 0.8.0 (2024-03-14) 🥧
+
+- Added AnyCable signed streams support. ([@palkan][])
+
+  Two new methods have been added to connect to streams directly without any channels: `cable.streamFrom(name)` and `cable.streamFromSigned(signedName)`. See [signed streams docs](https://docs.anycable.io/edge/anycable-go/signed_streams).
+
 ## 0.7.12 (2024-01-08)
 
 - Omit `undefined` in serialized channel identifiers. ([@ardecvz][])

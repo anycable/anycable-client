@@ -77,6 +77,8 @@ export class Channel<
 
   ensureSubscribed(): Promise<void>
 
+  whisper(payload: MessageType): Promise<void>
+
   on<E extends keyof EventsType>(event: E, callback: EventsType[E]): Unsubscribe
   once<E extends keyof EventsType>(
     event: E,

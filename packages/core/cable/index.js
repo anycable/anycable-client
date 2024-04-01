@@ -33,7 +33,17 @@ export class GhostChannel extends Channel {
   }
 }
 
-const STATE = Symbol('state')
+export const PUBSUB_CHANNEL = '$pubsub'
+
+export class PubSubChannel extends Channel {
+  static identifier = PUBSUB_CHANNEL
+
+  async perform() {
+    throw Error('not implemented')
+  }
+}
+
+export const STATE = Symbol('state')
 
 export class Cable {
   constructor({ transport, protocol, encoder, logger, lazy, hubOptions }) {
@@ -271,6 +281,18 @@ export class Cable {
 
   keepalive(msg) {
     this.emit('keepalive', msg)
+  }
+
+  streamFrom(name) {
+    let channel = new PubSubChannel({ stream_name: name })
+
+    return this.subscribe(channel)
+  }
+
+  streamFromSigned(name) {
+    let channel = new PubSubChannel({ signed_stream_name: name })
+
+    return this.subscribe(channel)
   }
 
   subscribeTo(ChannelClass, params) {

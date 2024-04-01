@@ -8,7 +8,8 @@ import {
   ReasonError,
   DisconnectedError,
   SubscriptionRejectedError,
-  Identifier
+  Identifier,
+  NoConnectionError
 } from '../index.js'
 
 class TestReceiver implements Receiver {
@@ -280,6 +281,48 @@ describe('receiver communicaton', () => {
     client.subscribed()
 
     return res
+  })
+
+  it('whisper is a wrapper over perform', async () => {
+    client.subscribed(channel)
+
+    jest
+      .spyOn(client, 'perform')
+      .mockImplementation(
+        (identifier: Identifier, action?: string, payload?: Message) => {
+          expect(identifier).toEqual(channel.identifier)
+          expect(action).toEqual('$whisper')
+          expect(payload).toMatchObject({ test: 'send' })
+
+          return Promise.resolve()
+        }
+      )
+
+    await channel.whisper({ test: 'send' })
+  })
+
+  it('whisper when no connection', async () => {
+    client.subscribed(channel)
+
+    jest
+      .spyOn(client, 'perform')
+      .mockImplementation(
+        (_id: Identifier, action?: string, payload?: Message) => {
+          return Promise.reject(new NoConnectionError())
+        }
+      )
+
+    let logs: any[] = []
+
+    ;(client as any).logger = {
+      warn: function (...args: any) {
+        logs.push(args)
+      }
+    }
+
+    await channel.whisper({ test: 'send' })
+
+    expect(logs).toHaveLength(1)
   })
 
   it('disconnects', () => {

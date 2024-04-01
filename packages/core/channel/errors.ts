@@ -90,3 +90,17 @@ export class AnotherTypedChannel extends Channel<
 
 let che: Channel
 che = new AnotherTypedChannel()
+
+export class WhisperingChannel extends Channel<
+  {},
+  { event: 'typing' | 'cursor'; payload: any }
+> {}
+
+let wch = new WhisperingChannel()
+wch.whisper({ event: 'cursor', payload: { x: 1, y: 2 } })
+
+// THROWS Argument of type
+wch.whisper('hello')
+
+// THROWS Type '"greeting"' is not assignable
+wch.whisper({ event: 'greeting', payload: 'hello' })

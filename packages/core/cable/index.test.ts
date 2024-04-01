@@ -17,6 +17,7 @@ import {
 } from '../index.js'
 import { TestTransport } from '../transport/testing'
 import { TestLogger } from '../logger/testing'
+import { PUBSUB_CHANNEL, PubSubChannel } from './index.js'
 
 class TestProtocol implements Protocol {
   cable!: Cable
@@ -1610,6 +1611,99 @@ describe('subscribeTo', () => {
     let received = await p
 
     expect(received).toEqual(message)
+  })
+})
+
+describe('streamFrom / streamFromSigned', () => {
+  beforeEach(() => {
+    cable.connect()
+    cable.connected()
+
+    jest
+      .spyOn(protocol, 'subscribe')
+      .mockImplementation(async (identifier, params) => {
+        return JSON.stringify({ identifier, ...params })
+      })
+  })
+
+  it('subscribes to $pubsub channel', async () => {
+    let channel = cable.streamFrom('chat_15')
+    await channel.ensureSubscribed()
+
+    let signedChannel = cable.streamFromSigned('xyz-chat-zyx')
+    await signedChannel.ensureSubscribed()
+
+    expect(cable.hub.size).toEqual(2)
+    expect(channel.state).toEqual('connected')
+    expect(signedChannel.state).toEqual('connected')
+
+    let p = new Promise<Message>(resolve => channel.on('message', resolve))
+    let p2 = new Promise<Message>(resolve =>
+      signedChannel.on('message', resolve)
+    )
+
+    transport.receive(
+      JSON.stringify({
+        identifier: JSON.stringify({
+          identifier: '$pubsub',
+          stream_name: 'chat_15'
+        }),
+        payload: { foo: 'clear' }
+      })
+    )
+
+    let received = await p
+
+    expect(received).toEqual({ foo: 'clear' })
+
+    transport.receive(
+      JSON.stringify({
+        identifier: JSON.stringify({
+          identifier: PUBSUB_CHANNEL,
+          signed_stream_name: 'xyz-chat-zyx'
+        }),
+        payload: { foo: 'signed' }
+      })
+    )
+
+    let received2 = await p2
+
+    expect(received2).toEqual({ foo: 'signed' })
+  })
+
+  it('using PubSubChannel class', async () => {
+    let channel = new PubSubChannel({ stream_name: 'chat_2' })
+    cable.subscribe(channel)
+    await channel.ensureSubscribed()
+
+    expect(cable.hub.size).toEqual(1)
+    expect(channel.state).toEqual('connected')
+
+    let p = new Promise<Message>(resolve => channel.on('message', resolve))
+
+    transport.receive(
+      JSON.stringify({
+        identifier: JSON.stringify({
+          identifier: '$pubsub',
+          stream_name: 'chat_2'
+        }),
+        payload: { foo: 'clear' }
+      })
+    )
+
+    let received = await p
+
+    expect(received).toEqual({ foo: 'clear' })
+  })
+
+  it('rejects perform attempts', async () => {
+    let channel = cable.streamFrom('chat_15')
+    await channel.ensureSubscribed()
+
+    // @ts-ignore
+    expect(channel.perform('keepalive')).rejects.toEqual(
+      Error('not implemented')
+    )
   })
 })
 

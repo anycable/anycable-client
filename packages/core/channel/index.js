@@ -124,6 +124,17 @@ export class Channel {
     return this.perform(undefined, payload)
   }
 
+  async whisper(payload) {
+    try {
+      await this.perform('$whisper', payload)
+    } catch (e) {
+      let logger = this.receiver ? this.receiver.logger : null
+      if (logger) {
+        logger.warn('whisper failed: ', e)
+      }
+    }
+  }
+
   receive(msg, meta) {
     this.emit('message', msg, meta)
   }
