@@ -2,6 +2,10 @@
 
 ## master
 
+## 0.8.3 (2024-04-09)
+
+- Fix closing WebSocket right after opening. ([@palkan][])
+
 ## 0.8.2 (2024-03-27)
 
 - Fix whispering for pub/sub channels. ([@palkan][])

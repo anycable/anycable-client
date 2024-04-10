@@ -80,8 +80,10 @@ export class WebSocketTransport {
   }
 
   close() {
-    if (this.ws && this.connected) {
+    if (this.ws) {
       this.onclose()
+    } else {
+      this.connected = false
     }
   }
 
