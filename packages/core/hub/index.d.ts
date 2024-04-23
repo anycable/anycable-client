@@ -51,7 +51,7 @@ export class Subscription {
 }
 
 export type HubOptions = Partial<{
-  concurrentSubscribes: bool
+  concurrentSubscribes: boolean
 }>
 
 export class Hub {

@@ -12,7 +12,7 @@ export class TurboChannel extends Channel {
 export interface StartOptions {
   tagName: string
   channelClass: typeof TurboChannel
-  requestSocketIDHeader: bool | string
+  requestSocketIDHeader: boolean | string
 }
 
 export const DEFAULT_SOCKET_HEADER: string

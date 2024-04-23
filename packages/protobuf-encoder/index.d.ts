@@ -20,7 +20,7 @@ export interface ReplyObject {
   epoch?: string
   offset?: number
   restored_ids?: string[]
-  restored?: bool
+  restored?: boolean
 }
 
 export class EnumWrapper {
