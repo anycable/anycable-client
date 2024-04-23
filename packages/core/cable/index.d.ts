@@ -4,7 +4,8 @@ import {
   Channel,
   Message,
   ChannelParamsMap,
-  Identifier
+  Identifier,
+  ChannelEvents
 } from '../channel/index.js'
 import { Transport } from '../transport/index.js'
 import { Protocol, ReasonError } from '../protocol/index.js'

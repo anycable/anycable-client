@@ -1,6 +1,6 @@
 import { Unsubscribe } from 'nanoevents'
 
-import { Logger } from '../logger.js'
+import { Logger } from '../logger/index.js'
 
 export type TransportEvents<T> = {
   open: () => void

@@ -1,5 +1,6 @@
 import { Unsubscribe } from 'nanoevents'
 import { Transport } from '@anycable/core'
+import { TransportEvents } from '@anycable/core/transport'
 
 type LongPollingOptions = Partial<{
   // For how long (in ms) to wait before sending a new request

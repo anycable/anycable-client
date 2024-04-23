@@ -1,3 +1,5 @@
+import { ActionCableConsumer, Cable, CreateOptions, TokenRefresher } from '@anycable/core'
+
 export {
   CreateOptions,
   Cable,
