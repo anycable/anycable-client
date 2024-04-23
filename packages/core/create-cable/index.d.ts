@@ -62,10 +62,15 @@ export interface CreateOptions<P extends ProtocolID | Protocol> {
   concurrentSubscribes: boolean
 }
 
-export const DEFAULT_OPTIONS: Partial<CreateOptions>
+export const DEFAULT_OPTIONS: Partial<CreateOptions<ProtocolID | Protocol>>
 
-export function createCable(url: string, opts?: Partial<CreateOptions>): Cable
-export function createCable(opts?: Partial<CreateOptions>): Cable
+export function createCable(
+  url: string,
+  opts?: Partial<CreateOptions<ProtocolID | Protocol>>
+): Cable
+export function createCable(
+  opts?: Partial<CreateOptions<ProtocolID | Protocol>>
+): Cable
 
 export type ActionCableMixin<T extends Message> = Partial<{
   initialized: () => void
@@ -104,8 +109,8 @@ export class ActionCableConsumer {
 
 export function createConsumer(
   url: string,
-  opts?: Partial<CreateOptions>
+  opts?: Partial<CreateOptions<ProtocolID | Protocol>>
 ): ActionCableConsumer
 export function createConsumer(
-  opts?: Partial<CreateOptions>
+  opts?: Partial<CreateOptions<ProtocolID | Protocol>>
 ): ActionCableConsumer

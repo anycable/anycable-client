@@ -1,4 +1,11 @@
-import { ActionCableConsumer, Cable, CreateOptions, TokenRefresher } from '@anycable/core'
+import {
+  ActionCableConsumer,
+  Cable,
+  CreateOptions,
+  Protocol,
+  ProtocolID,
+  TokenRefresher
+} from '@anycable/core'
 
 export {
   CreateOptions,
@@ -12,15 +19,20 @@ export { Channel } from '@anycable/core'
 export { Monitor } from './monitor/index.js'
 export { Logger } from './logger/index.js'
 
-export function createCable(url: string, opts?: Partial<CreateOptions>): Cable
-export function createCable(opts?: Partial<CreateOptions>): Cable
+export function createCable(
+  url: string,
+  opts?: Partial<CreateOptions<ProtocolID | Protocol>>
+): Cable
+export function createCable(
+  opts?: Partial<CreateOptions<ProtocolID | Protocol>>
+): Cable
 
 export function createConsumer(
   url: string,
-  opts?: Partial<CreateOptions>
+  opts?: Partial<CreateOptions<ProtocolID | Protocol>>
 ): ActionCableConsumer
 export function createConsumer(
-  opts?: Partial<CreateOptions>
+  opts?: Partial<CreateOptions<ProtocolID | Protocol>>
 ): ActionCableConsumer
 
 export function fetchTokenFromHTML(
