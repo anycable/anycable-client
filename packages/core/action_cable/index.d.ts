@@ -1,4 +1,9 @@
-import { Protocol, Consumer, ProcessedMessage } from '../protocol/index.js'
+import {
+  Protocol,
+  Consumer,
+  ProcessedMessage,
+  ReasonError
+} from '../protocol/index.js'
 import { Message } from '../channel/index.js'
 import { Logger } from '../logger/index.js'
 
@@ -23,5 +28,5 @@ export class ActionCableProtocol implements Protocol {
   perform(identifier: string, action: string, payload?: object): Promise<void>
   receive(msg: Message): ProcessedMessage | void
   recoverableClosure(err: Error): boolean
-  reset(err: Error): void
+  reset(err: ReasonError): void
 }
