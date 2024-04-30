@@ -7,7 +7,6 @@
     "allowJs": true,
     "strict": true,
     "noEmit": true,
-    "skipLibCheck": true, // otherwise check-dts fails AbortController + AbortSignal
     "lib": [
       "ES2020.Promise",
       "DOM"
@@ -17,6 +16,7 @@
       "jest"
     ]
   },
+  "include": ["packages/**/*.d.ts"],
   "exclude": [
     "**/errors.ts"
   ]

@@ -17,7 +17,7 @@
   "type": "module",
   "scripts": {
     "test:dev": "NODE_OPTIONS='--experimental-vm-modules' jest",
-    "test": "yarn test:dev --coverage && check-dts",
+    "test": "tsc -p noskiplibcheck_tsconfig.json && yarn test:dev --coverage && check-dts",
     "lint": "eslint . && prettier --check 'packages/**/*.{js,ts}'",
     "lint:fix": "eslint . --fix && prettier --check 'packages/**/*.{js,ts}' --write",
     "protos": "yarn protos:build && yarn protos:fix",
