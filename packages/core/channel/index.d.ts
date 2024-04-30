@@ -68,9 +68,9 @@ export class Channel<
     action: A,
     ...payload: ActionsType extends ChannelActions
       ? [ActionPayload?]
-      : ActionsType[A] extends () => void
-      ? []
-      : [Parameters<ActionsType[A]>[0]]
+      : ActionsType[A] extends (...arg: any) => void
+      ? Parameters<ActionsType[A]>
+      : []
   ): Promise<MessageType | void>
   send(payload: object): Promise<MessageType | void>
   receive(msg: MessageType, meta?: MessageMeta): void
