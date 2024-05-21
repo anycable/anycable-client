@@ -12,12 +12,12 @@
     "packages/*"
   ],
   "engines": {
-    "node": "^14.0.0 || >=16.0.0"
+    "node": ">=18.0.0"
   },
   "type": "module",
   "scripts": {
     "test:dev": "NODE_OPTIONS='--experimental-vm-modules' jest",
-    "test": "tsc -p noskiplibcheck_tsconfig.json && yarn test:dev --coverage && check-dts",
+    "test": "tsc && yarn test:dev --coverage && check-dts",
     "lint": "eslint . && prettier --check 'packages/**/*.{js,ts}'",
     "lint:fix": "eslint . --fix && prettier --check 'packages/**/*.{js,ts}' --write",
     "protos": "yarn protos:build && yarn protos:fix",
@@ -132,11 +132,11 @@
     "@logux/eslint-config": "^48.0.0",
     "@types/jest": "^29.4.0",
     "@types/jsdom": "^21.1.0",
-    "@types/node": "^18.11.19",
+    "@types/node": "^20.12.12",
     "@types/ws": "^8.5.4",
     "@typescript-eslint/eslint-plugin": "^5.51.0",
     "@typescript-eslint/parser": "^5.51.0",
-    "check-dts": "^0.7.0",
+    "check-dts": "^0.8.0",
     "eslint": "^8.33.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-plugin-import": "^2.23.4",
