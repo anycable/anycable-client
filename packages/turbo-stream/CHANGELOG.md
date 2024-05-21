@@ -2,6 +2,10 @@
 
 ## master
 
+## 0.6.0
+
+- Require `@anycable/core` ^0.9.0.
+
 ## 0.5.0
 
 - Require `@anycable/core` ^0.8.0.

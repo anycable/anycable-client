@@ -2,6 +2,10 @@
 
 ## master
 
+## 0.3.0 (2024-05-21)
+
+- Require `@anycable/core` ^0.9.0.
+
 ## 0.2.0 (2024-03-14)
 
 - Require `@anycable/core` ^0.8.0.

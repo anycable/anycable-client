@@ -1,6 +1,6 @@
 {
   "name": "@anycable/turbo-stream",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "AnyCable Client plugin to support Turbo Streams",
   "engines": {
     "node": ">=8.3.0"
@@ -24,7 +24,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@anycable/core": "^0.8.0"
+    "@anycable/core": "^0.9.0"
   },
   "peerDependencies": {
     "@hotwired/turbo": ">= 7.0"

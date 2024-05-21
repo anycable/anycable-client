@@ -4,6 +4,12 @@
 
 ## master
 
+## 0.9.0 (2024-05-21)
+
+- Types improvements. ([@cmdoptesc][])
+
+- Node 18+ is required.
+
 ## 0.8.1 (2024-03-27)
 
 - Added `channel.whisper(...)`. ([@palkan][])
@@ -107,3 +113,4 @@ Each component takes care of subscribing and unsubsribing; the actual subscripti
 [@charlie-wasp]: https://github.com/charlie-wasp
 [@TheSeally]: https://github.com/TheSeally
 [@ardecvz]: https://github.com/ardecvz
+[@cmdoptesc]: https://github.com/cmdoptesc

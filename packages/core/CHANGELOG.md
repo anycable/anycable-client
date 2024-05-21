@@ -2,6 +2,12 @@
 
 ## master
 
+## 0.9.0 (2024-05-21)
+
+- Types improvements. ([@cmdoptesc][])
+
+- Node 18+ is required.
+
 ## 0.8.3 (2024-04-09)
 
 - Fix closing WebSocket right after opening. ([@palkan][])
@@ -214,3 +220,4 @@ Each component takes care of subscribing and unsubsribing; the actual subscripti
 [@TheSeally]: https://github.com/TheSeally
 [@lokkirill]: https://github.com/lokkirill
 [@ardecvz]: https://github.com/ardecvz
+[@cmdoptesc]: https://github.com/cmdoptesc

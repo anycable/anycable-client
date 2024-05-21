@@ -1,9 +1,9 @@
 {
   "name": "@anycable/long-polling",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Long-polling transport for AnyCable client",
   "engines": {
-    "node": "^14.0.0 || >=16.0.0"
+    "node": ">=18.0.0"
   },
   "keywords": [
     "anycable",
@@ -22,7 +22,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@anycable/core": "^0.8.0"
+    "@anycable/core": "^0.9.0"
   },
   "devDependencies": {
     "@types/node-fetch": "^2.6.4",
