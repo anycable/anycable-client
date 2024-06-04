@@ -71,6 +71,7 @@ const broadcast = (stream: string, message: string) => {
 }
 
 afterEach(() => {
+  document.documentElement.removeAttribute('data-turbo-preview')
   wss.close()
   for (let ws of wss.clients) {
     ws.terminate()
@@ -128,7 +129,9 @@ describe('<turbo-stream-source>', () => {
     `
 
     let cable = createCable(`ws://localhost:${port}`)
-    start(cable, { tagName: 'turbo-cable-stream-source-connected' })
+    start(cable, {
+      tagName: 'turbo-cable-stream-source-connected'
+    })
 
     let channel = cable.hub.channels[0]
     expect(channel).not.toBeUndefined()
@@ -230,5 +233,74 @@ describe('<turbo-stream-source>', () => {
     expect(
       (event.detail.fetchOptions.headers as any)['X-TURBO-SOCKET']
     ).toEqual('42')
+  })
+
+  it('with delayedUnsubscribe', async () => {
+    document.body.innerHTML = `
+      <turbo-cable-stream-source-delayed signed-stream-name='test-delayed' channel='TurboChannel'></turbo-cable-stream-source-delayed>
+    `
+
+    let cable = createCable(`ws://localhost:${port}`)
+    start(cable, {
+      tagName: 'turbo-cable-stream-source-delayed',
+      delayedUnsubscribe: true
+    })
+
+    let channel = cable.hub.channels[0]
+    expect(channel).not.toBeUndefined()
+
+    await new Promise((resolve, reject) => {
+      setTimeout(() => {
+        reject(Error('no connect received'))
+      }, 2000)
+      channel.on('connect', resolve)
+    })
+
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    expect(
+      document.body
+        .querySelector('turbo-cable-stream-source-delayed')
+        ?.getAttribute('connected')
+    ).toEqual('')
+
+    // One subscribe command was sent
+    expect(receivedByServer).toHaveLength(1)
+
+    document.body.innerHTML = `<div></div>`
+
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    document.body.innerHTML = `
+      <turbo-cable-stream-source-delayed signed-stream-name='test-delayed' channel='TurboChannel'></turbo-cable-stream-source-delayed>
+    `
+
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    // No new commands were sent to the server
+    expect(receivedByServer).toHaveLength(1)
+
+    expect(
+      document.body
+        .querySelector('turbo-cable-stream-source-delayed')
+        ?.getAttribute('connected')
+    ).toEqual('')
+
+    expect(cable.hub.channels).toHaveLength(2)
+    channel = cable.hub.channels[1]
+
+    document.body.innerHTML = `<div></div>`
+
+    await new Promise((resolve, reject) => {
+      setTimeout(() => {
+        reject(Error('no close received'))
+      }, 1000)
+      channel.on('close', resolve)
+    })
+
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    expect(receivedByServer).toHaveLength(2)
+    expect((receivedByServer[1] as any).command).toEqual('unsubscribe')
   })
 })

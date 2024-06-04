@@ -2,6 +2,8 @@
 
 ## master
 
+- Add `delayedUnsubscribe` option. ([@palkan][])
+
 ## 0.6.0
 
 - Require `@anycable/core` ^0.9.0.

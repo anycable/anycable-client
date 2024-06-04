@@ -34,6 +34,19 @@ One subtle but important difference is that **`@anycable/turbo-stream` does not 
 
 ## Advanced configuration
 
+### Delayed unsubscribe
+
+When using Turbo Drive for navigation, it's common to have a stream source element attached to the same stream to appear in both old and new HTML. In order to avoid re-subscription to the underlying stream, we can keep the subscription during navigation by postponing the `unsubscribe` call (or more precisely, `channel.disconnect()`). Thus, we can avoid unnecessary Action Cable commands and avoid losing messages arrived in-between resubscription. You must opt-in to use this features:
+
+```js
+import { start } from "@anycable/turbo-stream"
+import cable from "cable"
+
+start(cable, { delayedUnsubscribe: true }) // default is 300ms
+
+start(cable, { delayedUnsubscribe: 1000 }) // Custom number of milliseconds
+```
+
 ### Attaching `X-Socket-ID` header to Turbo requests
 
 You can automatically add a header to all Turbo requests with the current socket session ID. This can be used to perform **broadcasts to others** (see [Rails integration docs](https://docs.anycable.io/rails/getting_started?id=action-cable-extensions)):

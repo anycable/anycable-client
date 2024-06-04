@@ -6,11 +6,15 @@ export const DEFAULT_SOCKET_HEADER = 'X-Socket-ID'
 export function start(cable, opts = {}) {
   let tagName = opts.tagName || 'turbo-cable-stream-source'
   let channelClass = opts.channelClass || TurboChannel
+  let delayedUnsubscribe = opts.delayedUnsubscribe || 0
+
+  if (delayedUnsubscribe === true) delayedUnsubscribe = 300
 
   let C = class extends TurboStreamSourceElement {}
 
   C.cable = cable
   C.channelClass = channelClass
+  C.delayedUnsubscribe = delayedUnsubscribe
 
   if (customElements.get(tagName) === undefined) {
     customElements.define(tagName, C)

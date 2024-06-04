@@ -13,6 +13,9 @@ export interface StartOptions {
   tagName: string
   channelClass: typeof TurboChannel
   requestSocketIDHeader: boolean | string
+  // Number of milliseconds to wait before unsubscribing from a channel after the element has been disconnected.
+  // If set to `true`, the default value (300ms) is used.
+  delayedUnsubscribe: boolean | number
 }
 
 export const DEFAULT_SOCKET_HEADER: string

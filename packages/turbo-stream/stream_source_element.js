@@ -6,6 +6,7 @@ import { isPreview } from './turbo.js'
 export class TurboStreamSourceElement extends HTMLElement {
   static cable
   static channelClass
+  static delayedUnsubscribe
 
   async connectedCallback() {
     connectStreamSource(this)
@@ -48,7 +49,15 @@ export class TurboStreamSourceElement extends HTMLElement {
         listener()
       }
       this.listeners.length = 0
-      this.channel.disconnect()
+
+      let ch = this.channel
+      let delay = this.constructor.delayedUnsubscribe
+
+      if (delay) {
+        setTimeout(() => ch.disconnect(), delay)
+      } else {
+        ch.disconnect()
+      }
     }
   }
 
