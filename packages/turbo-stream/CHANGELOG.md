@@ -2,6 +2,8 @@
 
 ## master
 
+## 0.7.0
+
 - Add `delayedUnsubscribe` option. ([@palkan][])
 
 ## 0.6.0

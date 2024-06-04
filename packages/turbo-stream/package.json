@@ -1,6 +1,6 @@
 {
   "name": "@anycable/turbo-stream",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "AnyCable Client plugin to support Turbo Streams",
   "engines": {
     "node": ">=8.3.0"
