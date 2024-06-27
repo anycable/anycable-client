@@ -532,6 +532,10 @@ If you're using `babel-loader`, `esbuild-loader` or similar, you can use the `in
 }
 ```
 
+### CommonJS compatibility
+
+We use ESM and don't any have any plans to support CommonJS ourselves. You can try [commonizer](https://github.com/wintercounter/commonizer) for that.
+
 ## Usage: Node.js
 
 Currently, we do not provide a dedicated Node.js package. You can use `@anycable/core` with Node.js:
