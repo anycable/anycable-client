@@ -385,6 +385,36 @@ This is a recommended way to use this feature with Hotwire applications, where i
 
 You can also disable retrieving history since the specified time completely by setting the `historyTimestamp` option to `false`.
 
+#### Handling history retrieval failures
+
+AnyCable reliable streams store history for a finite period of time and also have an upper size limit. Thus, in some cases, clients may fail to retrieve the missed messages (e.g., after a long-term disconnect). To gracefully handle this situation, you may decide to fallback to a full state reset (e.g., a browser page reload). You can use the specific "info" event to react on various protocol-level events not exposed to the generic Channel interface:
+
+```js
+import { createCable, Channel } from '@anycable/web'
+
+const cable = createCable({protocol: 'actioncable-v1-ext-json'});
+
+class ChatChannel extends Channel {
+  static identifier = 'ChatChannel'
+
+  constructor(params) {
+    super(params)
+
+    this.on("info", (evt) => {
+      if (evt.type === "history_not_found") {
+        // Restore state by performing an action
+        this.perform("resetState")
+      }
+
+      // Successful history retrieval is also notified
+      if (evt.type === "history_received") {
+        // ...
+      }
+    })
+  }
+}
+```
+
 #### PONGs support
 
 The extended protocol also support sending `pong` commands in response to `ping` messages. A server (AnyCable-Go) keeps track of pongs and disconnect the client if no pongs received in time. This helps to identify broken connections quicker.

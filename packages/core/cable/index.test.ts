@@ -13,7 +13,8 @@ import {
   SubscriptionRejectedError,
   StaleConnectionError,
   ReasonError,
-  Message
+  Message,
+  InfoEvent
 } from '../index.js'
 import { TestTransport } from '../transport/testing'
 import { TestLogger } from '../logger/testing'
@@ -997,6 +998,63 @@ describe('channels', () => {
         expect(logger.errors).toHaveLength(1)
       })
     ).rejects.toEqual(Error('failed'))
+  })
+
+  it('notify w/o identifier', async () => {
+    let received: InfoEvent[] = []
+    let promise = new Promise<void>((resolve, reject) => {
+      let tid = setTimeout(() => {
+        reject(Error('Timed out to receive notification event'))
+      }, 500)
+
+      cable.on('info', evt => {
+        received.push(evt)
+
+        if (received.length === 2) {
+          clearTimeout(tid)
+          resolve()
+        }
+      })
+    })
+
+    cable.notify('test_notification')
+    cable.notify('test_notification', { foo: 'bar' })
+
+    await promise
+
+    expect(received).toEqual([
+      { type: 'test_notification', data: undefined },
+      { type: 'test_notification', data: { foo: 'bar' } }
+    ])
+  })
+
+  it('notify', async () => {
+    cable.subscribe(channel)
+    expect(cable.hub.size).toEqual(1)
+
+    await channel.ensureSubscribed()
+
+    let promise = new Promise<void>((resolve, reject) => {
+      let tid = setTimeout(() => {
+        reject(Error('Timed out to receive notification event'))
+      }, 500)
+
+      cable.on('info', () => {
+        clearTimeout(tid)
+        reject(Error('Should not receive info event for cable'))
+      })
+
+      channel.on('info', evt => {
+        clearTimeout(tid)
+        expect(evt.type).toEqual('test_notification')
+        expect(evt.data).toEqual({ foo: 'bar' })
+        resolve()
+      })
+    })
+
+    cable.notify('test_notification', channel.identifier, { foo: 'bar' })
+
+    await promise
   })
 
   describe('closure and recovery with channels', () => {

@@ -329,6 +329,17 @@ describe('history', () => {
     expect(logger.logs[0].message).toEqual('history result received')
   })
 
+  it('notifies history_received', () => {
+    protocol.receive({ type: 'confirm_history', identifier })
+
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toMatchObject({
+      type: 'info',
+      event: 'history_received',
+      identifier
+    })
+  })
+
   it('logs reject_history', () => {
     expect(
       protocol.receive({ type: 'reject_history', identifier })
@@ -336,5 +347,16 @@ describe('history', () => {
 
     expect(logger.warnings).toHaveLength(1)
     expect(logger.warnings[0].message).toEqual('failed to retrieve history')
+  })
+
+  it('notifies history_not_found', () => {
+    protocol.receive({ type: 'reject_history', identifier })
+
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toMatchObject({
+      type: 'info',
+      event: 'history_not_found',
+      identifier
+    })
   })
 })

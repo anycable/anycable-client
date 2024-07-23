@@ -4,7 +4,8 @@ export {
   ChannelEvents,
   Message,
   MessageMeta,
-  Identifier
+  Identifier,
+  InfoEvent as ChannelInfoEvent
 } from './channel/index.js'
 export { Transport, FallbackTransport } from './transport/index.js'
 export { Encoder, JSONEncoder } from './encoder/index.js'
@@ -29,7 +30,8 @@ export {
   CableOptions,
   Cable,
   NoConnectionError,
-  CableEvents
+  CableEvents,
+  InfoEvent
 } from './cable/index.js'
 export {
   Monitor,

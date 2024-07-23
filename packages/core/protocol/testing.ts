@@ -1,5 +1,5 @@
 /*eslint n/no-unsupported-features/es-syntax: ["error", {version: "14.0"}] */
-import { Consumer, ReasonError } from '../index.js'
+import { Consumer, Identifier, ReasonError } from '../index.js'
 
 type State = 'idle' | 'connected' | 'restored' | 'disconnected' | 'closed'
 
@@ -50,5 +50,9 @@ export class TestConsumer implements Consumer {
 
   keepalive(msg: number) {
     this.lastPingedAt = msg | 0
+  }
+
+  notify(event: string, identifier?: Identifier, data?: object): void {
+    this.mailbox.push({ type: 'info', event, identifier, data })
   }
 }

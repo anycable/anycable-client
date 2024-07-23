@@ -171,6 +171,25 @@ export class Cable {
     this.emit('connect', { reconnect, restored })
   }
 
+  notify(event, identifier, data) {
+    if (identifier && typeof identifier !== 'string') {
+      data = identifier
+      identifier = undefined
+    }
+
+    // If identifier is present then it's a channel-level notification
+    if (!identifier) {
+      this.emit('info', { type: event, data })
+    } else {
+      let sub = this.hub.subscriptions.get(identifier)
+      if (sub) {
+        sub.channels.forEach(channel =>
+          channel.emit('info', { type: event, data })
+        )
+      }
+    }
+  }
+
   handleClose(err) {
     this.logger.debug('transport closed', { error: err })
 
