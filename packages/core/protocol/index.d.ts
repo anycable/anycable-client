@@ -36,6 +36,7 @@ export interface Consumer {
   closed(reason?: string | ReasonError): void
   keepalive(msg?: Message): void
   send(msg: object): void
+  notify(event: string, identifier?: Identifier, data?: object): void
 }
 
 export type ProcessedMessage = Partial<{

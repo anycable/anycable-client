@@ -54,11 +54,13 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
 
     if (type === 'confirm_history') {
       this.logger.debug('history result received', msg)
+      this.cable.notify('history_received', identifier)
       return
     }
 
     if (type === 'reject_history') {
       this.logger.warn('failed to retrieve history', msg)
+      this.cable.notify('history_not_found', identifier)
       return
     }
 

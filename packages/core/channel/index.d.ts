@@ -32,11 +32,17 @@ type ConnectEvent = Partial<{
   reconnect: boolean
 }>
 
+export type InfoEvent = {
+  type: string
+  data?: object
+}
+
 export interface ChannelEvents<T> {
   connect: (event: ConnectEvent) => void
   disconnect: (event: ReasonError) => void
   close: (event?: ReasonError) => void
   message: (msg: T, meta?: MessageMeta) => void
+  info: (event: InfoEvent) => void
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

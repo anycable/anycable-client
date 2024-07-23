@@ -19,11 +19,18 @@ type ConnectEvent = Partial<{
   reconnect: boolean
 }>
 
+export type InfoEvent = {
+  type: string
+  identifier?: Identifier
+  data?: object
+}
+
 export interface CableEvents {
   connect: (event: ConnectEvent) => void
   disconnect: (event: ReasonError) => void
   close: (event?: ReasonError) => void
   keepalive: (msg?: Message) => void
+  info: (event: InfoEvent) => void
 }
 
 export type CableOptions = {
@@ -108,6 +115,8 @@ export class Cable {
   restored(remoteIds: string[]): void
   disconnected(reason?: ReasonError): void
   closed(reason?: string | ReasonError): void
+  notify(event: string, data?: object): void
+  notify(event: string, identifier?: Identifier, data?: object): void
 
   setSessionId(sid: string): void
 }

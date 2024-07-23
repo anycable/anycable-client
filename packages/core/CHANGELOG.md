@@ -2,6 +2,10 @@
 
 ## master
 
+- Add `notification` event to Cable and Channel. ([@palkan][])
+
+  This event can be used to notify of some protocol-level events that happen under the hood and have no representation at the Channel API level. A example of such notification is a stream history retrieval failure.
+
 ## 0.9.0 (2024-05-21)
 
 - Types improvements. ([@cmdoptesc][])
