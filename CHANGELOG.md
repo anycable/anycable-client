@@ -4,6 +4,8 @@
 
 ## master
 
+## 0.9.1 (2024-07-31)
+
 - Add `info` event to Cable and Channel. ([@palkan][])
 
   This event can be used to notify of some protocol-level events that happen under the hood and have no representation at the Channel API level. A example of such event is a stream history retrieval failure (`{type: "history_not_found"}`).
