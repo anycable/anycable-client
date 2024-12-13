@@ -1,0 +1,11 @@
+// Static tasks configuration.
+//
+// Example:
+[
+  {
+    "label": "npx jest --testNamePattern \"$ZED_SYMBOL\"",
+    "command": "NODE_OPTIONS='--experimental-vm-modules' npx jest --testNamePattern",
+    "args": ["\"$ZED_SYMBOL\" $ZED_FILE"],
+    "tags": ["ts-test", "js-test"]
+  }
+]
