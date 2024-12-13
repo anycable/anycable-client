@@ -18,7 +18,7 @@ import {
 } from '../index.js'
 import { TestTransport } from '../transport/testing'
 import { TestLogger } from '../logger/testing'
-import { PUBSUB_CHANNEL, PubSubChannel } from './index.js'
+import { PUBSUB_CHANNEL, PubSubChannel, CableOptions } from './index.js'
 
 class TestProtocol implements Protocol {
   cable!: Cable
@@ -101,18 +101,22 @@ let transport: TestTransport
 let logger: TestLogger
 let cable: Cable
 let encoder: Encoder
+let cableOptions: CableOptions
 
 beforeEach(() => {
   logger = new TestLogger()
   transport = new TestTransport('ws:///')
   encoder = new JSONEncoder()
   protocol = new TestProtocol()
-  cable = new Cable({
+
+  cableOptions = {
     protocol,
     encoder,
     logger,
     transport
-  })
+  }
+
+  cable = new Cable(cableOptions)
 })
 
 describe('initialize', () => {
@@ -887,9 +891,33 @@ describe('channels', () => {
 
     cable.closed()
 
-    return expect(
+    await expect(
       cable.perform(channel.identifier, 'do', { foo: 'bar' })
     ).rejects.toEqual(Error('No connection'))
+
+    let cable2 = new Cable({ ...cableOptions, performFailures: 'warn' })
+    cable2.connect()
+    cable2.connected()
+    let channel2 = cable2.subscribeTo('test')
+    await channel2.ensureSubscribed()
+    cable2.closed()
+
+    await expect(
+      cable2.perform(channel.identifier, 'do', { foo: 'bar' })
+    ).resolves.toBeUndefined()
+    expect(logger.warnings).toHaveLength(1)
+
+    let cable3 = new Cable({ ...cableOptions, performFailures: 'ignore' })
+    cable3.connect()
+    cable3.connected()
+    let channel3 = cable3.subscribeTo('test')
+    await channel3.ensureSubscribed()
+    cable3.closed()
+
+    await expect(
+      cable3.perform(channel.identifier, 'do', { foo: 'bar' })
+    ).resolves.toBeUndefined()
+    expect(logger.warnings).toHaveLength(1)
   })
 
   it('send when closed', () => {

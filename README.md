@@ -728,6 +728,23 @@ export default createCable({
 });
 ```
 
+## Other configuration options
+
+There is a plenty of options available to configure the client. Please, refer to the full list in the [TS definition file](./packages/core/cable/index.d.ts).
+Here are the most popular/useful ones (and not yet mentioned in the docs):
+
+```js
+import { createCable } from '@anycable/core'
+
+// Below you can find some options and their default values
+const cable = createCable({
+  logLevel: 'info', //  use 'debug' for more verbose output and troubleshooting
+  performFailures: 'throw', // indicates how to treat channel.perform(...) failures; use `warn` or 'ignore' to silence errors
+  lazy: true, // if true, the connection would be established only when the first subscription is made
+  logger: console, // custom logger (must implement `log`, `info`, `warn`, `error`, `debug` methods)
+})
+```
+
 ## Further reading
 
 - [Architecture](./docs/architecture.md)

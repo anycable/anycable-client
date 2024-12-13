@@ -2,6 +2,8 @@
 
 ## master
 
+- Add `performFailures: 'throw' | 'warn' | 'ignore'` option to `createCable()`. ([@palkan][])
+
 ## 0.9.1 (2024-07-31)
 
 - Add `info` event to Cable and Channel. ([@palkan][])

@@ -50,12 +50,21 @@ export class PubSubChannel extends Channel {
 export const STATE = Symbol('state')
 
 export class Cable {
-  constructor({ transport, protocol, encoder, logger, lazy, hubOptions }) {
+  constructor({
+    transport,
+    protocol,
+    encoder,
+    logger,
+    lazy,
+    hubOptions,
+    performFailures
+  }) {
     this.emitter = createNanoEvents()
     this.transport = transport
     this.encoder = encoder
     this.logger = logger || new NoopLogger()
     this.protocol = protocol
+    this.performFailures = performFailures || 'throw'
 
     this.protocol.attached(this)
 
@@ -566,6 +575,21 @@ export class Cable {
   }
 
   async perform(identifier, action, payload) {
+    if (this.performFailures === 'throw') {
+      return this._perform(identifier, action, payload)
+    }
+
+    try {
+      return await this._perform(identifier, action, payload)
+    } catch (err) {
+      if (this.performFailures === 'warn') {
+        this.logger.warn('perform failed', { error: err })
+      }
+      return undefined
+    }
+  }
+
+  async _perform(identifier, action, payload) {
     if (this.state === 'connecting') {
       await this.pendingConnect()
     }

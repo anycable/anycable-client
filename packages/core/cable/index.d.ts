@@ -40,6 +40,7 @@ export type CableOptions = {
   logger?: Logger
   lazy?: boolean
   hubOptions?: HubOptions
+  performFailures?: 'throw' | 'warn' | 'ignore'
 }
 
 export type CableState =
