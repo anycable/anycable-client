@@ -199,7 +199,7 @@ class ActionCableSubscription {
   }
 
   perform(action, data = {}) {
-    this.channel.perform(action, data)
+    return this.channel.perform(action, data)
   }
 
   send(data) {
