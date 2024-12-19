@@ -4,6 +4,8 @@
 
 ## master
 
+## 0.9.2 (2024-12-12)
+
 - Add `performFailures: 'throw' | 'warn' | 'ignore'` option to `createCable()`. ([@palkan][])
 
 ## 0.9.1 (2024-07-31)
