@@ -3,6 +3,7 @@ import { createNanoEvents } from 'nanoevents'
 
 import { ReasonError } from '../protocol/index.js'
 import { stringifyParams } from '../stringify-params/index.js'
+import { Presence } from './presence.js'
 
 const STATE = Symbol('state')
 
@@ -13,6 +14,7 @@ export class Channel {
   constructor(params = {}) {
     this.emitter = createNanoEvents()
     this.params = Object.freeze(params)
+    this.presence = new Presence(this)
 
     this.initialConnect = true
 
@@ -90,6 +92,8 @@ export class Channel {
 
     this[STATE] = 'disconnected'
 
+    this.presence.reset()
+
     this.emit('disconnect', err)
   }
 
@@ -100,6 +104,8 @@ export class Channel {
     delete this.receiver
 
     this.initialConnect = true
+
+    this.presence.dispose()
 
     this.emit('close', err)
   }

@@ -244,6 +244,20 @@ export class Hub {
     })
   }
 
+  notify(id, event, payload) {
+    let localId = this._remoteToLocal[id]
+
+    if (!localId) {
+      return
+    }
+
+    let sub = this.subscriptions.get(localId)
+
+    if (!sub) return
+
+    sub.channels.forEach(channel => channel.emit(event, payload))
+  }
+
   close() {
     this._pendingMessages.length = 0
   }

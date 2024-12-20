@@ -363,6 +363,85 @@ describe('receiver communicaton', () => {
 
     expect(channel.state).toEqual('closed')
   })
+
+  describe('presence', () => {
+    it('join + leave', async () => {
+      client.subscribed(channel)
+
+      jest
+        .spyOn(client, 'perform')
+        .mockImplementation(
+          (identifier: Identifier, action?: string, payload?: Message) => {
+            expect(identifier).toEqual(channel.identifier)
+
+            if (action === '$presence:join') {
+              expect(payload).toMatchObject({ id: '42', info: 'foo' })
+            } else if (action === '$presence:leave') {
+              expect(payload).toEqual({ id: '42' })
+            } else {
+              throw new Error('Unexpected action')
+            }
+
+            return Promise.resolve()
+          }
+        )
+
+      await channel.presence.join('42', 'foo')
+      await channel.presence.leave()
+    })
+
+    it('info + join/leave + reset', async () => {
+      client.subscribed(channel)
+
+      let spy = jest
+        .spyOn(client, 'perform')
+        .mockImplementation(
+          (identifier: Identifier, action?: string, payload?: Message) => {
+            expect(identifier).toEqual(channel.identifier)
+            expect(action).toEqual('$presence:info')
+            expect(payload).toEqual({})
+
+            return Promise.resolve({
+              total: 1,
+              records: [{ id: '42', info: 'foo' }]
+            })
+          }
+        )
+
+      let info = await channel.presence.info()
+      expect(info).toEqual({ '42': 'foo' })
+
+      let info2 = await channel.presence.info()
+
+      expect(info2).toEqual({ '42': 'foo' })
+      expect(spy).toHaveBeenCalledTimes(1)
+
+      // check that leave/join updates the state
+      channel.emit('join', { id: '44', info: 'bar' })
+
+      let info3 = await channel.presence.info()
+      expect(info3).toEqual({ '42': 'foo', '44': 'bar' })
+
+      channel.emit('leave', { id: '42' })
+
+      let info4 = await channel.presence.info()
+      expect(info4).toEqual({ '44': 'bar' })
+
+      expect(spy).toHaveBeenCalledTimes(1)
+
+      channel.presence.reset()
+
+      let info5 = await channel.presence.info()
+      expect(info5).toEqual({ '42': 'foo' })
+
+      expect(spy).toHaveBeenCalledTimes(2)
+
+      channel.emit('join', { id: '48', info: 'baz' })
+
+      let info6 = await channel.presence.info()
+      expect(info6).toEqual({ '42': 'foo', '48': 'baz' })
+    })
+  })
 })
 
 type CustomMessage = {

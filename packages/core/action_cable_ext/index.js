@@ -9,10 +9,23 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
     this.streamsPositions = {}
     this.subscriptionStreams = {}
     this.pendingHistory = {}
+    this.pendingPresence = {}
+    this.presenceInfo = {}
     this.restoreSince = opts.historyTimestamp
     if (this.restoreSince === undefined) this.restoreSince = now()
     this.sessionId = undefined
     this.sendPongs = opts.pongs
+  }
+
+  reset(err) {
+    // Reject pending presence
+    for (let identifier in this.pendingPresence) {
+      this.pendingPresence[identifier].reject(err)
+    }
+
+    this.pendingPresence = {}
+
+    return super.reset()
   }
 
   receive(msg) {
@@ -78,12 +91,62 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
             command: 'history',
             history: this.historyRequestFor(restoredId)
           })
+
+          if (this.presenceInfo[restoredId]) {
+            this.cable.send({
+              identifier: restoredId,
+              command: 'join',
+              presence: this.presenceInfo[restoredId]
+            })
+          }
         }
 
         return this.cable.restored(restoredIds)
       }
 
       return this.cable.connected(this.sessionId)
+    }
+
+    if (type === 'presence') {
+      let pending = this.pendingPresence[identifier]
+
+      if (!pending) {
+        this.logger.warn('unexpected presence response', msg)
+        return
+      }
+
+      delete this.pendingPresence[identifier]
+
+      pending.resolve(message)
+
+      return {
+        type: 'presence',
+        identifier,
+        message
+      }
+    }
+
+    if (type === 'presence_error') {
+      let pending = this.pendingPresence[identifier]
+
+      if (!pending) {
+        this.logger.warn('unexpected presence response', msg)
+        return
+      }
+
+      delete this.pendingPresence[identifier]
+
+      pending.reject(new Error('failed to retrieve presence'))
+
+      return
+    }
+
+    if (type === 'join' || type === 'leave') {
+      return {
+        type,
+        identifier,
+        message
+      }
     }
 
     if (message) {
@@ -99,6 +162,26 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
     this.logger.warn(`unknown message type: ${type}`, { message: msg })
   }
 
+  perform(identifier, action, payload) {
+    // Handle presence actions
+    switch (action) {
+      case '$presence:join':
+        return this.join(identifier, payload)
+      case '$presence:leave':
+        return this.leave(identifier, payload)
+      case '$presence:info':
+        return this.presence(identifier, payload)
+    }
+
+    return super.perform(identifier, action, payload)
+  }
+
+  unsubscribe(identifier) {
+    delete this.presenceInfo[identifier]
+
+    return super.unsubscribe(identifier)
+  }
+
   buildSubscribeRequest(identifier) {
     let req = super.buildSubscribeRequest(identifier)
 
@@ -108,6 +191,12 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
       req.history = historyReq
 
       this.pendingHistory[identifier] = true
+    }
+
+    let presence = this.presenceInfo[identifier]
+
+    if (presence) {
+      req.presence = presence
     }
 
     return req
@@ -158,5 +247,49 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
     if (this.cable.state === 'connected') {
       this.cable.send({ command: 'pong' })
     }
+  }
+
+  async join(identifier, presence) {
+    this.presenceInfo[identifier] = presence
+
+    this.cable.send({
+      command: 'join',
+      identifier,
+      presence
+    })
+
+    return Promise.resolve()
+  }
+
+  async leave(identifier, presence) {
+    delete this.presenceInfo[identifier]
+
+    this.cable.send({
+      command: 'leave',
+      identifier,
+      presence
+    })
+
+    return Promise.resolve()
+  }
+
+  presence(identifier, data) {
+    if (this.pendingPresence[identifier]) {
+      this.logger.warn('presence is already pending, skipping', identifier)
+      return Promise.reject(Error('Already requesting presence'))
+    }
+
+    return new Promise((resolve, reject) => {
+      this.pendingPresence[identifier] = {
+        resolve,
+        reject
+      }
+
+      this.cable.send({
+        command: 'presence',
+        identifier,
+        data
+      })
+    })
   }
 }

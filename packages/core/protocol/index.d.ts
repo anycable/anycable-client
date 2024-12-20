@@ -40,6 +40,7 @@ export interface Consumer {
 }
 
 export type ProcessedMessage = Partial<{
+  type: string
   identifier: Identifier
   message: Message
   meta: MessageMeta

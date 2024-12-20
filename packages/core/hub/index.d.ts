@@ -64,5 +64,6 @@ export class Hub {
   subscribe(id: string, remoteId: string): void
   unsubscribe(id: string): void
   transmit(remoteId: string, msg: Message, meta: MessageMeta): void
+  notify(remoteId: string, event: string, msg: Message): void
   close(): void
 }

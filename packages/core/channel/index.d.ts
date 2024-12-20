@@ -1,6 +1,7 @@
 import { Unsubscribe } from 'nanoevents'
 
 import { ReasonError } from '../protocol/index.js'
+import { Presence, PresenceEvent, PresenceInfo } from './presence.js'
 
 export type Identifier = string
 
@@ -37,12 +38,15 @@ export type InfoEvent = {
   data?: object
 }
 
-export interface ChannelEvents<T> {
+export interface ChannelEvents<T, P = object | string> {
   connect: (event: ConnectEvent) => void
   disconnect: (event: ReasonError) => void
   close: (event?: ReasonError) => void
   message: (msg: T, meta?: MessageMeta) => void
   info: (event: InfoEvent) => void
+  join: (event: PresenceEvent<P>) => void
+  leave: (event: { id: string }) => void
+  presence: (event: PresenceInfo<P>) => void
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -56,7 +60,8 @@ export class Channel<
   ParamsType extends ChannelParamsMap = {},
   MessageType extends Message = Message,
   EventsType extends ChannelEvents<MessageType> = ChannelEvents<MessageType>,
-  ActionsType = any
+  ActionsType = any,
+  PresenceType = object
 > {
   static readonly identifier: string
 
@@ -64,6 +69,7 @@ export class Channel<
   readonly channelId: string
   readonly state: ChannelState
   readonly identifier: Identifier
+  readonly presence: Presence<PresenceType>
 
   constructor(...args: {} extends ParamsType ? [undefined?] : [ParamsType])
 
@@ -92,7 +98,7 @@ export class Channel<
   ): Unsubscribe
 
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  protected emit<E extends keyof EventsType>(
+  emit<E extends keyof EventsType>(
     event: E,
     ...args: EventsType[E] extends (...сargs: any) => any
       ? Parameters<EventsType[E]>

@@ -39,7 +39,7 @@ export class PubSubChannel extends Channel {
   static identifier = PUBSUB_CHANNEL
 
   async perform(action, payload) {
-    if (action === '$whisper') {
+    if (action.startsWith('$')) {
       return super.perform(action, payload)
     }
 
@@ -190,12 +190,7 @@ export class Cable {
     if (!identifier) {
       this.emit('info', { type: event, data })
     } else {
-      let sub = this.hub.subscriptions.get(identifier)
-      if (sub) {
-        sub.channels.forEach(channel =>
-          channel.emit('info', { type: event, data })
-        )
-      }
+      this.hub.notify(identifier, 'info', { type: event, data })
     }
   }
 
@@ -288,9 +283,13 @@ export class Cable {
     if (processed) {
       this.logger.debug('processed incoming message', processed)
 
-      let { identifier, message, meta } = processed
+      let { type, identifier, message, meta } = processed
 
-      this.hub.transmit(identifier, message, meta)
+      if (type) {
+        this.hub.notify(identifier, type, message)
+      } else {
+        this.hub.transmit(identifier, message, meta)
+      }
     }
   }
 

@@ -1080,7 +1080,7 @@ describe('channels', () => {
       })
     })
 
-    cable.notify('test_notification', channel.identifier, { foo: 'bar' })
+    cable.notify('test_notification', 'test_26', { foo: 'bar' })
 
     await promise
   })

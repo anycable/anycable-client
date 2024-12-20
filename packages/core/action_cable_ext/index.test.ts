@@ -360,3 +360,166 @@ describe('history', () => {
     })
   })
 })
+
+describe('presence', () => {
+  let identifier: string
+  let presenceState: any
+
+  beforeEach(() => {
+    logger.level = 'debug'
+    identifier = JSON.stringify({ channel: 'TestChannel' })
+    presenceState = {
+      total: 0,
+      records: []
+    }
+  })
+
+  it('request presence + success', () => {
+    let presencePromise = expect(
+      protocol.perform(identifier, '$presence:info')
+    ).resolves.toEqual(presenceState)
+
+    expect(
+      protocol.receive({ type: 'presence', identifier, message: presenceState })
+    ).toEqual({ type: 'presence', identifier, message: presenceState })
+
+    return presencePromise
+  })
+
+  it('request presence + failure', () => {
+    let presencePromise = expect(
+      protocol.perform(identifier, '$presence:info')
+    ).rejects.toEqual(new Error('failed to retrieve presence'))
+
+    expect(
+      protocol.receive({ type: 'presence_error', identifier })
+    ).toBeUndefined()
+
+    return presencePromise
+  })
+
+  it('request presence + reset', () => {
+    let presencePromise = expect(
+      protocol.perform(identifier, '$presence:info')
+    ).rejects.toEqual(new Error('reset'))
+
+    protocol.reset(new Error('reset'))
+
+    return presencePromise
+  })
+
+  it('join', async () => {
+    await protocol.perform('test_id', '$presence:join', {
+      id: '42',
+      info: 'vova'
+    })
+
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toMatchObject({
+      command: 'join',
+      identifier: 'test_id',
+      presence: {
+        id: '42',
+        info: 'vova'
+      }
+    })
+
+    expect(
+      protocol.receive({
+        type: 'join',
+        identifier,
+        message: { id: '42', info: 'vova' }
+      })
+    ).toEqual({ type: 'join', identifier, message: { id: '42', info: 'vova' } })
+  })
+
+  it('leave', async () => {
+    await protocol.perform('test_id', '$presence:leave', { id: '42' })
+
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toMatchObject({
+      command: 'leave',
+      identifier: 'test_id',
+      presence: { id: '42' }
+    })
+
+    expect(
+      protocol.receive({ type: 'leave', identifier, message: { id: '42' } })
+    ).toEqual({ type: 'leave', identifier, message: { id: '42' } })
+  })
+
+  it('restore + presence', async () => {
+    identifier = '{"channel":"TestChannel"}'
+    let subscribePromise = expect(
+      protocol.subscribe('TestChannel')
+    ).resolves.toEqual(identifier)
+
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toEqual({ command: 'subscribe', identifier })
+    protocol.receive({ type: 'confirm_subscription', identifier })
+    await subscribePromise
+
+    await protocol.perform(identifier, '$presence:join', {
+      id: '42',
+      info: 'vova'
+    })
+    expect(cable.mailbox).toHaveLength(2)
+
+    cable.mailbox.length = 0
+
+    protocol.receive({
+      type: 'welcome',
+      sid: '123',
+      restored: true,
+      restored_ids: [identifier]
+    })
+
+    expect(cable.state).toEqual('restored')
+
+    expect(cable.mailbox).toHaveLength(2)
+    expect((cable.mailbox[0] as any).command).toEqual('history')
+
+    expect(cable.mailbox[1]).toMatchObject({
+      command: 'join',
+      identifier,
+      presence: {
+        id: '42',
+        info: 'vova'
+      }
+    })
+  })
+
+  it('re-subscribe + presence', async () => {
+    identifier = '{"channel":"TestChannel"}'
+    let subscribePromise = expect(
+      protocol.subscribe('TestChannel')
+    ).resolves.toEqual(identifier)
+
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toEqual({ command: 'subscribe', identifier })
+    protocol.receive({ type: 'confirm_subscription', identifier })
+    await subscribePromise
+
+    await protocol.perform(identifier, '$presence:join', {
+      id: '42',
+      info: 'vova'
+    })
+    expect(cable.mailbox).toHaveLength(2)
+
+    cable.mailbox.length = 0
+
+    let resubscribePromise = expect(
+      protocol.subscribe('TestChannel')
+    ).resolves.toEqual(identifier)
+
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toMatchObject({
+      command: 'subscribe',
+      identifier,
+      presence: {
+        id: '42',
+        info: 'vova'
+      }
+    })
+  })
+})
