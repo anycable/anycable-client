@@ -1,4 +1,5 @@
 import { CreateSubscriptionOptions } from '.'
+import { InfoEvent } from '../channel'
 import {
   Hub,
   Channel,
@@ -128,6 +129,26 @@ describe('hub', () => {
     let newChannel = new TestChannel()
     subscription.add(newChannel)
     expect(newChannel.mailbox).toHaveLength(0)
+  })
+
+  it('notify test', () => {
+    let event: InfoEvent | undefined
+    channel.on('info', (ev: InfoEvent) => {
+      event = ev
+    })
+
+    subscription = hub.subscriptions.create('a', createOptions())
+    subscription.add(channel)
+
+    hub.subscribe('a', 'A')
+    hub.subscribe('b', 'B')
+
+    hub.notify('A', 'info', { type: 'test', data: 1 })
+    hub.notify('a', 'info', { type: 'test', data: 1 })
+    hub.notify('B', 'info', { type: 'test', data: 1 })
+
+    expect(event).toBeDefined()
+    expect(event).toEqual({ type: 'test', data: 1 })
   })
 
   it('close', () => {

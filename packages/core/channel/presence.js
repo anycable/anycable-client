@@ -3,24 +3,25 @@ export class Presence {
   constructor(channel) {
     this.channel = channel
     this.listeners = []
-    this.watching = false
   }
 
   watch() {
-    if (this.watching) return
-
-    this.watching = true
-
     this.listeners.push(
-      this.channel.on('join', msg => {
+      this.channel.on('presence', msg => {
+        if (msg.type === 'info') {
+          if (!this._state) {
+            this._state = this.stateFromInfo(msg)
+          }
+          return
+        }
+
         if (!this._state) return
 
-        this._state[msg.id] = msg.info
-      }),
-      this.channel.on('leave', msg => {
-        if (!this._state) return
-
-        delete this._state[msg.id]
+        if (msg.type === 'join') {
+          this._state[msg.id] = msg.info
+        } else if (msg.type === 'leave') {
+          delete this._state[msg.id]
+        }
       })
     )
   }
@@ -37,8 +38,6 @@ export class Presence {
 
     this.listeners.forEach(listener => listener())
     this.listeners.length = 0
-
-    this.watching = false
   }
 
   async join(id, info) {
@@ -51,9 +50,7 @@ export class Presence {
   async leave() {
     if (!this._info) return undefined
 
-    let res = await this.channel.perform('$presence:leave', {
-      id: this._info.id
-    })
+    let res = await this.channel.perform('$presence:leave')
 
     delete this._info
 
@@ -78,14 +75,18 @@ export class Presence {
     try {
       let presence = await this.channel.perform('$presence:info', {})
 
-      this._state = presence.records.reduce((acc, { id, info }) => {
-        acc[id] = info
-        return acc
-      }, {})
+      this._state = this.stateFromInfo(presence)
 
       return this._state
     } finally {
       delete this._promise
     }
+  }
+
+  stateFromInfo(presence) {
+    return presence.records.reduce((acc, { id, info }) => {
+      acc[id] = info
+      return acc
+    }, {})
   }
 }

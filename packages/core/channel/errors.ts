@@ -46,14 +46,14 @@ ch.on('message', (msg: object, meta: object) => {
   meta
 })
 
-// THROWS Argument of type '"data"' is not assignable to parameter of type 'keyof ChannelEvents<Message>'
+// THROWS Argument of type '"data"' is not assignable to parameter of type 'keyof ChannelEvents<Message, string | object>'
 ch.on('data', (msg: object) => true)
 
 interface CustomEvents extends ChannelEvents<{ tupe: number }> {
   custom: () => void
 }
 
-// THROWS Type 'CustomEvents' does not satisfy the constraint 'ChannelEvents<{ type: string; }>'
+// THROWS Type 'CustomEvents' does not satisfy the constraint 'ChannelEvents<{ type: string; }, string | object>'
 export class TypedChannel extends Channel<{}, { type: string }, CustomEvents> {}
 
 interface ChannelActions {

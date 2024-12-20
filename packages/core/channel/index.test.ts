@@ -377,7 +377,7 @@ describe('receiver communicaton', () => {
             if (action === '$presence:join') {
               expect(payload).toMatchObject({ id: '42', info: 'foo' })
             } else if (action === '$presence:leave') {
-              expect(payload).toEqual({ id: '42' })
+              expect(payload).toBeUndefined()
             } else {
               throw new Error('Unexpected action')
             }
@@ -386,6 +386,10 @@ describe('receiver communicaton', () => {
           }
         )
 
+      await channel.presence.leave()
+
+      await channel.presence.join('42', 'foo')
+      // double-join should be ignored
       await channel.presence.join('42', 'foo')
       await channel.presence.leave()
     })
@@ -411,35 +415,81 @@ describe('receiver communicaton', () => {
       let info = await channel.presence.info()
       expect(info).toEqual({ '42': 'foo' })
 
-      let info2 = await channel.presence.info()
+      info = await channel.presence.info()
 
-      expect(info2).toEqual({ '42': 'foo' })
+      expect(info).toEqual({ '42': 'foo' })
       expect(spy).toHaveBeenCalledTimes(1)
 
       // check that leave/join updates the state
-      channel.emit('join', { id: '44', info: 'bar' })
+      channel.emit('presence', { type: 'join', id: '44', info: 'bar' })
 
-      let info3 = await channel.presence.info()
-      expect(info3).toEqual({ '42': 'foo', '44': 'bar' })
+      info = await channel.presence.info()
+      expect(info).toEqual({ '42': 'foo', '44': 'bar' })
 
-      channel.emit('leave', { id: '42' })
+      channel.emit('presence', { type: 'leave', id: '42' })
 
-      let info4 = await channel.presence.info()
-      expect(info4).toEqual({ '44': 'bar' })
+      info = await channel.presence.info()
+      expect(info).toEqual({ '44': 'bar' })
 
       expect(spy).toHaveBeenCalledTimes(1)
 
       channel.presence.reset()
 
-      let info5 = await channel.presence.info()
-      expect(info5).toEqual({ '42': 'foo' })
+      channel.emit('presence', {
+        type: 'info',
+        records: [{ id: '42', info: 'fu' }],
+        total: 1
+      })
+
+      info = await channel.presence.info()
+      expect(info).toEqual({ '42': 'fu' })
+
+      expect(spy).toHaveBeenCalledTimes(1)
+
+      channel.presence.dispose()
+
+      info = await channel.presence.info()
+      expect(info).toEqual({ '42': 'foo' })
 
       expect(spy).toHaveBeenCalledTimes(2)
 
-      channel.emit('join', { id: '48', info: 'baz' })
+      channel.emit('presence', { type: 'join', id: '48', info: 'baz' })
 
-      let info6 = await channel.presence.info()
-      expect(info6).toEqual({ '42': 'foo', '48': 'baz' })
+      info = await channel.presence.info()
+      expect(info).toEqual({ '42': 'foo', '48': 'baz' })
+    })
+
+    it('info + join/leave + reset', async () => {
+      client.subscribed(channel)
+
+      let resolver!: (value: any) => void
+
+      let spy = jest
+        .spyOn(client, 'perform')
+        .mockImplementation(
+          (identifier: Identifier, action?: string, payload?: Message) => {
+            return new Promise(resolve => {
+              resolver = resolve
+            })
+          }
+        )
+
+      let promise = channel.presence.info()
+      let promise2 = channel.presence.info()
+
+      // Must be ignored while waiting for the response
+      channel.emit('presence', { type: 'join', id: '44', info: 'bar' })
+
+      resolver({
+        total: 1,
+        records: [{ id: '42', info: 'foo' }]
+      })
+
+      let res = await promise
+      let res2 = await promise2
+
+      expect(res).toEqual({ '42': 'foo' })
+      expect(res2).toEqual({ '42': 'foo' })
     })
   })
 })

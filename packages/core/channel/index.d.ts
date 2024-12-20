@@ -1,7 +1,7 @@
 import { Unsubscribe } from 'nanoevents'
 
 import { ReasonError } from '../protocol/index.js'
-import { Presence, PresenceEvent, PresenceInfo } from './presence.js'
+import { Presence, PresenceEvent } from './presence.js'
 
 export type Identifier = string
 
@@ -44,9 +44,7 @@ export interface ChannelEvents<T, P = object | string> {
   close: (event?: ReasonError) => void
   message: (msg: T, meta?: MessageMeta) => void
   info: (event: InfoEvent) => void
-  join: (event: PresenceEvent<P>) => void
-  leave: (event: { id: string }) => void
-  presence: (event: PresenceInfo<P>) => void
+  presence: (event: PresenceEvent<P>) => void
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

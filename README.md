@@ -53,7 +53,7 @@ createCable('ws://cable.example.com/my_cable')
 ### Pub/Sub
 
 > [!IMPORTANT]
-> This feature is backed by AnyCable _signed streams_ (available since v1.5). See the [documentation](https://docs.anycable.io/edge/anycable-go/signed_streams).
+> This feature is backed by AnyCable _signed streams_ (available since v1.5). See the [documentation](https://docs.anycable.io/anycable-go/signed_streams).
 
 You can subscribe directly to data streams as follows:
 
@@ -78,6 +78,68 @@ const signedName = await obtainSignedStreamNameFromWhenever();
 const chatChannel = cable.streamFromSigned(signedName);
 // ...
 ```
+
+### Presence tracking
+
+> [!IMPORTANT]
+> This feature is currently supported only by [AnyCable+](https://plus.anycable.io) and edge version of AnyCable server. See the [documentation](https://docs.anycable.io/edge/anycable-go/presence).
+
+You can keep track of the users currently connected to the channel. Let's assume you have the following channel:
+
+```js
+const cable = createCable();
+const chatChannel = cable.streamFrom('room/42');
+```
+
+To join the channel's presence set, you must explicitly provide the user's information:
+
+```js
+// The first argument must be a unique user identifier within the channel
+// and the second argument is an arbitrary user data (presence information)
+chatChannel.presence.join(user.id, { name: user.name })
+```
+
+You MUST join the presence once, no need to do that on every connection or reconnection—our library takes care of this.
+
+You can subscribe to presence events:
+
+```js
+chatChannel.presence.on('presence', (ev) => {
+  const { type, info, id } = ev
+
+  // Type could be 'join', 'leave', 'presence', or 'error'
+  if (type === 'join') {
+    console.log("user joined", id, info);
+  }
+
+  if (type === 'leave') {
+    // no info, just id
+    console.log("user left", id);
+  }
+})
+```
+
+To obtain the current presence state, you can use the `info` function:
+
+```js
+const users = await chatChannel.presence.info()
+
+// users is an object with user ids as keys and user data as values
+users //=> { 'user-id': { name: 'John' }, ... }
+```
+
+Calling `presence.info()` performs a server request on the initial invocation (or when necessary) and uses `join` / `leave` events for keeping the
+information up-to-date.
+
+Note that it's not necessary to join the channel to obtain the presence information.
+
+You can also leave the channel as follows:
+
+```js
+chatChannel.presence.leave()
+```
+
+The users leaves the channel automatically on unsubscribe or disconnect (in this case, the presense state update might be delayed depending on the server-side configuration).
 
 ### Channels
 

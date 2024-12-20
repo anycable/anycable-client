@@ -108,40 +108,24 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
     }
 
     if (type === 'presence') {
-      let pending = this.pendingPresence[identifier]
+      let presenceType = message.type
 
-      if (!pending) {
-        this.logger.warn('unexpected presence response', msg)
-        return
+      if (presenceType === 'info') {
+        let pending = this.pendingPresence[identifier]
+
+        if (pending) {
+          delete this.pendingPresence[identifier]
+          pending.resolve(message)
+        }
+      } else if (presenceType === 'error') {
+        let pending = this.pendingPresence[identifier]
+
+        if (pending) {
+          delete this.pendingPresence[identifier]
+          pending.reject(new Error('failed to retrieve presence'))
+        }
       }
 
-      delete this.pendingPresence[identifier]
-
-      pending.resolve(message)
-
-      return {
-        type: 'presence',
-        identifier,
-        message
-      }
-    }
-
-    if (type === 'presence_error') {
-      let pending = this.pendingPresence[identifier]
-
-      if (!pending) {
-        this.logger.warn('unexpected presence response', msg)
-        return
-      }
-
-      delete this.pendingPresence[identifier]
-
-      pending.reject(new Error('failed to retrieve presence'))
-
-      return
-    }
-
-    if (type === 'join' || type === 'leave') {
       return {
         type,
         identifier,
@@ -276,7 +260,7 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
   presence(identifier, data) {
     if (this.pendingPresence[identifier]) {
       this.logger.warn('presence is already pending, skipping', identifier)
-      return Promise.reject(Error('Already requesting presence'))
+      return Promise.reject(Error('presence request is already pending'))
     }
 
     return new Promise((resolve, reject) => {

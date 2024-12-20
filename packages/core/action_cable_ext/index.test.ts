@@ -3,6 +3,7 @@ import { jest } from '@jest/globals'
 import { ActionCableExtendedProtocol } from '../index.js'
 import { TestConsumer } from '../protocol/testing'
 import { TestLogger } from '../logger/testing'
+import { PresenceEvent } from '../channel/presence.js'
 
 let cable: TestConsumer
 let protocol: ActionCableExtendedProtocol
@@ -363,27 +364,32 @@ describe('history', () => {
 
 describe('presence', () => {
   let identifier: string
-  let presenceState: any
+  let presenceState: PresenceEvent<string>
 
   beforeEach(() => {
     logger.level = 'debug'
     identifier = JSON.stringify({ channel: 'TestChannel' })
     presenceState = {
+      type: 'info',
       total: 0,
       records: []
     }
   })
 
-  it('request presence + success', () => {
+  it('request presence + success', async () => {
     let presencePromise = expect(
       protocol.perform(identifier, '$presence:info')
     ).resolves.toEqual(presenceState)
+
+    let doublePresencePromise = expect(
+      protocol.perform(identifier, '$presence:info')
+    ).rejects.toEqual(new Error('presence request is already pending'))
 
     expect(
       protocol.receive({ type: 'presence', identifier, message: presenceState })
     ).toEqual({ type: 'presence', identifier, message: presenceState })
 
-    return presencePromise
+    await presencePromise
   })
 
   it('request presence + failure', () => {
@@ -392,8 +398,12 @@ describe('presence', () => {
     ).rejects.toEqual(new Error('failed to retrieve presence'))
 
     expect(
-      protocol.receive({ type: 'presence_error', identifier })
-    ).toBeUndefined()
+      protocol.receive({
+        type: 'presence',
+        identifier,
+        message: { type: 'error' }
+      })
+    ).toEqual({ type: 'presence', identifier, message: { type: 'error' } })
 
     return presencePromise
   })
@@ -426,11 +436,15 @@ describe('presence', () => {
 
     expect(
       protocol.receive({
-        type: 'join',
+        type: 'presence',
         identifier,
-        message: { id: '42', info: 'vova' }
+        message: { type: 'join', id: '42', info: 'vova' }
       })
-    ).toEqual({ type: 'join', identifier, message: { id: '42', info: 'vova' } })
+    ).toEqual({
+      type: 'presence',
+      identifier,
+      message: { type: 'join', id: '42', info: 'vova' }
+    })
   })
 
   it('leave', async () => {
@@ -439,13 +453,20 @@ describe('presence', () => {
     expect(cable.mailbox).toHaveLength(1)
     expect(cable.mailbox[0]).toMatchObject({
       command: 'leave',
-      identifier: 'test_id',
-      presence: { id: '42' }
+      identifier: 'test_id'
     })
 
     expect(
-      protocol.receive({ type: 'leave', identifier, message: { id: '42' } })
-    ).toEqual({ type: 'leave', identifier, message: { id: '42' } })
+      protocol.receive({
+        type: 'presence',
+        identifier,
+        message: { type: 'leave', id: '42' }
+      })
+    ).toEqual({
+      type: 'presence',
+      identifier,
+      message: { type: 'leave', id: '42' }
+    })
   })
 
   it('restore + presence', async () => {
@@ -520,6 +541,41 @@ describe('presence', () => {
         id: '42',
         info: 'vova'
       }
+    })
+  })
+
+  it('subscribe + presence + unsubscribe + subscribe', async () => {
+    identifier = '{"channel":"TestChannel"}'
+    let subscribePromise = expect(
+      protocol.subscribe('TestChannel')
+    ).resolves.toEqual(identifier)
+
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toEqual({ command: 'subscribe', identifier })
+    protocol.receive({ type: 'confirm_subscription', identifier })
+    await subscribePromise
+
+    await protocol.perform(identifier, '$presence:join', {
+      id: '42',
+      info: 'vova'
+    })
+    expect(cable.mailbox).toHaveLength(2)
+
+    await protocol.unsubscribe(identifier)
+
+    cable.mailbox.length = 0
+
+    // wait for subscribe cooldown
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    let resubscribePromise = expect(
+      protocol.subscribe('TestChannel')
+    ).resolves.toEqual(identifier)
+
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toEqual({
+      command: 'subscribe',
+      identifier
     })
   })
 })

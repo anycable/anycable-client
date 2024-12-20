@@ -68,11 +68,12 @@ class TestProtocol implements Protocol {
     }
 
     if (typeof msg === 'object') {
-      let data = msg as { identifier: string; payload: object }
+      let data = msg as { identifier: string; payload: object; type?: string }
 
-      let { identifier, payload } = data
+      let { identifier, payload, type } = data
 
       return {
+        type,
         identifier,
         message: payload,
         meta: { id: this.counter.toString() }
@@ -1081,6 +1082,35 @@ describe('channels', () => {
     })
 
     cable.notify('test_notification', 'test_26', { foo: 'bar' })
+
+    await promise
+  })
+
+  it('receive events', async () => {
+    await cable.subscribe(channel).ensureSubscribed()
+
+    expect(cable.hub.size).toEqual(1)
+    expect(channel.state).toEqual('connected')
+
+    let promise = new Promise<void>((resolve, reject) => {
+      let tid = setTimeout(() => {
+        reject(Error('Timed out to receive message'))
+      }, 500)
+
+      channel.on('info', (msg: InfoEvent) => {
+        clearTimeout(tid)
+        expect(msg.data).toEqual('hallo')
+        resolve()
+      })
+    })
+
+    transport.receive(
+      JSON.stringify({
+        identifier: 'test_26',
+        payload: { data: 'hallo' },
+        type: 'info'
+      })
+    )
 
     await promise
   })
