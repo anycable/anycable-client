@@ -16,7 +16,8 @@ Multiple reasons that forced us to implement an alternative client library for A
 - [TypeScript support](#typescript-support)
 - Revisited client-side APIs.
 - [Testability](#testing)
-- Future [protocol extensions/modifications support](#extended-action-cable-protocol).
+- Features like [presence tracking](#presence-tracking).
+- Additional [protocol extensions](#extended-action-cable-protocol) (e.g., history support).
 - Better [Turbo Streams support](https://github.com/anycable/anycable-client/tree/master/packages/turbo-stream)
 
 📖 Read also the [introductory post](https://evilmartians.com/chronicles/introducing-anycable-javascript-and-typescript-client).

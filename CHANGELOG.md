@@ -4,6 +4,12 @@
 
 ## master
 
+## 1.0.0 (2024-12-26)
+
+- Add `channel.presence` API. ([@palkan][])
+
+  See [docs](https://docs.anycable.io/edge/anycable-go/presence).
+
 ## 0.9.2 (2024-12-12)
 
 - Add `performFailures: 'throw' | 'warn' | 'ignore'` option to `createCable()`. ([@palkan][])
