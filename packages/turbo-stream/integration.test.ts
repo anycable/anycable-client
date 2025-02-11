@@ -243,7 +243,9 @@ describe('<turbo-stream-source>', () => {
     let cable = createCable(`ws://localhost:${port}`)
     start(cable, {
       tagName: 'turbo-cable-stream-source-delayed',
-      delayedUnsubscribe: true
+      delayedUnsubscribe: true,
+      presence: true,
+      presenceTagName: 'turbo-cable-presence-delayed'
     })
 
     let channel = cable.hub.channels[0]

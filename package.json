@@ -54,7 +54,8 @@
       ".*/testing.ts",
       "packages/web",
       "packages/protobuf-encoder/generated",
-      "packages/turbo-stream/snakeize"
+      "packages/turbo-stream/snakeize",
+      "packages/turbo-stream/presence_source_element"
     ]
   },
   "eslintConfig": {

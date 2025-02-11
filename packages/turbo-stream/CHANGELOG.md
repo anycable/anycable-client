@@ -2,6 +2,10 @@
 
 ## master
 
+## 0.8.0
+
+- Add presence element that integrates with AnyCable Presence API. ([@palkan][])
+
 ## 0.7.0
 
 - Add `delayedUnsubscribe` option. ([@palkan][])

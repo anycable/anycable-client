@@ -16,6 +16,9 @@ export interface StartOptions {
   // Number of milliseconds to wait before unsubscribing from a channel after the element has been disconnected.
   // If set to `true`, the default value (300ms) is used.
   delayedUnsubscribe: boolean | number
+  // activate presence tag
+  presence: boolean
+  presenceTagName: string
 }
 
 export const DEFAULT_SOCKET_HEADER: string
