@@ -21,6 +21,7 @@ class GoodTransport<T> implements Transport<T> {
   }
   setURL(url: string) {}
   setParam(key: string, value: string) {}
+  setToken(val: string, name: string) {}
   on(event: string, callback: () => void) {
     return () => {}
   }

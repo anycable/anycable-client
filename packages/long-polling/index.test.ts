@@ -47,6 +47,13 @@ describe('LongPollingTransport', () => {
     expect(t.url).toBe('http://example.cable/ws?token=xxx&key=value')
   })
 
+  it('setToken', () => {
+    t.setURL('http://example.cable/ws?token=xxx')
+    t.setToken('yyy', 'token')
+
+    expect(t.url).toBe('http://example.cable/ws?token=yyy')
+  })
+
   it('send when not connected', () => {
     expect(() => {
       t.send('test')

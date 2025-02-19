@@ -94,6 +94,12 @@ describe('FallbackTransport', () => {
     expect(b.state).toEqual({ hello: 'world' })
   })
 
+  it('sets tokens for all transports', () => {
+    transport.setToken('secret')
+    expect(a.state.jid).toEqual('secret')
+    expect(b.state.jid).toEqual('secret')
+  })
+
   it('delegates events to active transport', async () => {
     let open = jest.fn()
     let close = jest.fn()

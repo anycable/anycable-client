@@ -31,6 +31,10 @@ export class TestTransport implements Transport<string> {
     this.state[key] = value
   }
 
+  setToken(value: string, param: string = 'jid') {
+    this.state[param] = value
+  }
+
   open() {
     this.opened = true
     this.emit('open')

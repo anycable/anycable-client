@@ -38,6 +38,13 @@ it('setParam + overwrite query param', () => {
   expect(t.url).toBe('ws://example.cable/ws?token=yyy')
 })
 
+it('setToken', () => {
+  let t = new WebSocketTransport('ws://example.cable/ws?jid=xxx')
+  t.setToken('yyy')
+
+  expect(t.url).toBe('ws://example.cable/ws?jid=yyy')
+})
+
 it('send when not connected', () => {
   let t = new WebSocketTransport('ws://')
 

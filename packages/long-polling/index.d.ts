@@ -29,6 +29,7 @@ export class LongPollingTransport implements Transport<string> {
 
   setURL(url: string): void
   setParam(key: string, value: string): void
+  setToken(value: string, param?: string): void
 
   on<E extends keyof TransportEvents<string>>(
     event: E,

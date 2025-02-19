@@ -131,6 +131,10 @@ export class LongPollingTransport {
     this.setURL(newURL)
   }
 
+  setToken(val, name = 'jid') {
+    this.setParam(name, val)
+  }
+
   send(data) {
     if (!this.connected) {
       throw Error('No connection')

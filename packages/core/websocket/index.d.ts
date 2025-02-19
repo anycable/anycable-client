@@ -29,6 +29,7 @@ export class WebSocketTransport<
 
   setURL(url: string): void
   setParam(key: string, value: string): void
+  setToken(value: string, param?: string): void
 
   displayName(): string
 

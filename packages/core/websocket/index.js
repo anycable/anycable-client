@@ -71,6 +71,10 @@ export class WebSocketTransport {
     this.setURL(newURL)
   }
 
+  setToken(val, key = 'jid') {
+    this.setParam(key, val)
+  }
+
   send(data) {
     if (!this.ws || !this.connected) {
       throw Error('WebSocket is not connected')

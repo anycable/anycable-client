@@ -22,6 +22,7 @@ export interface Transport<PayloadType = string> {
 
   setURL(url: string): void
   setParam(key: string, value: string): void
+  setToken(value: string, param?: string): void
 
   displayName(): string
 
@@ -57,6 +58,7 @@ export class FallbackTransport<PayloadType = string>
 
   setURL(url: string): void
   setParam(key: string, value: string): void
+  setToken(value: string, param?: string): void
 
   on<E extends keyof TransportEvents<PayloadType>>(
     event: E,

@@ -65,6 +65,12 @@ export class FallbackTransport {
     })
   }
 
+  setToken(val, name) {
+    this.transports.forEach(transport => {
+      transport.setToken(val, name)
+    })
+  }
+
   on(event, callback) {
     return this.emitter.on(event, callback)
   }
