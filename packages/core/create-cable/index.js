@@ -51,7 +51,8 @@ export function createCable(url, opts) {
     protocolOptions,
     concurrentSubscribes,
     performFailures,
-    transportConfigurator
+    transportConfigurator,
+    auth
   } = opts
 
   logger = logger || new NoopLogger(logLevel)
@@ -113,6 +114,10 @@ export function createCable(url, opts) {
 
   if (fallbacks) {
     transport = new FallbackTransport([transport, ...fallbacks], { logger })
+  }
+
+  if (auth && auth.token) {
+    transport.setToken(auth.token, auth.param || 'jid')
   }
 
   reconnectStrategy = reconnectStrategy || backoffWithJitter(pingInterval)

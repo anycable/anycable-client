@@ -59,6 +59,18 @@ const historyTimestampFromMeta = () => {
   }
 }
 
+const tokenFromMeta = () => {
+  if (typeof document !== 'undefined' && document.head) {
+    return fetchMeta(document, 'token')
+  }
+}
+
+const tokenParamFromMeta = () => {
+  if (typeof document !== 'undefined' && document.head) {
+    return fetchMeta(document, 'token-param')
+  }
+}
+
 export function createCable(url, opts) {
   if (typeof url === 'object' && typeof opts === 'undefined') {
     opts = url
@@ -69,6 +81,13 @@ export function createCable(url, opts) {
   opts = opts || {}
 
   opts.historyTimestamp ||= historyTimestampFromMeta()
+
+  let token = tokenFromMeta()
+
+  if (token) {
+    let param = tokenParamFromMeta()
+    opts.auth = Object.assign({ token, param }, opts.auth || {})
+  }
 
   opts = Object.assign({}, DEFAULTS, opts)
 
@@ -138,9 +157,12 @@ export function fetchTokenFromHTML(opts) {
     let doc = new DOMParser().parseFromString(html, 'text/html')
 
     let newURL = fetchMeta(doc, 'url')
+    let newToken = fetchMeta(doc, 'token')
+    let newTokenParam = fetchMeta(doc, 'token-param')
 
-    if (newURL) {
-      transport.setURL(newURL)
+    if (newURL || newToken) {
+      if (newURL) transport.setURL(newURL)
+      if (newToken) transport.setToken(newToken, newTokenParam)
     } else {
       throw Error("Couldn't find a token on the page")
     }

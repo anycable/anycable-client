@@ -511,7 +511,10 @@ export default createCable({
     let data = await response.json()
 
     // Update URL for the underlying transport
-    transport.setURL('ws://example.com/cable?token=' + data['token'])
+    transport.setURL('ws://example.com/cable?jid=' + data['token'])
+
+    // or update only the token
+    transport.setToken(data['token'])
   }
 })
 ```
@@ -524,7 +527,7 @@ import { createCable, fetchTokenFromHTML } from '@anycable/web'
 
 // By default, the current page is loaded in the background,
 // and the action-cable-url (or cable-url) meta tag is used to update
-// the connection url
+// the connection url and the cable-token meta tag is used to update the token (if any)
 export default createCable({tokenRefresher: fetchTokenFromHTML()})
 
 // You can also specify an alternative URL
@@ -541,6 +544,33 @@ export default createCable({
 
 There are several ways to provide an initial token value. You can provide it as a part of the initial connection URL. In this case, no additional actions are required.
 
+You can also provide a token during the cable initialization:
+
+```js
+import { createCable } from '@anycable/web'
+
+export default createCable({
+  auth: {token: "secret-value"}
+});
+```
+
+By default, the token is added to the URL as a query parameter. We use the `jid` parameter name by default (to match the default AnyCable JWT functionality). You can change this by specifying the `param` option:
+
+```js
+export default createCable({
+  auth: {token: "secret-value", param: "token"}
+});
+```
+
+When using `@anycable/web` package, you can inject the token into the HTML page using a meta tag with the `cable-token` name:
+
+```html
+<meta name="cable-token" content="secret-token">
+
+<!-- you can also specify a custom param name for token -->
+<meta name="cable-token-param" content="token">
+```
+
 In some cases, the only way to obtain a token is to make a request to the server. However, it might be necessary to initialize a _cable_ instance right on the application start, without waiting for the token to be fetched. In this case, you can use a `transportCongfigurator` option, which allows you to specify an async function to be called right before the connection is established (so you can tweak the parameters). For example:
 
 ```js
@@ -556,7 +586,7 @@ export default createCable({
     let response = await fetch('/token.json')
     let data = await response.json()
 
-    transport.setParam('token', data['token'])
+    transport.setToken(data['token'], 'token')
   }
 })
 ```

@@ -128,6 +128,18 @@ it('with monitor=false', () => {
   expect(cable.monitor).toBeUndefined()
 })
 
+it('with auth options', () => {
+  let cable = createCable('ws://example', {
+    auth: { token: 'eat-yourself', param: 'tt' }
+  })
+
+  expect(cable.protocol).toBeInstanceOf(ActionCableProtocol)
+  expect(cable.transport).toBeInstanceOf(WebSocketTransport)
+
+  let ws = cable.transport as WebSocketTransport
+  expect(ws.url).toEqual('ws://example/?tt=eat-yourself')
+})
+
 describe('with tokenRefresher', () => {
   let transport: TestTransport
   let called: number

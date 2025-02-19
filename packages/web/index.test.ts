@@ -67,6 +67,17 @@ describe('createCable', () => {
     let protocol = cable.protocol as any
     expect(protocol.restoreSince).toEqual(20230416)
   })
+
+  it('uses token from cable-token meta', () => {
+    document.head.innerHTML = `
+      <meta name="cable-url" content="ws://anycable.go:2313/cable">
+      <meta name="cable-token" content="101123">
+      <meta name="cable-token-param" content="toka">
+    `
+    let cable = createCable()
+    let ws = cable.transport
+    expect(ws.url).toEqual(`ws://anycable.go:2313/cable?toka=101123`)
+  })
 })
 
 describe('fetchTokenFromHTML', () => {
@@ -109,6 +120,35 @@ describe('fetchTokenFromHTML', () => {
       })
     )
     expect(transport.url).toEqual('ws://anycable.go:2313/cable?token=secret')
+  })
+
+  it('with separate meta for url and token', async () => {
+    let html = `
+    <html>
+      <head>
+        <meta name="action-cable-url" content="ws://anycable.go:2414/cable">
+        <meta name="action-cable-token" content="s3cr3t">
+      </head>
+      <body>
+      </body>
+    </html>
+    `
+    let mock = fetch.mockImplementationOnce(() =>
+      Promise.resolve({ text: () => Promise.resolve(html), ok: true })
+    )
+
+    await refresher(transport)
+
+    expect(mock).toHaveBeenCalledWith(
+      'http://anycable.test/demo',
+      expect.objectContaining({
+        credentials: 'same-origin',
+        headers: expect.objectContaining({
+          'X-ANYCABLE-OPERATION': 'token-refresh'
+        })
+      })
+    )
+    expect(transport.url).toEqual('ws://anycable.go:2414/cable?jid=s3cr3t')
   })
 
   it('with custom url and no meta data in response', () => {

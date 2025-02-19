@@ -2,6 +2,8 @@
 
 ## master
 
+- Support passing authentication token in HTML meta tags (`cable-token` and `cable-token-param`). ([@palkan][])
+
 ## 1.0.0 (2024-12-26)
 
 - Add `channel.presence` API. ([@palkan][])

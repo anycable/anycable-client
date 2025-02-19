@@ -21,7 +21,7 @@ export type ProtocolID =
 
 export type TransportConfigurator = (
   transport: Transport,
-  { initial: boolean }
+  params: { initial: boolean }
 ) => Promise<void>
 export type TokenRefresher = (transport: Transport) => Promise<void>
 
@@ -66,6 +66,8 @@ export interface CreateOptions<P extends ProtocolID | Protocol> {
 
   concurrentSubscribes: boolean
   performFailures: 'throw' | 'warn' | 'ignore'
+
+  auth: { token?: string; param?: string }
 }
 
 export const DEFAULT_OPTIONS: Partial<CreateOptions<ProtocolID | Protocol>>
