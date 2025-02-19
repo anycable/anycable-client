@@ -5,10 +5,13 @@ import { Transport, TransportEvents } from '../transport/index.js'
 
 type WebSocketPayload = string | Uint8Array
 
+export type WebSocketAuthStrategy = 'params' | 'header' | 'sub-protocol'
+
 export type WebSocketOpts = Partial<{
   /* eslint-disable @typescript-eslint/no-explicit-any */
   websocketImplementation: any
   websocketOptions: object
+  authStrategy: WebSocketAuthStrategy
   subprotocol: string
   format: 'text' | 'binary'
 }>

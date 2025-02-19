@@ -593,6 +593,38 @@ export default createCable({
 
 Note that you still need the `tokenRefresher` to handle token expiration, because configurator does not handle this for you.
 
+#### Ways to attach a token to a WebSocket connection
+
+WebSockets in browsers do not support providing custom headers. Thus, we use query parameters to pass the token by default (when you use the `transport.setToken` function).
+
+When using WebSockets in non-browser environments (such as Node.js, React Native), you can use HTTP headers. If you want to do that with AnyCable, you can specify the `websocketAuthStrategy` option:
+
+```js
+import WebSocket from 'ws'
+import { createCable } from '@anycable/core'
+
+let cable = createCable(url, {
+  websocketImplementation: WebSocket,
+  websocketAuthStrategy: 'header',
+  auth: {token: 'secret-token'}
+})
+```
+
+The configuration above would add the `x-jid: secret-token` header to the WebSocket connection.
+
+We also support the `sub-protocol` strategy, which adds a specificly formed sub-protocol to the list of the client suppported protocols. This approach works in the browser, too:
+
+```js
+export default createCable({
+  auth: {token: "secret-value"},
+  websocketAuthStrategy: 'sub-protocol'
+});
+```
+
+A WebSocket connection created by such cable will have the `anycable-token.secret-value` sub-protocol in the list of protocols (`sec-websocket-protocol` header) in addition to the usual sub-protocols.
+
+**NOTE:** the `sub-protocol` strategy is not supported by all WebSocket servers. It has been added to AnyCable in v1.6.
+
 ### Hotwire (Turbo Streams) support
 
 To use AnyCable client with [Turbo Streams][turbo-streams], we provide a tiny plugin—`@anycable/turbo-stream`. It allows you to configure a Cable instance yourself to use with Turbo Stream source elements:

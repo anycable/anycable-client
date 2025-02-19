@@ -17,10 +17,12 @@ export class WebSocketTransport {
     this.connected = false
     this.emitter = createNanoEvents()
 
-    let { format, subprotocol } = opts
+    let { format, subprotocol, authStrategy } = opts
 
     this.format = format || 'text'
     this.connectionOptions = opts.websocketOptions
+    this.authStrategy = authStrategy || 'param'
+    this.authProtocol = ''
     this.subprotocol = subprotocol
   }
 
@@ -29,14 +31,14 @@ export class WebSocketTransport {
   }
 
   open() {
+    let protocols = this.subprotocol
+    if (this.authStrategy === 'sub-protocol') {
+      protocols = [this.subprotocol, this.authProtocol]
+    }
     if (this.connectionOptions) {
-      this.ws = new this.Impl(
-        this.url,
-        this.subprotocol,
-        this.connectionOptions
-      )
+      this.ws = new this.Impl(this.url, protocols, this.connectionOptions)
     } else {
-      this.ws = new this.Impl(this.url, this.subprotocol)
+      this.ws = new this.Impl(this.url, protocols)
     }
     this.ws.binaryType = 'arraybuffer'
     this.initListeners()
@@ -72,7 +74,26 @@ export class WebSocketTransport {
   }
 
   setToken(val, key = 'jid') {
-    this.setParam(key, val)
+    if (this.authStrategy === 'param') {
+      this.setParam(key, val)
+    } else if (this.authStrategy === 'header') {
+      this.connectionOptions = this.connectionOptions || {}
+      this.connectionOptions.headers = this.connectionOptions.headers || {}
+
+      let authHeaderKey = `x-${key}`.toLowerCase()
+
+      // find existing auth header key (it could have a different case)
+      let existingKey = Object.keys(this.connectionOptions.headers).find(
+        k => k.toLowerCase() === authHeaderKey
+      )
+      authHeaderKey = existingKey || authHeaderKey
+
+      this.connectionOptions.headers[authHeaderKey] = val
+    } else if (this.authStrategy === 'sub-protocol') {
+      this.authProtocol = `anycable-token.${val}`
+    } else {
+      throw new Error('Unknown auth strategy: ' + this.authStrategy)
+    }
   }
 
   send(data) {

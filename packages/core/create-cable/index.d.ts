@@ -7,6 +7,7 @@ import { Protocol } from '../protocol/index.js'
 import { Channel, Message, ChannelParamsMap } from '../channel/index.js'
 import { Options } from '../action_cable/index.js'
 import { ExtendedOptions } from '../action_cable_ext/index.js'
+import { WebSocketAuthStrategy } from '../websocket/index.js'
 
 export type ExtendedProtocolID =
   | 'actioncable-v1-ext-json'
@@ -42,6 +43,7 @@ export interface CreateOptions<P extends ProtocolID | Protocol> {
   websocketImplementation: any
   websocketFormat: string
   websocketOptions: object
+  websocketAuthStrategy: WebSocketAuthStrategy
 
   fallbacks: Transport[]
 

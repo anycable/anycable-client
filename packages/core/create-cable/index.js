@@ -34,6 +34,7 @@ export function createCable(url, opts) {
     websocketImplementation,
     websocketFormat,
     websocketOptions,
+    websocketAuthStrategy,
     fallbacks,
     logLevel,
     logger,
@@ -109,6 +110,7 @@ export function createCable(url, opts) {
       websocketImplementation,
       websocketOptions,
       subprotocol,
+      authStrategy: websocketAuthStrategy,
       format: websocketFormat
     })
 

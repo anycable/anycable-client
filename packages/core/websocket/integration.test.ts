@@ -277,3 +277,96 @@ it('with headers', async () => {
 
   expect(response).toEqual('secret')
 })
+
+it('with authStrategy=sub-protocol', async () => {
+  wss.on('connection', (ws, req) => {
+    let protocols = req.headers['sec-websocket-protocol'] || 'none'
+    let token = 'none'
+
+    protocols.split(',').find((protocol: string) => {
+      if (protocol.startsWith('anycable-token.')) {
+        token = protocol.split('.')[1]
+        return true
+      }
+
+      return false
+    })
+
+    ws.send(token)
+  })
+
+  let client = new WebSocketTransport<WebSocket, string>(
+    `ws://0.0.0.0:${port}`,
+    {
+      websocketImplementation: WebSocket,
+      subprotocol: 'actioncable-json-v1',
+      authStrategy: 'sub-protocol'
+    }
+  )
+
+  client.setToken('secret')
+
+  let dataPromise = new Promise<string>((resolve, reject) => {
+    let tid = setTimeout(() => {
+      reject(Error('Failed to receive data'))
+    }, 500)
+    client.once('data', msg => {
+      clearTimeout(tid)
+      resolve(msg)
+    })
+  })
+
+  await client.open()
+
+  let response = await dataPromise
+
+  expect(response).toEqual('secret')
+})
+
+it('with authStrategy=headers', async () => {
+  wss.on('connection', (ws, req) => {
+    let token = req.headers['x-token'] || 'none'
+    ws.send(token)
+  })
+
+  let client = new WebSocketTransport<WebSocket, string>(
+    `ws://0.0.0.0:${port}`,
+    {
+      websocketImplementation: WebSocket,
+      authStrategy: 'header',
+      websocketOptions: { headers: { 'X-Token': 'secret' } }
+    }
+  )
+
+  client.setToken('secret-head', 'token')
+
+  let dataPromise = new Promise<string>((resolve, reject) => {
+    let tid = setTimeout(() => {
+      reject(Error('Failed to receive data'))
+    }, 500)
+    client.once('data', msg => {
+      clearTimeout(tid)
+      resolve(msg)
+    })
+  })
+
+  await client.open()
+
+  let response = await dataPromise
+
+  expect(response).toEqual('secret-head')
+})
+
+it('with unknown strategy', async () => {
+  let client = new WebSocketTransport<WebSocket, string>(
+    `ws://0.0.0.0:${port}`,
+    {
+      websocketImplementation: WebSocket,
+      authStrategy: 'headers' as any
+    }
+  )
+
+  expect(() => {
+    client.setToken('error')
+  }).toThrowError('Unknown auth strategy: headers')
+})
