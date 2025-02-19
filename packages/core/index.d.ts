@@ -49,5 +49,6 @@ export {
   ActionCableMixin,
   ActionCableSubscriptions,
   TokenRefresher,
+  TransportConfigurator,
   ProtocolID
 } from './create-cable/index.js'

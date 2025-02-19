@@ -11,7 +11,7 @@ export class TestTransport implements Transport<string> {
   opened: boolean
   sent: (string | Uint8Array)[]
 
-  constructor(url: string) {
+  constructor(url: string = '') {
     this.url = url
     this.emitter = createNanoEvents()
     this.state = {}

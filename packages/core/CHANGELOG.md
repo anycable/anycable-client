@@ -2,6 +2,8 @@
 
 ## master
 
+- Add `transportConfigurator` parameter to `createCable` to perform arbitrary transport modifications (like, fetching the initial token) before opening a connection. ([@palkan][])
+
 ## 1.0.0 (2024-12-26)
 
 - Add `channel.presence` API. ([@palkan][])

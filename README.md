@@ -493,11 +493,13 @@ export default createCable({
 })
 ```
 
-### Refreshing authentication tokens
+### Token-based authentication
 
-If you use a token-based authentication with expirable tokens (e.g., like [AnyCable PRO JWT identification](https://docs.anycable.io/anycable-go/jwt_identification)), you need a mechanism to refresh tokens for a long-lived clients (to let them reconnect in case of a connection failure).
+AnyCable SDK provides several features to simplify using token-based authentication (either an [official AnyCable one](https://docs.anycable.io/anycable-go/jwt_identification) or a custom one).
 
-AnyCable client can help you to make this process as simple as possible: just provide a function, which could retrieve a new token and update the connection url. AnyCable will take care of everything else (tracking expiration and reconnecting). Here is an example:
+#### Refreshing tokens
+
+AnyCable provides a smooth mechanism to refresh tokens for a long-lived clients (to let them reconnect in case of a connection failure): just provide a function, which could retrieve a new token and update the connection url or parameters. AnyCable will take care of everything else (tracking expiration and reconnecting). Here is an example:
 
 ```js
 // cable.js
@@ -534,6 +536,32 @@ export default createCable({
 **NOTE:** the `tokenRefresher` only activates when a server sends a disconnection message with reason `token_expired` (i.e., `{"type":"disconnect","reason":"token_expired","reconnect":false}`).
 
 **NODE:** the `fetchTokenFromHTML` performs an HTTP request with a specific header attached (`X-ANYCABLE-OPERATION=token-refresh`), which you could use to minimize the amount of HTML to return in response.
+
+#### Providing initial token value
+
+There are several ways to provide an initial token value. You can provide it as a part of the initial connection URL. In this case, no additional actions are required.
+
+In some cases, the only way to obtain a token is to make a request to the server. However, it might be necessary to initialize a _cable_ instance right on the application start, without waiting for the token to be fetched. In this case, you can use a `transportCongfigurator` option, which allows you to specify an async function to be called right before the connection is established (so you can tweak the parameters). For example:
+
+```js
+import { createCable } from '@anycable/web'
+
+export default createCable({
+  transportConfigurator: async (transport, { initial }) => {
+    // The initial flag indicates whether this is the first connetion attempt or a reconnection
+    if (!initial) return;
+
+    transport.setURL('ws://example.com/cable')
+
+    let response = await fetch('/token.json')
+    let data = await response.json()
+
+    transport.setParam('token', data['token'])
+  }
+})
+```
+
+Note that you still need the `tokenRefresher` to handle token expiration, because configurator does not handle this for you.
 
 ### Hotwire (Turbo Streams) support
 

@@ -13,6 +13,7 @@ import { Hub, HubOptions } from '../hub/index.js'
 import { Encoder } from '../encoder/index.js'
 import { Logger } from '../logger/index.js'
 import { Monitor } from '../monitor/index.js'
+import { TransportConfigurator } from '../create-cable/index.js'
 
 type ConnectEvent = Partial<{
   restored: boolean
@@ -41,6 +42,7 @@ export type CableOptions = {
   lazy?: boolean
   hubOptions?: HubOptions
   performFailures?: 'throw' | 'warn' | 'ignore'
+  transportConfigurator?: TransportConfigurator
 }
 
 export type CableState =

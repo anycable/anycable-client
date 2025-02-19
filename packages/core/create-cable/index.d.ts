@@ -19,6 +19,10 @@ export type ProtocolID =
   | 'actioncable-v1-protobuf'
   | ExtendedProtocolID
 
+export type TransportConfigurator = (
+  transport: Transport,
+  { initial: boolean }
+) => Promise<void>
 export type TokenRefresher = (transport: Transport) => Promise<void>
 
 type ProtocolOptions<T extends Protocol | ProtocolID> = T extends Protocol
@@ -51,6 +55,7 @@ export interface CreateOptions<P extends ProtocolID | Protocol> {
 
   lazy: boolean
 
+  transportConfigurator: TransportConfigurator
   tokenRefresher: TokenRefresher
 
   reconnectStrategy: ReconnectStrategy

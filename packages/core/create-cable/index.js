@@ -49,7 +49,8 @@ export function createCable(url, opts) {
     tokenRefresher,
     historyTimestamp,
     protocolOptions,
-    concurrentSubscribes
+    concurrentSubscribes,
+    transportConfigurator
   } = opts
 
   logger = logger || new NoopLogger(logLevel)
@@ -135,7 +136,8 @@ export function createCable(url, opts) {
     encoder,
     logger,
     lazy,
-    hubOptions
+    hubOptions,
+    transportConfigurator
   })
 
   if (monitor) {

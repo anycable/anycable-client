@@ -12,7 +12,8 @@ import {
   DisconnectedError,
   Cable,
   TokenRefresher,
-  FallbackTransport
+  FallbackTransport,
+  TransportConfigurator
 } from '../index.js'
 import { TestTransport } from '../transport/testing'
 
@@ -255,6 +256,49 @@ describe('with tokenRefresher', () => {
     cable.disconnect()
 
     expect(called).toEqual(0)
+  })
+})
+
+describe('with transportConfigurator', () => {
+  let transport: TestTransport
+  let calls: boolean[] = []
+  let configurator: TransportConfigurator
+  let cable: Cable
+
+  beforeEach(() => {
+    transport = new TestTransport()
+    calls = []
+    configurator = (t: Transport, { initial }) => {
+      calls.push(initial)
+      if (initial) {
+        t.setURL('ws://anycable.test')
+      } else {
+        t.setParam('token', calls.length.toString())
+      }
+      return Promise.resolve()
+    }
+
+    cable = createCable({
+      transportConfigurator: configurator,
+      transport
+    })
+  })
+
+  it('success', async () => {
+    transport.on('open', () => {
+      cable.connected()
+    })
+
+    await cable.connect()
+    expect(transport.url).toEqual('ws://anycable.test')
+
+    cable.disconnected()
+    await cable.connect()
+
+    expect(transport.url).toEqual('ws://anycable.test')
+    expect(transport.state.token).toEqual('2')
+
+    expect(calls).toEqual([true, false])
   })
 })
 

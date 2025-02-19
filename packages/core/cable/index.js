@@ -57,7 +57,8 @@ export class Cable {
     logger,
     lazy,
     hubOptions,
-    performFailures
+    performFailures,
+    transportConfigurator
   }) {
     this.emitter = createNanoEvents()
     this.transport = transport
@@ -75,6 +76,7 @@ export class Cable {
     this.handleClose = this.handleClose.bind(this)
     this.handleIncoming = this.handleIncoming.bind(this)
 
+    this.transportConfigurator = transportConfigurator
     this.transport.on('close', this.handleClose)
     this.transport.on('data', this.handleIncoming)
 
@@ -96,12 +98,19 @@ export class Cable {
       return this.pendingConnect()
     }
 
+    let wasIdle = this.state === 'idle'
+
     this[STATE] = 'connecting'
     let promise = this.pendingConnect()
 
     this.logger.debug('connecting')
 
     try {
+      if (this.transportConfigurator) {
+        await this.transportConfigurator(this.transport, {
+          initial: wasIdle
+        })
+      }
       await this.transport.open()
     } catch (err) {
       this.handleClose(err)
