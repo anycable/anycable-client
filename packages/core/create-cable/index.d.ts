@@ -65,6 +65,7 @@ export interface CreateOptions<P extends ProtocolID | Protocol> {
   historyTimestamp: number | false
 
   concurrentSubscribes: boolean
+  performFailures: 'throw' | 'warn' | 'ignore'
 }
 
 export const DEFAULT_OPTIONS: Partial<CreateOptions<ProtocolID | Protocol>>

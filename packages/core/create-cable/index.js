@@ -50,6 +50,7 @@ export function createCable(url, opts) {
     historyTimestamp,
     protocolOptions,
     concurrentSubscribes,
+    performFailures,
     transportConfigurator
   } = opts
 
@@ -137,6 +138,7 @@ export function createCable(url, opts) {
     logger,
     lazy,
     hubOptions,
+    performFailures,
     transportConfigurator
   })
 
