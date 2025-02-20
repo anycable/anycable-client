@@ -4,6 +4,8 @@
 
 ## master
 
+## 1.1.0 (2025-02-19)
+
 - Add `websocketAuthStrategy` option to `createCable` to specify how to pass a token for WebSocket connections (using a query param, a header, or a sub-protocol). ([@palkan][])
 
 - Add `auth: {token: '...'}` option to `createCable` to pass the initial authentiation token. ([@palkan][])

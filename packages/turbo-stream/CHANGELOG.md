@@ -2,6 +2,10 @@
 
 ## master
 
+## 0.8.1
+
+- Require `@anycable/core` ^1.1.0.
+
 ## 0.8.0
 
 - Add presence element that integrates with AnyCable Presence API. ([@palkan][])
