@@ -94,7 +94,7 @@ export class ActionCableSubscription {
   channel: ActionCableChannel
   identifier: string
 
-  perform(action: string, payload?: object): void
+  perform(action: string, payload?: object): Promise<void>
   send(payload: object): void
   unsubscribe(): void
 }
