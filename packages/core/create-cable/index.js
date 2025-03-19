@@ -233,7 +233,9 @@ class ActionCableChannel extends GhostChannel {
     this.subscription = new ActionCableSubscription(this)
     Object.assign(this.subscription, mixin)
 
-    this.on('connect', ({ reconnect }) => this.subscription.notify('connected', { reconnected: reconnect }))
+    this.on('connect', ({ reconnect }) =>
+      this.subscription.notify('connected', { reconnected: reconnect })
+    )
     this.on('disconnect', () =>
       this.subscription.notify('disconnected', { allowReconnect: true })
     )
