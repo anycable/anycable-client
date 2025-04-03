@@ -4,6 +4,11 @@
 
 ## master
 
+## 1.1.1 (2025-04-02)
+
+- Added `reconnected` flag to Action Cable connected callback payload. ([@d4rky-pl
+][])
+
 ## 1.1.0 (2025-02-19)
 
 - Add `websocketAuthStrategy` option to `createCable` to specify how to pass a token for WebSocket connections (using a query param, a header, or a sub-protocol). ([@palkan][])
@@ -138,3 +143,4 @@ Each component takes care of subscribing and unsubsribing; the actual subscripti
 [@TheSeally]: https://github.com/TheSeally
 [@ardecvz]: https://github.com/ardecvz
 [@cmdoptesc]: https://github.com/cmdoptesc
+[@d4rky-pl]: https://github.com/d4rky-pl
