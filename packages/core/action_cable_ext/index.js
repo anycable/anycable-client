@@ -12,6 +12,7 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
     this.pendingPresence = {}
     this.presenceInfo = {}
     this.restoreSince = opts.historyTimestamp
+    this.disableSessionRecovery = opts.disableSessionRecovery
     if (this.restoreSince === undefined) this.restoreSince = now()
     this.sessionId = undefined
     this.sendPongs = opts.pongs
@@ -37,8 +38,14 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
 
     let { type, identifier, message } = msg
 
-    // These message types do not require special handling
-    if (type === 'disconnect' || type === 'reject_subscription') {
+    if (type === 'disconnect') {
+      // delete sessionID to avoid recovery
+      delete this.sessionId
+      this.cable.setSessionId('')
+      return super.receive(msg)
+    }
+
+    if (type === 'reject_subscription') {
       return super.receive(msg)
     }
 
@@ -78,9 +85,11 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
     }
 
     if (type === 'welcome') {
-      this.sessionId = msg.sid
+      if (!this.disableSessionRecovery) {
+        this.sessionId = msg.sid
 
-      if (this.sessionId) this.cable.setSessionId(this.sessionId)
+        if (this.sessionId) this.cable.setSessionId(this.sessionId)
+      }
 
       if (msg.restored) {
         let restoredIds =

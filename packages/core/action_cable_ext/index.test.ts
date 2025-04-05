@@ -30,6 +30,7 @@ describe('connection', () => {
 
     expect(cable.state).toEqual('connected')
     expect(cable.mailbox).toHaveLength(0)
+    expect(protocol.recoverableClosure(Error('any'))).toEqual(false)
   })
 
   it('welcome + sid', () => {
@@ -53,6 +54,36 @@ describe('connection', () => {
     expect(cable.state).toEqual('disconnected')
     expect(cable.mailbox).toHaveLength(0)
   })
+
+  it('welcome + disconnect', () => {
+    protocol.receive({ type: 'welcome', sid: '231' })
+    expect(cable.state).toEqual('connected')
+    expect(cable.sessionId).toEqual('231')
+
+    protocol.receive({ type: 'disconnect' })
+    expect(cable.state).toEqual('disconnected')
+    expect(cable.sessionId).toEqual('')
+  })
+
+  describe('with disableSesssionRecovery=true', () => {
+    beforeEach(() => {
+      protocol = new ActionCableExtendedProtocol({
+        logger,
+        historyTimestamp: false,
+        disableSessionRecovery: true
+      })
+      protocol.attached(cable)
+    })
+
+    it('welcome + sid', () => {
+      protocol.receive({ type: 'welcome', sid: '231' })
+
+      expect(cable.state).toEqual('connected')
+      expect(cable.mailbox).toHaveLength(0)
+      expect(cable.sessionId).toBeUndefined()
+      expect(protocol.recoverableClosure(Error('any'))).toEqual(false)
+    })
+  })
 })
 
 describe('subscriptions', () => {
@@ -71,6 +102,20 @@ describe('subscriptions', () => {
     expect(cable.mailbox[0]).toMatchObject({ command: 'subscribe', identifier })
 
     protocol.receive({ type: 'confirm_subscription', identifier })
+
+    return res
+  })
+
+  it('subscribes with rejection', () => {
+    let res = expect(protocol.subscribe('TestChannel')).rejects.toHaveProperty(
+      'name',
+      'SubscriptionRejectedError'
+    )
+
+    expect(cable.mailbox).toHaveLength(1)
+    expect(cable.mailbox[0]).toMatchObject({ command: 'subscribe', identifier })
+
+    protocol.receive({ type: 'reject_subscription', identifier })
 
     return res
   })

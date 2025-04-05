@@ -6,6 +6,8 @@ export type ExtendedOptions =
       historyTimestamp: number | false
       // Enable PONGs
       pongs: boolean
+      // Disable session recovery completely
+      disableSessionRecovery: boolean
     }>
   | Options
 

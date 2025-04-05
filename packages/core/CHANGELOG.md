@@ -2,6 +2,12 @@
 
 ## master
 
+## 1.1.2 (2025-04-05)
+
+- Add `disableSessionRecovery` option for extended protocol. ([@palkan][])
+
+- Prevent session recovery after `disconnect` message is received. ([@palkan][])
+
 ## 1.1.1 (2025-04-02)
 
 - Added `reconnected` flag to Action Cable connected callback payload. ([@d4rky-pl
