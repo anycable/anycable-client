@@ -55,7 +55,8 @@
       "packages/web",
       "packages/protobuf-encoder/generated",
       "packages/turbo-stream/snakeize",
-      "packages/turbo-stream/presence_source_element"
+      "packages/turbo-stream/presence_source_element",
+      "packages/echo/.*"
     ]
   },
   "eslintConfig": {
@@ -114,7 +115,8 @@
       },
       {
         "files": [
-          "packages/turbo-stream/*.{ts,js}"
+          "packages/turbo-stream/*.{ts,js}",
+          "packages/echo/*.{ts,js}"
         ],
         "rules": {
           "camelcase": "off"

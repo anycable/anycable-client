@@ -3139,6 +3139,11 @@ kleur@^3.0.3:
   resolved "https://registry.npmjs.org/kleur/-/kleur-3.0.3.tgz"
   integrity sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==
 
+"laravel-echo@>= 2.1.0":
+  version "2.1.7"
+  resolved "https://registry.yarnpkg.com/laravel-echo/-/laravel-echo-2.1.7.tgz#563f7e6ba021cff20bbd43cddc9012077d2dfce2"
+  integrity sha512-EMcRmI/hJhea+eCeyJY9e7gkdVVZ42kGyntKZuM3NxeR00Glu45Cpsr0kNz4QC09YCQd48LZjQA1xSTtYteTwg==
+
 leven@^3.1.0:
   version "3.1.0"
   resolved "https://registry.npmjs.org/leven/-/leven-3.1.0.tgz"
