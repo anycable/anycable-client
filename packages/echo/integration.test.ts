@@ -144,7 +144,7 @@ describe('EchoCable Laravel Echo Integration', () => {
     let eventReceived = false
     let receivedData: any = null
 
-    channel.listen('test-event', (data: any) => {
+    channel.listen('.test-event', (data: any) => {
       eventReceived = true
       receivedData = data
     })
@@ -155,6 +155,35 @@ describe('EchoCable Laravel Echo Integration', () => {
     })
 
     broadcast('test-channel', 'test-event', { message: 'Hello World' })
+
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    expect(eventReceived).toBe(true)
+    expect(receivedData).toEqual({ message: 'Hello World' })
+  })
+
+  it('with custom namespace', async () => {
+    let customCable = (echoCable = new EchoCable({
+      cableOptions: { url: `ws://localhost:${port}` },
+      namespace: 'ns'
+    }))
+    let channel = customCable.channel('test-channel')
+    expect(channel).toBeDefined()
+
+    let eventReceived = false
+    let receivedData: any = null
+
+    channel.listen('test-event', (data: any) => {
+      eventReceived = true
+      receivedData = data
+    })
+
+    await new Promise((resolve, reject) => {
+      setTimeout(reject, 2000)
+      channel.subscribed(resolve)
+    })
+
+    broadcast('test-channel', 'ns\\test-event', { message: 'Hello World' })
 
     await new Promise(resolve => setTimeout(resolve, 300))
 
@@ -177,7 +206,7 @@ describe('EchoCable Laravel Echo Integration', () => {
     let eventReceived = false
     let receivedData: any = null
 
-    privateChannel.listen('private-event', (data: any) => {
+    privateChannel.listen('.private-event', (data: any) => {
       eventReceived = true
       receivedData = data
     })
@@ -347,7 +376,7 @@ describe('EchoCable Laravel Echo Integration', () => {
     // Simulate a Laravel notification
     broadcast(
       'user.1',
-      'Illuminate\\Notifications\\Events\\BroadcastNotificationCreated',
+      'App\\Events\\Illuminate\\Notifications\\Events\\BroadcastNotificationCreated',
       {
         id: 'notification-id',
         type: 'App\\Notifications\\OrderShipped',

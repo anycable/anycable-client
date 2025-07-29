@@ -1,8 +1,10 @@
 import { createCable } from '@anycable/web'
 
 import { PresenceChannel, PrivateChannel, PublicChannel } from './channels.js'
+import { EventFormatter } from './event-formatter.js'
 
 const DEFAULT_AUTH_ENDPOINT = '/broadcasting/auth'
+const DEFAULT_NAMESPACE = 'App\\Events'
 
 /**
  * Main EchoCable broadcaster implementation
@@ -11,11 +13,14 @@ export class EchoCable {
   constructor(options) {
     this.options = {
       authEndpoint: DEFAULT_AUTH_ENDPOINT,
+      namespace: DEFAULT_NAMESPACE,
       auth: {
         headers: {}
       },
       ...options
     }
+
+    this.options.eventFormatter = new EventFormatter(this.options.namespace)
 
     let url = options.cableOptions?.url
 

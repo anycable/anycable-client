@@ -8,6 +8,7 @@ export interface AuthOptions {
 export interface EchoCableOptions {
   cable?: Cable
   cableOptions?: Partial<CableOptions & { url: string }>
+  namespace?: string | false
   authEndpoint?: string
   auth?: AuthOptions
   [key: string]: unknown

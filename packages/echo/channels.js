@@ -69,6 +69,8 @@ export class PublicChannel {
    * Listen for an event on the channel
    */
   listen(event, callback) {
+    event = this.options.eventFormatter.format(event)
+
     if (!this.listeners.has(event)) {
       this.listeners.set(event, [])
     }
@@ -81,7 +83,7 @@ export class PublicChannel {
    * Listen for whisper events (client events)
    */
   listenForWhisper(event, callback) {
-    return this.listen('client-' + event, callback)
+    return this.listen('.client-' + event, callback)
   }
 
   /**
@@ -98,6 +100,7 @@ export class PublicChannel {
    * Stop listening for an event
    */
   stopListening(event, callback) {
+    event = this.options.eventFormatter.format(event)
     let listeners = this.listeners.get(event)
 
     if (listeners) {
@@ -118,7 +121,7 @@ export class PublicChannel {
    * Stop listening for whisper events
    */
   stopListeningForWhisper(event, callback) {
-    return this.stopListening('client-' + event, callback)
+    return this.stopListening('.client-' + event, callback)
   }
 
   /**
@@ -312,20 +315,20 @@ export class PresenceChannel extends PrivateChannel {
    * Listen for users joining
    */
   here(callback) {
-    return this.listen('here', callback)
+    return this.listen('.here', callback)
   }
 
   /**
    * Listen for users joining
    */
   joining(callback) {
-    return this.listen('joining', callback)
+    return this.listen('.joining', callback)
   }
 
   /**
    * Listen for users leaving
    */
   leaving(callback) {
-    return this.listen('leaving', callback)
+    return this.listen('.leaving', callback)
   }
 }
