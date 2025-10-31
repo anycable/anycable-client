@@ -2,6 +2,8 @@
 
 ## master
 
+- Improve Action Cable JS/TS compatibility. ([@palkan][])
+
 ## 1.1.2 (2025-04-05)
 
 - Add `disableSessionRecovery` option for extended protocol. ([@palkan][])

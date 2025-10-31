@@ -135,7 +135,7 @@ export class ActionCableProtocol {
       payload = {}
     }
 
-    payload.action = action
+    payload.action ||= action
 
     this.cable.send({
       command: 'message',

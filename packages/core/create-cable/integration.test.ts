@@ -1,4 +1,4 @@
-import { CableOptions, GhostChannel } from '../cable/index.js'
+import { ActionCableConsumer } from '../action_cable_compat/index.js'
 import {
   createCable,
   Message,
@@ -11,7 +11,7 @@ import {
   CreateOptions
 } from '../index.js'
 import { TestTransport } from '../transport/testing'
-import { ProtocolID } from './index.js'
+import { createConsumer, ProtocolID } from './index.js'
 
 class CableTransport extends TestTransport {
   pingTid?: any
@@ -538,5 +538,108 @@ describe('Action Cable protocol communication', () => {
       let res = await messagePromise
       expect(res).toEqual({ foo: 'bar', action: 'echo' })
     })
+  })
+})
+
+describe('Action Cable compatibility', () => {
+  let transport: CableTransport
+  let consumer: ActionCableConsumer
+  let opts: Partial<CreateOptions<ProtocolID>>
+
+  beforeEach(() => {
+    transport = new CableTransport('ws://anycable.test')
+
+    opts = {
+      transport
+    }
+
+    if (process.env.DEBUG === '1') {
+      opts.logger = new Logger('debug')
+    }
+
+    consumer = createConsumer('ws://example', opts)
+  })
+
+  it('connects', async () => {
+    await consumer.connect()
+    expect(consumer.cable.state).toEqual('connected')
+  })
+
+  it('subscribes and performs', async () => {
+    let callback: (data: object) => void
+    let receivedPromise = new Promise((resolve, reject) => {
+      let tid = setTimeout(() => {
+        reject(new Error('timeout error'))
+      }, 1000)
+      callback = data => {
+        clearTimeout(tid)
+        expect(data).toEqual({ foo: 'bar', action: 'echo' })
+        resolve(data)
+      }
+    })
+
+    await consumer.ensureActiveConnection()
+
+    let subscription = consumer.subscriptions.create(
+      {
+        channel: 'TestChannel'
+      },
+      {
+        received: (data: object) => {
+          callback(data)
+        }
+      }
+    )
+
+    subscription.send({ action: 'echo', foo: 'bar' })
+
+    await receivedPromise
+  })
+
+  it('subscribes and unsubscribes', async () => {
+    let connectCallback: () => void
+    let connectedPromise = new Promise<void>((resolve, reject) => {
+      let tid = setTimeout(() => {
+        reject(new Error('timeout error'))
+      }, 1000)
+      connectCallback = () => {
+        clearTimeout(tid)
+        resolve()
+      }
+    })
+    let disconnectCallback: () => void
+    let disconnectedPromise = new Promise<void>((resolve, reject) => {
+      let tid = setTimeout(() => {
+        reject(new Error('timeout error'))
+      }, 1000)
+      disconnectCallback = () => {
+        clearTimeout(tid)
+        resolve()
+      }
+    })
+
+    consumer.send({ command: 'pong' })
+
+    consumer.subscriptions.create(
+      {
+        channel: 'TestChannel'
+      },
+      {
+        connected: () => {
+          connectCallback()
+        },
+        disconnected: () => {
+          disconnectCallback()
+        }
+      }
+    )
+
+    await connectedPromise
+
+    consumer.disconnect()
+
+    await disconnectedPromise
+
+    expect(transport.pongsCount).toEqual(1)
   })
 })

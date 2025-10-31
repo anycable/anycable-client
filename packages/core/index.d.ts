@@ -45,10 +45,13 @@ export {
   createCable,
   DEFAULT_OPTIONS,
   createConsumer,
-  ActionCableConsumer,
-  ActionCableMixin,
-  ActionCableSubscriptions,
   TokenRefresher,
   TransportConfigurator,
   ProtocolID
 } from './create-cable/index.js'
+export {
+  ActionCableConsumer,
+  ActionCableMixin,
+  ActionCableSubscriptions,
+  ActionCableSubscription
+} from './action_cable_compat/index.js'

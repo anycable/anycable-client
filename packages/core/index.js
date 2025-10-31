@@ -20,7 +20,10 @@ export { WebSocketTransport } from './websocket/index.js'
 export {
   createCable,
   DEFAULT_OPTIONS,
-  createConsumer,
-  ActionCableConsumer,
-  ActionCableSubscriptions
+  createConsumer
 } from './create-cable/index.js'
+export {
+  ActionCableConsumer,
+  ActionCableSubscriptions,
+  ActionCableSubscription
+} from './action_cable_compat/index.js'
