@@ -1,5 +1,4 @@
 import { Encoder } from '@anycable/core'
-import { off } from 'process'
 
 export interface MessageObject {
   command?: string

@@ -19,11 +19,17 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@anycable/core": "^0.9.0",
+    "@anycable/core": "^1.1.0",
     "@ygoe/msgpack": "^1.0.0",
     "protobufjs": "^7.2.1"
   },
   "devDependencies": {
     "protobufjs-cli": "^1.1.1"
-  }
+  },
+  "eslintIgnore": [
+    "errors.ts",
+    "generated/",
+    "generated/**/*",
+    "**/*.d.ts"
+  ]
 }

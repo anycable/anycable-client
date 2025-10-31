@@ -12,6 +12,11 @@ export class ProtobufEncoder {
   encode(msg) {
     // convert enum value names to corresponding integers
     msg.command = Command.getIdByValue(msg.command)
+
+    if (msg.data && typeof msg.data !== 'string') {
+      msg.data = JSON.stringify(msg.data)
+    }
+
     msg.type = MessageType.getIdByValue(msg.type)
 
     if (msg.message !== undefined) {

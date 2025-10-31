@@ -22,7 +22,8 @@ export namespace action_cable {
         unsubscribe = 2,
         message = 3,
         history = 4,
-        pong = 5
+        pong = 5,
+        whisper = 6
     }
 
     /** Properties of a StreamHistoryRequest. */

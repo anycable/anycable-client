@@ -126,7 +126,9 @@
   },
   "eslintIgnore": [
     "**/errors.ts",
-    "packages/protobuf-encoder/*"
+    "packages/protobuf-encoder/generated/",
+    "packages/protobuf-encoder/generated/**/*",
+    "packages/protobuf-encoder/**/*.d.ts"
   ],
   "devDependencies": {
     "@babel/core": "^7.14.6",

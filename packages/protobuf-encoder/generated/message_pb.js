@@ -54,6 +54,7 @@ export const action_cable = $root.action_cable = (() => {
      * @property {number} message=3 message value
      * @property {number} history=4 history value
      * @property {number} pong=5 pong value
+     * @property {number} whisper=6 whisper value
      */
     action_cable.Command = (function() {
         const valuesById = {}, values = Object.create(valuesById);
@@ -63,6 +64,7 @@ export const action_cable = $root.action_cable = (() => {
         values[valuesById[3] = "message"] = 3;
         values[valuesById[4] = "history"] = 4;
         values[valuesById[5] = "pong"] = 5;
+        values[valuesById[6] = "whisper"] = 6;
         return values;
     })();
 
@@ -850,6 +852,7 @@ export const action_cable = $root.action_cable = (() => {
                 case 3:
                 case 4:
                 case 5:
+                case 6:
                     break;
                 }
             if (message.identifier != null && message.hasOwnProperty("identifier"))
@@ -957,6 +960,10 @@ export const action_cable = $root.action_cable = (() => {
             case "pong":
             case 5:
                 message.command = 5;
+                break;
+            case "whisper":
+            case 6:
+                message.command = 6;
                 break;
             }
             if (object.identifier != null)

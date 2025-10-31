@@ -12,7 +12,6 @@ import { createCable } from '../core/create-cable'
 import { Channel } from '../core/channel'
 import { Cable } from '../core/cable'
 import { Encoder } from '../core/encoder'
-import exp from 'constants'
 
 const Message = protos.Message
 const Reply = protos.Reply
@@ -146,9 +145,9 @@ describe('protobuf message e2e sending', () => {
   let cable: Cable
   let subscribeAndSendPromise: Promise<any>
   let channel: TestChannel
-  const payload = { foo: 1, bar: 'baz' }
-  const action = 'test'
-  const identifier = JSON.stringify({ channel: 'test', id: '21' })
+  let payload = { foo: 1, bar: 'baz' }
+  let action = 'test'
+  let identifier = JSON.stringify({ channel: 'test', id: '21' })
 
   beforeEach(() => {
     transport = new TestTransport('ws:///')
@@ -220,5 +219,26 @@ describe('protobuf message e2e sending', () => {
     transport.receive(encodedMessage)
 
     await messagePromise
+  })
+
+  it('supports whispers', async () => {
+    await subscribeAndSendPromise
+
+    await channel.whisper({ event: 'next_song', title: 'Ivanovo Detstvo' })
+
+    let sentMessage = transport.sent[2]
+
+    expect(sentMessage).toBeInstanceOf(Buffer)
+
+    let decoded = Message.decode(<Buffer>sentMessage)
+
+    expect(decoded.command).toBe(Command.whisper)
+    expect(decoded.identifier).toBe(identifier)
+
+    // Data must be JSON-encoded if not string
+    expect(JSON.parse(decoded.data)).toEqual({
+      event: 'next_song',
+      title: 'Ivanovo Detstvo'
+    })
   })
 })

@@ -2,6 +2,12 @@
 
 ## master
 
+## 0.6.1 (2025-10-31) 🎃
+
+- Support `whisper` commands.
+
+- Require `@anycable/core` ^1.1.0.
+
 ## 0.6.0 (2024-05-21)
 
 - Require `@anycable/core` ^0.9.0.
