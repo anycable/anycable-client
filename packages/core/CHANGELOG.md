@@ -2,6 +2,8 @@
 
 ## master
 
+## 1.1.3 (2025-11-10)
+
 - Improve Action Cable JS/TS compatibility. ([@palkan][])
 
 ## 1.1.2 (2025-04-05)

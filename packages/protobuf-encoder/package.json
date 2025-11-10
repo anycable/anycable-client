@@ -1,6 +1,6 @@
 {
   "name": "@anycable/protobuf-encoder",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Protobuf encoder for AnyCable client",
   "keywords": [
     "anycable",
