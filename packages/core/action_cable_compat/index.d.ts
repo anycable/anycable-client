@@ -16,7 +16,7 @@ export class ActionCableSubscription {
 
   perform(action: string, payload?: object): void
   send(payload: object): void
-  whisper(payload: object): void
+  whisper(payload: object): Promise<void>
   unsubscribe(): void
 }
 

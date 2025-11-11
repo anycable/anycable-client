@@ -2,6 +2,10 @@
 
 ## master
 
+## 1.1.4 (2025-11-11)
+
+- Add `whisper` to Action Cable compatibility. ([@palkan][])
+
 ## 1.1.3 (2025-11-10)
 
 - Improve Action Cable JS/TS compatibility. ([@palkan][])
