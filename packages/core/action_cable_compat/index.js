@@ -22,7 +22,7 @@ export class ActionCableSubscription {
   }
 
   whisper(data) {
-    this.channel.whisper(data)
+    return this.channel.whisper(data)
   }
 
   get identifier() {
