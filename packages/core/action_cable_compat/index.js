@@ -21,6 +21,10 @@ export class ActionCableSubscription {
     this.channel.send(data)
   }
 
+  whisper(data) {
+    this.channel.whisper(data)
+  }
+
   get identifier() {
     return this.channel.identifier
   }

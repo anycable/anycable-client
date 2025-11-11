@@ -19,11 +19,13 @@ class CableTransport extends TestTransport {
   pongsCount: number = 0
   nextSid: string = ''
   nextRestoredIds: string[] | null = null
+  whispers: any[] = []
 
   constructor(url: string) {
     super(url)
 
     this.subscriptions = {}
+    this.whispers = []
   }
 
   open() {
@@ -88,6 +90,11 @@ class CableTransport extends TestTransport {
           identifier
         })
       }
+    } else if (command === 'whisper') {
+      this.whispers.push({
+        identifier,
+        data: msg.data
+      })
     }
   }
 
@@ -641,5 +648,22 @@ describe('Action Cable compatibility', () => {
     await disconnectedPromise
 
     expect(transport.pongsCount).toEqual(1)
+  })
+
+  it('whispers on subscription', async () => {
+    await consumer.ensureActiveConnection()
+
+    let subscription = consumer.subscriptions.create({
+      channel: 'TestChannel'
+    })
+
+    await subscription.channel.ensureSubscribed()
+    await subscription.whisper({ event: 'typing', user: 'john' })
+
+    expect(transport.whispers).toHaveLength(1)
+    expect(transport.whispers[0]).toMatchObject({
+      identifier: subscription.channel.identifier,
+      data: { event: 'typing', user: 'john' }
+    })
   })
 })
