@@ -3,6 +3,8 @@ import { Unsubscribe } from 'nanoevents'
 import { ReasonError } from '../protocol/index.js'
 import { Presence, PresenceEvent } from './presence.js'
 
+export { Presence, PresenceEvent } from './presence.js'
+
 export type Identifier = string
 
 export type Message = object | string | number

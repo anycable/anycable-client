@@ -5,7 +5,9 @@ export {
   Message,
   MessageMeta,
   Identifier,
-  InfoEvent as ChannelInfoEvent
+  InfoEvent as ChannelInfoEvent,
+  Presence,
+  PresenceEvent
 } from './channel/index.js'
 export { Transport, FallbackTransport } from './transport/index.js'
 export { Encoder, JSONEncoder } from './encoder/index.js'

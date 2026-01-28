@@ -14,7 +14,14 @@ export {
   TokenRefresher
 } from '@anycable/core'
 
-export { Channel } from '@anycable/core'
+export {
+  Channel,
+  ChannelEvents,
+  Message,
+  MessageMeta,
+  Presence,
+  PresenceEvent
+} from '@anycable/core'
 
 export { Monitor } from './monitor/index.js'
 export { Logger } from './logger/index.js'
