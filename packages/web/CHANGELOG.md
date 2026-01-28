@@ -2,6 +2,10 @@
 
 ## master
 
+## 1.1.1 (2026-01-28)
+
+- Expose more core types.
+
 ## 1.1.0 (2025-02-19)
 
 - Support passing authentication token in HTML meta tags (`cable-token` and `cable-token-param`). ([@palkan][])

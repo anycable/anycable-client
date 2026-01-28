@@ -4,6 +4,18 @@
 
 ## master
 
+## 1.1.5 (2026-01-28)
+
+- Minor fixes
+
+## 1.1.4 (2025-11-11)
+
+- Add `whisper` to Action Cable compatibility. ([@palkan][])
+
+## 1.1.3 (2025-11-10)
+
+- Improve Action Cable JS/TS compatibility. ([@palkan][])
+
 ## 1.1.2 (2025-04-05)
 
 - Add `disableSessionRecovery` option for extended protocol. ([@palkan][])

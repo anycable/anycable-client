@@ -2,6 +2,10 @@
 
 ## master
 
+## 1.1.5 (2026-01-28)
+
+- Minor fixes
+
 ## 1.1.4 (2025-11-11)
 
 - Add `whisper` to Action Cable compatibility. ([@palkan][])
