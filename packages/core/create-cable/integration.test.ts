@@ -160,6 +160,22 @@ describe('Action Cable protocol communication', () => {
     expect(cable.state).toEqual('connected')
   })
 
+  it('connects - disconnects - connects again', async () => {
+    let connectCount = 0
+    cable.on('connect', ev => {
+      connectCount++
+      expect(ev.reconnect).toBe(false)
+    })
+    await cable.connect()
+    expect(cable.state).toEqual('connected')
+
+    cable.disconnect()
+    expect(cable.state).toEqual('closed')
+
+    await cable.connect()
+    expect(cable.state).toEqual('connected')
+  })
+
   it('subscribes and perform', async () => {
     await cable.connect()
 
