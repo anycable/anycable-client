@@ -388,7 +388,7 @@ describe('receiver communicaton', () => {
 
       await channel.presence.leave()
 
-      await channel.presence.join('42', 'foo')
+      await channel.presence.join(42, 'foo')
       // double-join should be ignored
       await channel.presence.join('42', 'foo')
       await channel.presence.leave()

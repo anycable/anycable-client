@@ -43,7 +43,7 @@ export class Presence {
   async join(id, info) {
     if (this._info) return undefined
 
-    this._info = { id, info }
+    this._info = { id: String(id), info }
     return this.channel.perform('$presence:join', this._info)
   }
 
