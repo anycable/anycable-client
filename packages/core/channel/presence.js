@@ -84,6 +84,8 @@ export class Presence {
   }
 
   stateFromInfo(presence) {
+    if (!presence.records) return {}
+
     return presence.records.reduce((acc, { id, info }) => {
       acc[id] = info
       return acc

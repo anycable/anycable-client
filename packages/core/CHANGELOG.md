@@ -2,6 +2,10 @@
 
 ## master
 
+## 1.1.6 (2026-02-13)
+
+- Fix parsing empty presence sets.
+
 ## 1.1.5 (2026-01-28)
 
 - Minor fixes

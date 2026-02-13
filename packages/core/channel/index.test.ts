@@ -491,6 +491,24 @@ describe('receiver communicaton', () => {
       expect(res).toEqual({ '42': 'foo' })
       expect(res2).toEqual({ '42': 'foo' })
     })
+
+    it('info w/ no users', async () => {
+      client.subscribed(channel)
+
+      jest
+        .spyOn(client, 'perform')
+        .mockImplementation(
+          (identifier: Identifier, action?: string, payload?: Message) => {
+            return Promise.resolve({
+              total: 0
+            })
+          }
+        )
+
+      let res = await channel.presence.info()
+
+      expect(res).toEqual({})
+    })
   })
 })
 
