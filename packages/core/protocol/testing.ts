@@ -33,7 +33,12 @@ export class TestConsumer implements Consumer {
     }
   }
 
+  // When set, send() throws it instead of recording the message — mimics a
+  // cable whose transport is already gone
+  sendError?: Error
+
   send(msg: object) {
+    if (this.sendError) throw this.sendError
     this.mailbox.push(msg)
   }
 
