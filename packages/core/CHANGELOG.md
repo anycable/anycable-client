@@ -2,6 +2,8 @@
 
 ## master
 
+- Fix importing `@anycable/core/testing`: the `./testing` subpath was missing from the package `exports`, so Node ESM, Vite, and Jest 28+ failed to resolve it. ([@irinanazarova][])
+
 ## 1.1.6 (2026-02-13)
 
 - Fix parsing empty presence sets.
@@ -273,3 +275,4 @@ Each component takes care of subscribing and unsubsribing; the actual subscripti
 [@ardecvz]: https://github.com/ardecvz
 [@cmdoptesc]: https://github.com/cmdoptesc
 [@d4rky-pl]: https://github.com/d4rky-pl
+[@irinanazarova]: https://github.com/irinanazarova
