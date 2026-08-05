@@ -83,7 +83,7 @@ const chatChannel = cable.streamFromSigned(signedName);
 ### Presence tracking
 
 > [!IMPORTANT]
-> This feature is currently supported only by [AnyCable+](https://plus.anycable.io) and edge version of AnyCable server. See the [documentation](https://docs.anycable.io/edge/anycable-go/presence).
+> This feature requires AnyCable server v1.6+ with the broker enabled. See the [documentation](https://docs.anycable.io/anycable-go/presence).
 
 You can keep track of the users currently connected to the channel. Let's assume you have the following channel:
 
