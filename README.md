@@ -105,10 +105,10 @@ You MUST join the presence once, no need to do that on every connection or recon
 You can subscribe to presence events:
 
 ```js
-chatChannel.presence.on('presence', (ev) => {
+chatChannel.on('presence', (ev) => {
   const { type, info, id } = ev
 
-  // Type could be 'join', 'leave', 'presence', or 'error'
+  // Type could be 'join', 'leave', 'info', or 'error'
   if (type === 'join') {
     console.log("user joined", id, info);
   }
