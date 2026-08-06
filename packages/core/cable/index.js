@@ -316,7 +316,21 @@ export class Cable {
 
     this.logger.debug('outgoing message', msg)
 
-    this.transport.send(data)
+    try {
+      this.transport.send(data)
+    } catch (err) {
+      // The transport refuses to send when its socket is already gone, but the
+      // cable may not have processed the close event yet (e.g. the tab was
+      // starved of CPU long enough for the server to drop the connection).
+      // Surface that as a DisconnectedError so callers can tell "we are not
+      // connected right now, retry on reconnect" apart from a genuine failure.
+      // Without it, Cable#subscribe treats the plain Error as fatal and
+      // permanently removes the channel from the hub, so it is never
+      // re-subscribed when the connection comes back.
+      throw err instanceof ReasonError
+        ? err
+        : new DisconnectedError(err, 'transport_closed')
+    }
   }
 
   keepalive(msg) {

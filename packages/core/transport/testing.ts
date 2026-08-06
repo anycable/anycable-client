@@ -10,6 +10,9 @@ export class TestTransport implements Transport<string> {
   state: Env
   opened: boolean
   sent: (string | Uint8Array)[]
+  // When set, send() throws it instead of recording the payload — mimics a
+  // real transport whose socket is already gone
+  sendError?: Error
 
   constructor(url: string = '') {
     this.url = url
@@ -42,6 +45,7 @@ export class TestTransport implements Transport<string> {
   }
 
   send(data: string | Uint8Array) {
+    if (this.sendError) throw this.sendError
     this.sent.push(data)
   }
 

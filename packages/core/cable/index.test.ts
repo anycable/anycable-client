@@ -751,6 +751,49 @@ describe('channels', () => {
     ).rejects.toEqual(new ReasonError(Error('failed')))
   })
 
+  it('send wraps a transport failure into a DisconnectedError', () => {
+    transport.sendError = Error('WebSocket is not connected')
+
+    expect(() => {
+      cable.send({ action: 'ping' })
+    }).toThrow(DisconnectedError)
+  })
+
+  it('subscribe keeps the channel when the transport send fails', async () => {
+    // A protocol that sends over the cable, like ActionCableProtocol does
+    let attempts = 0
+    jest.spyOn(protocol, 'subscribe').mockImplementation(async identifier => {
+      attempts++
+      cable.send({ command: 'subscribe', identifier })
+      return 'test_id'
+    })
+
+    // The socket is already gone but the cable hasn't processed the close yet,
+    // so the transport rejects the send with a plain Error. That must not be
+    // treated as a fatal subscribe failure: the channel has to stay in the hub
+    // so it is re-subscribed once the connection is back.
+    transport.sendError = Error('WebSocket is not connected')
+
+    cable.subscribe(channel)
+    await new Promise(resolve => setTimeout(resolve, 50))
+
+    expect(attempts).toEqual(1)
+    expect(channel.state).not.toEqual('closed')
+    expect(cable.hub.subscriptions.all()).toHaveLength(1)
+    expect(logger.errors).toHaveLength(0)
+
+    // Reconnect and the pending subscription goes through
+    transport.sendError = undefined
+    cable.disconnected(new DisconnectedError('test'))
+    await Promise.resolve()
+    cable.connect()
+    cable.connected()
+
+    await channel.ensureSubscribed()
+    expect(channel.state).toEqual('connected')
+    expect(cable.hub.size).toEqual(1)
+  })
+
   it('unsubscribe when connected', async () => {
     await cable.subscribe(channel).ensureSubscribed()
     expect(cable.hub.size).toEqual(1)

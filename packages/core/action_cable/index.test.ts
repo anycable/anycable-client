@@ -105,6 +105,28 @@ describe('subscriptions', () => {
     return res
   })
 
+  it('does not leave a pending subscription behind when the send fails', async () => {
+    cable.sendError = Error('WebSocket is not connected')
+
+    await expect(protocol.subscribe('TestChannel')).rejects.toThrow(
+      'WebSocket is not connected'
+    )
+
+    // Nothing was sent, so no ack and no retry/expire timers are coming. The
+    // pending entry must not survive, otherwise this identifier can never be
+    // subscribed again on this protocol instance.
+    cable.sendError = undefined
+
+    let res = expect(protocol.subscribe('TestChannel')).resolves.toEqual(
+      identifier
+    )
+
+    expect(cable.mailbox).toHaveLength(1)
+    protocol.receive({ type: 'confirm_subscription', identifier })
+
+    return res
+  })
+
   it('subscribes successfully with params', () => {
     identifier = JSON.stringify({
       channel: 'TestChannel',

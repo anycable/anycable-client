@@ -2,6 +2,12 @@
 
 ## master
 
+- Fix channels being permanently dropped when a subscribe races a socket close.
+
+  `Cable#send` now raises a `DisconnectedError` when the transport refuses to
+  send, so `Cable#subscribe` retries on reconnect instead of treating the
+  failure as fatal and unsubscribing the channel from the hub.
+
 - Fix importing `@anycable/core/testing`: the `./testing` subpath was missing from the package `exports`, so Node ESM, Vite, and Jest 28+ failed to resolve it. ([@irinanazarova][])
 
 ## 1.1.6 (2026-02-13)

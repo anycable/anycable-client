@@ -62,7 +62,16 @@ export class ActionCableProtocol {
         id
       }
 
-      this.cable.send(this.buildSubscribeRequest(identifier))
+      try {
+        this.cable.send(this.buildSubscribeRequest(identifier))
+      } catch (err) {
+        // Nothing was sent, so no ack is coming and the retry/expire timers
+        // below are never armed. Drop the pending entry we just recorded --
+        // otherwise it outlives the failure and every later subscribe for this
+        // identifier is rejected with "Already subscribing".
+        delete this.pendingSubscriptions[identifier]
+        throw err
+      }
 
       this.maybeRetrySubscribe(id, identifier, retryInterval)
     })
