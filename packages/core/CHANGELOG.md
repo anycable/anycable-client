@@ -6,10 +6,9 @@
 
   `Cable#send` now raises a `DisconnectedError` when the transport refuses to
   send, so `Cable#subscribe` retries on reconnect instead of treating the
-  failure as fatal and unsubscribing the channel from the hub. The Action Cable
-  protocol also drops the pending subscription it recorded before the failed
-  send, which previously made every later subscribe for that identifier fail
-  with "Already subscribing".
+  failure as fatal and unsubscribing the channel from the hub.
+
+- Fix importing `@anycable/core/testing`: the `./testing` subpath was missing from the package `exports`, so Node ESM, Vite, and Jest 28+ failed to resolve it. ([@irinanazarova][])
 
 ## 1.1.6 (2026-02-13)
 
@@ -282,3 +281,4 @@ Each component takes care of subscribing and unsubsribing; the actual subscripti
 [@ardecvz]: https://github.com/ardecvz
 [@cmdoptesc]: https://github.com/cmdoptesc
 [@d4rky-pl]: https://github.com/d4rky-pl
+[@irinanazarova]: https://github.com/irinanazarova

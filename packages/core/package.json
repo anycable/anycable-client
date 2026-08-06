@@ -20,6 +20,7 @@
   "types": "./index.d.ts",
   "exports": {
     ".": "./index.js",
+    "./testing": "./testing/index.js",
     "./package.json": "./package.json"
   },
   "dependencies": {
