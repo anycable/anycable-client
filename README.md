@@ -83,7 +83,7 @@ const chatChannel = cable.streamFromSigned(signedName);
 ### Presence tracking
 
 > [!IMPORTANT]
-> This feature is currently supported only by [AnyCable+](https://plus.anycable.io) and edge version of AnyCable server. See the [documentation](https://docs.anycable.io/edge/anycable-go/presence).
+> This feature requires AnyCable server v1.6+ with the broker enabled. See the [documentation](https://docs.anycable.io/anycable-go/presence).
 
 You can keep track of the users currently connected to the channel. Let's assume you have the following channel:
 
@@ -105,10 +105,10 @@ You MUST join the presence once, no need to do that on every connection or recon
 You can subscribe to presence events:
 
 ```js
-chatChannel.presence.on('presence', (ev) => {
+chatChannel.on('presence', (ev) => {
   const { type, info, id } = ev
 
-  // Type could be 'join', 'leave', 'presence', or 'error'
+  // Type could be 'join', 'leave', 'info', or 'error'
   if (type === 'join') {
     console.log("user joined", id, info);
   }
