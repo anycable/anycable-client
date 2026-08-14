@@ -751,6 +751,42 @@ describe('channels', () => {
     ).rejects.toEqual(new ReasonError(Error('failed')))
   })
 
+  it('subscribe keeps the channel when the transport send fails', async () => {
+    let attempts = 0
+    jest.spyOn(protocol, 'subscribe').mockImplementation(async identifier => {
+      attempts++
+      cable.send({ command: 'subscribe', identifier })
+      return 'test_id'
+    })
+
+    let firstSend = true
+
+    jest.spyOn(transport, 'send').mockImplementation(() => {
+      if (firstSend) {
+        firstSend = false
+        throw Error('WebSocket is not connected')
+      }
+    })
+
+    cable.subscribe(channel)
+    await new Promise(resolve => setTimeout(resolve, 50))
+
+    expect(attempts).toEqual(1)
+    expect(channel.state).not.toEqual('closed')
+    expect(cable.hub.subscriptions.all()).toHaveLength(1)
+    expect(logger.errors).toHaveLength(0)
+
+    cable.disconnected(new DisconnectedError('test'))
+    await Promise.resolve()
+    cable.connect()
+    cable.connected()
+
+    await channel.ensureSubscribed()
+    expect(channel.state).toEqual('connected')
+    expect(cable.hub.size).toEqual(1)
+    expect(attempts).toEqual(2)
+  })
+
   it('unsubscribe when connected', async () => {
     await cable.subscribe(channel).ensureSubscribed()
     expect(cable.hub.size).toEqual(1)

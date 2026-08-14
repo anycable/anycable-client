@@ -56,13 +56,14 @@ export class ActionCableProtocol {
 
     return new Promise((resolve, reject) => {
       let id = ++commandID
+
+      this.cable.send(this.buildSubscribeRequest(identifier))
+
       this.pendingSubscriptions[identifier] = {
         resolve,
         reject,
         id
       }
-
-      this.cable.send(this.buildSubscribeRequest(identifier))
 
       this.maybeRetrySubscribe(id, identifier, retryInterval)
     })

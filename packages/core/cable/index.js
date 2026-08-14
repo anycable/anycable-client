@@ -316,7 +316,13 @@ export class Cable {
 
     this.logger.debug('outgoing message', msg)
 
-    this.transport.send(data)
+    try {
+      this.transport.send(data)
+    } catch (err) {
+      throw err instanceof ReasonError
+        ? err
+        : new DisconnectedError(err, 'transport_closed')
+    }
   }
 
   keepalive(msg) {

@@ -4,6 +4,10 @@
 
 ## master
 
+## 1.1.6 (2026-08-14)
+
+- Fix subscriptions being lost when transport fails before WebSocket receives close.
+
 ## 1.1.5 (2026-01-28)
 
 - Minor fixes

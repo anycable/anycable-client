@@ -243,25 +243,25 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
   }
 
   async join(identifier, presence) {
-    this.presenceInfo[identifier] = presence
-
     this.cable.send({
       command: 'join',
       identifier,
       presence
     })
 
+    this.presenceInfo[identifier] = presence
+
     return Promise.resolve()
   }
 
   async leave(identifier, presence) {
-    delete this.presenceInfo[identifier]
-
     this.cable.send({
       command: 'leave',
       identifier,
       presence
     })
+
+    delete this.presenceInfo[identifier]
 
     return Promise.resolve()
   }
@@ -273,16 +273,16 @@ export class ActionCableExtendedProtocol extends ActionCableProtocol {
     }
 
     return new Promise((resolve, reject) => {
-      this.pendingPresence[identifier] = {
-        resolve,
-        reject
-      }
-
       this.cable.send({
         command: 'presence',
         identifier,
         data
       })
+
+      this.pendingPresence[identifier] = {
+        resolve,
+        reject
+      }
     })
   }
 }
