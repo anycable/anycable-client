@@ -4,7 +4,7 @@
 
 ## master
 
-## 1.1.6 (2026-08-14)
+## 1.1.7 (2026-08-14)
 
 - Fix subscriptions being lost when transport fails before WebSocket receives close.
 
