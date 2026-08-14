@@ -3,9 +3,20 @@
 // Example:
 [
   {
-    "label": "npx jest --testNamePattern \"$ZED_SYMBOL\"",
-    "command": "NODE_OPTIONS='--experimental-vm-modules' npx jest --testNamePattern",
-    "args": ["\"$ZED_SYMBOL\" $ZED_FILE"],
+    "label": "jest $ZED_SYMBOL",
+    "command": "yarn",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "args": [
+      "jest",
+       "--runInBand",
+      "--testNamePattern",
+      "\"$ZED_SYMBOL\"",
+      "$ZED_FILE"
+    ],
+    "env":
+    {
+      "NODE_OPTIONS": "--experimental-vm-modules"
+    },
     "tags": ["ts-test", "js-test"]
   }
 ]
