@@ -2,6 +2,8 @@
 
 ## master
 
+- Defer closing a connecting WebSocket until it opens to avoid a Safari WebKit failure.
+
 - Fix importing `@anycable/core/testing`: the `./testing` subpath was missing from the package `exports`, so Node ESM, Vite, and Jest 28+ failed to resolve it. ([@irinanazarova][])
 
 ## 1.1.6 (2026-02-13)
