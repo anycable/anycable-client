@@ -152,10 +152,15 @@ export class WebSocketTransport {
   }
 
   onclose() {
-    this.ws.onclose = undefined
-    this.ws.onmessage = undefined
-    this.ws.onopen = undefined
-    this.ws.close()
+    let ws = this.ws
+    ws.onclose = undefined
+    ws.onmessage = undefined
+    ws.onopen = undefined
+    if (ws.readyState === this.Impl.CONNECTING) {
+      ws.addEventListener('open', () => ws.close(), { once: true })
+    } else {
+      ws.close()
+    }
     delete this.ws
     this.connected = false
 
