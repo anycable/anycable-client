@@ -35,6 +35,19 @@ export class EchoCable {
     if (!this.cable) {
       throw new Error('AnyCable cable instance is required')
     }
+
+    this.wasConnected = this.cable.state === 'connected'
+    this.closeError = undefined
+
+    this.cable.on('connect', () => {
+      this.wasConnected = true
+      this.closeError = undefined
+    })
+
+    this.cable.on('close', err => {
+      this.wasConnected = false
+      this.closeError = err
+    })
   }
 
   /**
@@ -115,6 +128,42 @@ export class EchoCable {
    */
   socketId() {
     return this.cable.sessionId
+  }
+
+  /**
+   * Get the connection status in Laravel Echo terms
+   */
+  connectionStatus() {
+    switch (this.cable.state) {
+      case 'connected':
+        return 'connected'
+      case 'connecting':
+        return this.wasConnected ? 'reconnecting' : 'connecting'
+      case 'disconnected':
+        // The monitor reconnects the cable after a disconnect
+        return this.cable.monitor ? 'reconnecting' : 'disconnected'
+      case 'closed':
+        // The server closed the connection and asked not to reconnect
+        // (for example, unauthorized); a user disconnect has no error
+        return this.closeError ? 'failed' : 'disconnected'
+      default:
+        return 'disconnected'
+    }
+  }
+
+  /**
+   * Call the callback with the new status on every connection change.
+   * Returns a function that removes the callback.
+   */
+  onConnectionChange(callback) {
+    let update = () => callback(this.connectionStatus())
+    let unbinds = ['connect', 'disconnect', 'close'].map(event =>
+      this.cable.on(event, update)
+    )
+
+    return () => {
+      unbinds.forEach(unbind => unbind())
+    }
   }
 
   /**

@@ -14,6 +14,13 @@ export interface EchoCableOptions {
   [key: string]: unknown
 }
 
+export type ConnectionStatus =
+  | 'connected'
+  | 'disconnected'
+  | 'connecting'
+  | 'reconnecting'
+  | 'failed'
+
 export declare class PublicChannel {
   listen(event: string, callback: Function): this
   listenForWhisper(event: string, callback: Function): this
@@ -47,6 +54,8 @@ export declare class EchoCable {
   leave(name: string): void
   leaveChannel(name: string): void
   socketId(): string | undefined
+  connectionStatus(): ConnectionStatus
+  onConnectionChange(callback: (status: ConnectionStatus) => void): () => void
   disconnect(): void
 }
 
