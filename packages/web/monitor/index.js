@@ -1,13 +1,33 @@
 import { Monitor as BaseMonitor, DisconnectedError } from '@anycable/core'
 
 export class Monitor extends BaseMonitor {
-  watch(cable) {
-    super.watch(cable)
+  initListeners() {
+    super.initListeners()
 
     this.initActivityListeners()
+
+    this.unbind.push(
+      this.target.on('connect', () => this.initActivityListeners())
+    )
+    this.unbind.push(
+      this.target.on('disconnect', () => this.initActivityListeners())
+    )
+    this.unbind.push(
+      this.target.on('close', () => this.removeActivityListeners())
+    )
+    this.unbind.push(() => this.removeActivityListeners())
+  }
+
+  removeActivityListeners() {
+    if (this.activityUnbind) {
+      this.activityUnbind()
+      this.activityUnbind = null
+    }
   }
 
   initActivityListeners() {
+    if (this.activityUnbind) return
+
     if (
       typeof document !== 'undefined' &&
       typeof window !== 'undefined' &&
@@ -35,13 +55,13 @@ export class Monitor extends BaseMonitor {
       window.addEventListener('resume', connect, false)
       window.addEventListener('freeze', disconnectFrozen, false)
 
-      this.unbind.push(() => {
+      this.activityUnbind = () => {
         document.removeEventListener('visibilitychange', visibility, false)
         window.removeEventListener('focus', connect, false)
         window.removeEventListener('online', connect, false)
         window.removeEventListener('resume', connect, false)
         window.removeEventListener('freeze', disconnectFrozen, false)
-      })
+      }
     }
   }
 
