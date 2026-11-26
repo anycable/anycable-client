@@ -36,16 +36,13 @@ export class EchoCable {
       throw new Error('AnyCable cable instance is required')
     }
 
-    this.wasConnected = this.cable.state === 'connected'
     this.closeError = undefined
 
     this.cable.on('connect', () => {
-      this.wasConnected = true
       this.closeError = undefined
     })
 
     this.cable.on('close', err => {
-      this.wasConnected = false
       this.closeError = err
     })
   }
@@ -138,7 +135,7 @@ export class EchoCable {
       case 'connected':
         return 'connected'
       case 'connecting':
-        return this.wasConnected ? 'reconnecting' : 'connecting'
+        return this.cable.initialConnect ? 'connecting' : 'reconnecting'
       case 'disconnected':
         // The monitor reconnects the cable after a disconnect
         return this.cable.monitor ? 'reconnecting' : 'disconnected'
