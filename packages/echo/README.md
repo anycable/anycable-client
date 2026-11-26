@@ -58,5 +58,17 @@ window.Echo = new Echo({
 });
 ```
 
+### Connection status
+
+`EchoCable` implements `connectionStatus()` and `onConnectionChange()` from Laravel Echo 2.x, so the `useConnectionStatus()` hooks of `@laravel/echo-react`, `@laravel/echo-vue` and `@laravel/echo-svelte` work with it. The status is one of `connecting`, `connected`, `reconnecting` (the cable reconnects after a disconnect), `disconnected` (not connected yet, or closed by the client) and `failed` (the server closed the connection without a reconnect, for example, `unauthorized`).
+
+```js
+const status = window.Echo.connectionStatus();
+
+const unsubscribe = window.Echo.connector.onConnectionChange(status => {
+  console.log('AnyCable connection status:', status);
+});
+```
+
 [Laravel Echo]: https://github.com/laravel/echo
 [anycable-laravel]: https://github.com/anycable/anycable-laravel

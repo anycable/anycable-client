@@ -448,3 +448,87 @@ describe('EchoCable Laravel Echo Integration', () => {
     expect(errorData).toBeInstanceOf(Error)
   })
 })
+
+describe('EchoCable connection status', () => {
+  let waitFor = async (check: () => boolean) => {
+    for (let i = 0; i < 100 && !check(); i++) {
+      await new Promise(resolve => setTimeout(resolve, 20))
+    }
+    expect(check()).toBe(true)
+  }
+
+  it('reports connecting, connected, reconnecting and disconnected', async () => {
+    let echoCable = new EchoCable({
+      cable: createCable(`ws://localhost:${port}`, {
+        protocol: 'actioncable-v1-ext-json',
+        reconnectStrategy: () => 50
+      })
+    })
+    let statuses: string[] = []
+    let unbind = echoCable.onConnectionChange(status => statuses.push(status))
+
+    expect(echoCable.connectionStatus()).toBe('disconnected')
+
+    let connecting = echoCable.cable.connect()
+    expect(echoCable.connectionStatus()).toBe('connecting')
+
+    await connecting
+    expect(echoCable.connectionStatus()).toBe('connected')
+
+    conns[0].close()
+    await waitFor(() => statuses.includes('reconnecting'))
+    await waitFor(() => echoCable.connectionStatus() === 'connected')
+
+    echoCable.disconnect()
+    expect(echoCable.connectionStatus()).toBe('disconnected')
+
+    expect(statuses).toEqual([
+      'connected',
+      'reconnecting',
+      'connected',
+      'disconnected'
+    ])
+
+    unbind()
+    await echoCable.cable.connect()
+    expect(statuses).toHaveLength(4)
+    echoCable.disconnect()
+  })
+
+  it('reports failed when the server closes without reconnect', async () => {
+    let echoCable = new EchoCable({
+      cableOptions: { url: `ws://localhost:${port}` }
+    })
+    let statuses: string[] = []
+    echoCable.onConnectionChange(status => statuses.push(status))
+
+    await echoCable.cable.connect()
+
+    conns[0].send(
+      JSON.stringify({
+        type: 'disconnect',
+        reason: 'unauthorized',
+        reconnect: false
+      })
+    )
+
+    await waitFor(() => echoCable.connectionStatus() === 'failed')
+    expect(statuses).toEqual(['connected', 'failed'])
+  })
+
+  it('reports disconnected after a disconnect without a monitor', async () => {
+    let echoCable = new EchoCable({
+      cable: createCable(`ws://localhost:${port}`, {
+        protocol: 'actioncable-v1-ext-json',
+        monitor: false
+      })
+    })
+
+    await echoCable.cable.connect()
+    expect(echoCable.connectionStatus()).toBe('connected')
+
+    conns[0].close()
+    await waitFor(() => echoCable.cable.state === 'disconnected')
+    expect(echoCable.connectionStatus()).toBe('disconnected')
+  })
+})
